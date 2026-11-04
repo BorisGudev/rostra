@@ -1,0 +1,750 @@
+/* ================================================================
+   Viva voce: the oral exam.
+   A hall you walk into (setup), a chamber that looks back at you
+   (exam room), and a verdict that lands with a thud (report).
+   Everything on a .stage is dark in both themes; the rest follows
+   the marble and night tokens.
+   ================================================================ */
+
+:root {
+  /* Marble and wax are mixed from the stage palette, so they read the same in both themes */
+  --viva-marble-hi: color-mix(in srgb, var(--stage-ink) 92%, var(--stage-gold));
+  --viva-marble-mid: color-mix(in srgb, var(--stage-ink) 60%, var(--stage-bg-2));
+  --viva-marble-lo: color-mix(in srgb, var(--stage-ink) 24%, var(--stage-bg));
+  --viva-plinth-lo: color-mix(in srgb, var(--stage-ink) 9%, var(--stage-bg));
+  --viva-marble-line: color-mix(in srgb, var(--stage-bg) 66%, var(--stage-muted));
+  --viva-shade: var(--stage-bg);
+  --viva-night: color-mix(in srgb, var(--stage-bg) 62%, var(--shade));
+  --viva-wax-hi: color-mix(in srgb, var(--stage-pathos) 60%, var(--stage-ink));
+  --viva-wax: color-mix(in srgb, var(--stage-pathos) 72%, var(--stage-bg));
+  --viva-wax-deep: color-mix(in srgb, var(--stage-pathos) 34%, var(--stage-bg));
+  --viva-soft-ink: color-mix(in srgb, var(--stage-ink) 78%, transparent);
+  --viva-veil: color-mix(in srgb, var(--stage-ink) 5%, transparent);
+}
+
+/* Shared components (klepsydra, meander, chips, inputs) read theme tokens.
+   On the set pieces those tokens point at the stage palette, in light theme too. */
+.viva-room, .viva-hero, .viva-verdict, .viva-brief-stage {
+  --surface: var(--stage-bg-2);
+  --surface-2: color-mix(in srgb, var(--stage-ink) 7%, var(--stage-bg));
+  --surface-3: color-mix(in srgb, var(--stage-ink) 12%, var(--stage-bg));
+  --ink: var(--stage-ink);
+  --ink-2: var(--viva-soft-ink);
+  --muted: var(--stage-muted);
+  --line: var(--stage-line);
+  --line-2: var(--stage-line);
+  --ethos: var(--stage-ethos);
+  --pathos: var(--stage-pathos);
+  --logos: var(--stage-logos);
+  --gold: var(--stage-gold);
+  --good: var(--stage-logos);
+  --warn: var(--stage-gold);
+  --bad: var(--stage-pathos);
+  --on-accent: var(--stage-bg);
+  --card-sheen: color-mix(in srgb, var(--stage-ink) 9%, transparent);
+  color-scheme: dark;
+}
+
+.viva-home, .viva-history, .viva-technique, .viva-room-wrap, .viva-report, .viva-revise { min-width: 0; }
+
+.viva-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ================================================================
+   The bench: colonnade, busts, cones, dust
+   ================================================================ */
+.viva-bench { display: block; width: 100%; height: auto; overflow: hidden; }
+.viva-rule { fill: none; stroke: var(--stage-line); stroke-width: 1.5; }
+.viva-col rect { fill: color-mix(in srgb, var(--stage-ink) 8%, var(--stage-bg)); }
+.viva-flute { fill: none; stroke: var(--stage-bg); stroke-width: 1.6; opacity: .7; }
+
+/* Busts sit on an SVG transform attribute, so light them with opacity only and move only their inner parts */
+.viva-bust { opacity: .82; transition: opacity .7s var(--ease-out); }
+.viva-bust.is-dim { opacity: .24; }
+.viva-bust.is-lit { opacity: .86; }
+.viva-bust.is-speaking { opacity: 1; }
+.viva-bust.is-thinking { opacity: .62; animation: viva-think-breathe 3.8s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .55s); }
+.viva-bust-shadow { fill: var(--viva-shade); opacity: .75; }
+.viva-carve { font-family: var(--font-inscr); font-size: 12.5px; font-weight: 700; letter-spacing: .13em; fill: var(--viva-shade); opacity: .86; }
+.viva-carve-greek { font-family: var(--font-greek); font-style: italic; font-size: 14px; fill: var(--viva-shade); opacity: .74; }
+.viva-laurel { fill: color-mix(in srgb, var(--stage-gold) 60%, var(--viva-marble-mid)); }
+.viva-eyes { fill: var(--viva-shade); opacity: .78; transform-origin: 80px 70px; transition: opacity .4s; }
+.viva-mouth { fill: var(--viva-shade); opacity: .72; transform-origin: 80px 89.6px; }
+.viva-head { transform-origin: 80px 102px; }
+.viva-ripple { fill: none; stroke-width: 2.2; stroke-linecap: round; opacity: 0; transition: opacity .3s; }
+.viva-dots { opacity: 0; transition: opacity .3s; }
+.viva-dots circle { fill: var(--stage-gold); }
+
+.viva-bust.is-speaking .viva-head { animation: viva-nod 3.2s ease-in-out infinite; }
+.viva-bust.is-speaking .viva-mouth { animation: viva-mouth .46s ease-in-out infinite alternate; }
+.viva-bust.is-speaking .viva-ripple { opacity: 1; }
+.viva-bust.is-speaking .viva-ripple path { opacity: .75; animation: viva-ripple 1.5s ease-out infinite; }
+.viva-bust.is-speaking .viva-ripple path:nth-child(2) { animation-delay: .28s; }
+.viva-bust.is-thinking .viva-head { animation: viva-ponder 5.2s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -1.3s); }
+.viva-bust.is-thinking .viva-eyes { transform: scaleY(.55); opacity: .95; }
+.viva-bust.is-thinking .viva-dots { opacity: 1; }
+.viva-bust.is-thinking .viva-dots circle { animation: viva-dot 1.3s ease-in-out infinite; }
+.viva-bust.is-thinking .viva-dots circle:nth-child(2) { animation-delay: .18s; }
+.viva-bust.is-thinking .viva-dots circle:nth-child(3) { animation-delay: .36s; }
+
+/* The beam: hard edges, and screen makes the lights add up. */
+.viva-cone { opacity: .62; mix-blend-mode: screen; pointer-events: none; transition: opacity .7s var(--ease-out); }
+.viva-cone.is-dim { opacity: .05; }
+.viva-cone.is-lit { opacity: .7; }
+.viva-cone.is-speaking { opacity: 1; animation: viva-beam 3.6s ease-in-out infinite; }
+.viva-cone.is-thinking { opacity: .24; }
+.viva-pool { opacity: .5; transition: opacity .7s var(--ease-out); }
+.viva-pool.is-dim { opacity: .06; }
+.viva-pool.is-lit { opacity: .7; }
+.viva-pool.is-speaking { opacity: 1; }
+.viva-pool.is-thinking { opacity: .28; }
+.viva-sweep { display: none; }
+.viva-dust { display: none; }
+.viva-dust circle:nth-child(3n) { animation-duration: 9.5s; }
+.viva-dust circle:nth-child(3n + 1) { animation-duration: 5.6s; }
+
+/* Lamps strike one at a time as you walk in */
+.viva-bench.is-entering .viva-cone { animation: viva-strike 1.2s linear backwards; animation-delay: calc(var(--i, 0) * .42s + .12s); }
+.viva-bench.is-entering .viva-pool { animation: viva-rise 1.2s ease-out backwards; animation-delay: calc(var(--i, 0) * .42s + .3s); }
+.viva-bench.is-entering .viva-bust { animation: viva-rise 1.3s ease-out backwards; animation-delay: calc(var(--i, 0) * .42s + .12s); }
+/* In the hall they stand idle, and the lights breathe */
+.viva-bench.is-idle .viva-cone { animation: viva-idle 8s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -2.6s); }
+
+/* A small dark alcove holding a bust on a light surface */
+.viva-niche {
+  display: inline-flex; align-items: flex-end; justify-content: center; flex: none; overflow: hidden;
+  padding: 0 10px; max-width: 100%;
+  border-radius: 50% 50% 8px 8px / 62% 62% 8px 8px;
+  background: radial-gradient(90% 100% at 50% 0%, var(--stage-bg-2), var(--stage-bg) 80%);
+  box-shadow: inset 0 0 0 1px var(--stage-line), inset 0 -12px 18px -12px var(--shade);
+}
+.viva-niche svg { display: block; height: 100%; width: auto; max-width: 100%; }
+.viva-niche .viva-bust.is-dim { opacity: .46; }
+.viva-niche .viva-cone { filter: none; }
+.stage .viva-niche { background: none; box-shadow: none; }
+
+/* ================================================================
+   The hall: hero and setup
+   ================================================================ */
+.viva-hero {
+  display: grid; grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr); gap: clamp(10px, 2vw, 28px);
+  align-items: end; padding: clamp(20px, 3.6vw, 44px) clamp(18px, 3.6vw, 44px) 0;
+  border-radius: 14px;
+  background: var(--stage-bg);
+}
+.viva-hero::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 18px; z-index: -1;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--stage-ink) 12%, transparent), transparent);
+}
+.viva-hero-text { display: grid; gap: 14px; align-self: center; min-width: 0; padding-bottom: clamp(20px, 3.4vw, 44px); }
+.viva-hero-eyebrow { display: inline-flex; align-items: center; gap: 12px; color: var(--stage-gold); font-size: 11px; letter-spacing: .24em; }
+.viva-hero-eyebrow::after { content: ""; flex: 0 1 64px; min-width: 16px; height: 8px; background: var(--stage-gold); opacity: .7; -webkit-mask: var(--meander) repeat-x 0 50% / 8px 8px; mask: var(--meander) repeat-x 0 50% / 8px 8px; }
+.viva-hero h1 { font-size: clamp(32px, 4.8vw, 56px); line-height: .98; letter-spacing: -0.042em; }
+.viva-hero-lead { max-width: 50ch; color: var(--viva-soft-ink); font-size: 15.5px; line-height: 1.55; text-wrap: pretty; }
+.viva-hero-stats { display: inline-flex; flex-wrap: wrap; gap: 4px 14px; color: var(--stage-muted); font-size: 13px; }
+.viva-hero-stats b { color: var(--stage-ink); font-family: var(--font-display); font-size: 17px; font-weight: 760; letter-spacing: -0.02em; }
+.viva-hero-bench { display: grid; align-self: end; min-width: 0; }
+.viva-hero-bench::before {
+  content: ""; display: block; aspect-ratio: 200 / 46; margin-bottom: -2px;
+  background: color-mix(in srgb, var(--stage-ink) 34%, transparent);
+  -webkit-mask: var(--pediment) center / 100% 100% no-repeat; mask: var(--pediment) center / 100% 100% no-repeat;
+}
+
+.viva-setup { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(16px, 2.4vw, 26px); align-items: start; scroll-margin-top: 16px; }
+.viva-summons { position: relative; display: grid; gap: 20px; overflow: hidden; }
+.viva-summons::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 10px;
+  background: var(--line-2); -webkit-mask: var(--meander) repeat-x 0 50% / 10px 10px; mask: var(--meander) repeat-x 0 50% / 10px 10px;
+}
+.viva-summons-head { display: grid; gap: 6px; padding-top: 6px; }
+.viva-summons-head .inscr { color: var(--muted); letter-spacing: .24em; font-size: 10.5px; }
+.viva-summons-head h2 { font-size: clamp(27px, 3vw, 34px); }
+/* Labels are carved */
+.viva-setup .field > label, .viva-setup .label { font-family: var(--font-inscr); text-transform: uppercase; letter-spacing: .16em; font-size: 11px; color: var(--ink-2); }
+.viva-subject {
+  border-width: 0 0 2px; border-color: var(--ink-2); border-radius: 6px 6px 0 0; background: var(--surface-2); box-shadow: none;
+  padding: 12px 14px; font-family: var(--font-display); font-size: clamp(20px, 2.4vw, 25px); font-weight: 680; letter-spacing: -0.022em;
+}
+.viva-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.viva-opts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.viva-opt {
+  display: grid; gap: 6px; align-content: start; min-width: 0; padding: 12px 13px; text-align: left;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); color: var(--ink);
+  transition: border-color .15s, background .15s, box-shadow .15s, transform .12s;
+}
+.viva-opt:hover { border-color: var(--line-2); background: var(--surface); }
+.viva-opt:active { transform: translateY(1px); }
+.viva-opt[aria-pressed="true"] { background: var(--surface); border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink), 0 12px 22px -16px color-mix(in srgb, var(--ink) 80%, transparent); }
+.viva-opt-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+.viva-opt-top b { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 15.5px; font-weight: 740; letter-spacing: -0.015em; }
+.viva-opt-top .num { font-size: 11.5px; color: var(--muted); }
+
+/* Four characters waiting in their alcoves, each in their own light */
+.viva-personas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.viva-persona {
+  --pc: var(--gold);
+  display: grid; gap: 10px; align-content: start; min-width: 0; padding: 8px 8px 12px; text-align: left;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); color: var(--ink);
+  transition: border-color .2s, background .2s, box-shadow .2s, transform .12s;
+}
+.viva-persona:nth-child(2) { --pc: var(--logos); }
+.viva-persona:nth-child(3) { --pc: var(--ethos); }
+.viva-persona:nth-child(4) { --pc: var(--pathos); }
+.viva-persona > span:last-child { padding: 0 6px; }
+.viva-persona b { display: block; font-family: var(--font-display); font-size: 16px; font-weight: 740; letter-spacing: -0.018em; transition: color .2s; }
+.viva-persona .viva-niche { width: 100%; height: 92px !important; }
+.viva-persona:hover { border-color: color-mix(in srgb, var(--pc) 55%, var(--line)); }
+.viva-persona:active { transform: translateY(1px); }
+.viva-persona[aria-pressed="true"] { background: var(--surface); border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc), 0 18px 30px -20px var(--pc); }
+.viva-persona[aria-pressed="true"] b { color: var(--pc); }
+.viva-toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; }
+.viva-toggle input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--gold); }
+.viva-toggle input:disabled + span { opacity: .7; }
+
+.viva-brief { position: sticky; top: 16px; display: grid; gap: 14px; min-width: 0; }
+.viva-brief-stage { display: grid; justify-items: center; gap: 12px; padding: 22px 16px 16px; }
+.viva-brief-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--stage-ink); }
+.viva-brief-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; padding-top: 12px; border-top: 1px solid var(--stage-line); text-align: center; font-size: 11.5px; line-height: 1.25; color: var(--stage-muted); }
+.viva-brief-facts span { display: grid; gap: 2px; }
+.viva-brief-facts b { font-family: var(--font-display); font-size: 22px; font-weight: 780; letter-spacing: -0.03em; color: var(--stage-ink); }
+.viva-how { counter-reset: viva-step; display: grid; gap: 10px; margin: 0; padding: 0 2px; list-style: none; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.viva-how li { counter-increment: viva-step; position: relative; padding-left: 32px; }
+.viva-how li::before { content: counter(viva-step, upper-roman); position: absolute; left: 0; top: 0; width: 24px; font-family: var(--font-inscr); font-weight: 700; font-size: 13px; color: var(--gold); text-align: right; }
+.viva-how b { color: var(--ink); }
+.viva-seating { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); font-size: 14px; color: var(--ink-2); }
+.viva-seating > span:nth-child(2) { flex: 1; min-width: 0; }
+
+/* ---------- History and technique ---------- */
+.viva-row { display: flex; align-items: center; gap: 6px; border-radius: 6px; }
+.viva-row + .viva-row { box-shadow: 0 -1px 0 var(--line); }
+.viva-row-main {
+  flex: 1; min-width: 0; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 8px; text-align: left; border: 0; border-radius: 6px; background: none; color: var(--ink); transition: background .15s;
+}
+.viva-row-main:hover { background: var(--surface-2); }
+.viva-row-medal { display: grid; place-items: center; width: 48px; }
+.viva-row-medal .viva-seal { display: block; }
+.viva-row-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-3); color: var(--muted); }
+.viva-row-ic.live { background: var(--logos-soft); color: var(--logos); box-shadow: 0 0 0 0 color-mix(in srgb, var(--logos) 45%, transparent); animation: viva-live 2.6s ease-out infinite; }
+.viva-row-ic.setup { background: var(--surface-3); color: var(--muted); }
+.viva-row-go { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 650; color: var(--muted); white-space: nowrap; }
+.viva-row-main:hover .viva-row-go { color: var(--ink); }
+.viva-row-confirm { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px; font-size: 13.5px; border-radius: 6px; background: var(--bad-soft); overflow-wrap: anywhere; }
+
+.viva-lessons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.viva-lesson {
+  --pc: var(--ethos);
+  display: grid; gap: 4px; align-content: start; min-width: 0; padding: 14px; text-align: left; color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
+  box-shadow: inset 0 3px 0 var(--pc), var(--shadow-sm); transition: transform .15s var(--ease-out), box-shadow .15s;
+}
+@media (hover: hover) { .viva-lesson:hover { transform: translateY(-2px); box-shadow: inset 0 3px 0 var(--pc), var(--shadow); } }
+.viva-lesson b { font-family: var(--font-display); font-size: 15px; font-weight: 720; line-height: 1.2; letter-spacing: -0.015em; }
+.viva-lesson-num { display: flex; align-items: center; min-height: 28px; font-family: var(--font-inscr); font-size: 21px; font-weight: 700; color: var(--pc); }
+.viva-lesson.done { background: var(--surface-2); }
+
+/* ================================================================
+   The exam room
+   ================================================================ */
+.viva-room {
+  display: grid; border-radius: 14px;
+  background:
+    radial-gradient(70% 300px at 50% 0%, var(--stage-bg-2), transparent 78%),
+    var(--viva-night);
+  font-synthesis: none;
+}
+/* Darkness closes in at the walls */
+.viva-room::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, var(--shade), transparent 22%, transparent 78%, var(--shade));
+  opacity: .78;
+}
+/* Overtime: the room warms from the floor up, over the lectern too */
+.viva-room::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(90% 280px at 50% 100%, color-mix(in srgb, var(--stage-pathos) 34%, transparent), transparent 78%);
+  transition: opacity .8s var(--ease-out);
+}
+.viva-room.is-over::after { opacity: 1; animation: viva-over 2.6s ease-in-out infinite; }
+.viva-room .viva-bench {
+  max-width: 800px; margin-inline: auto;
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 7%, black 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 7%, black 93%, transparent);
+}
+
+.viva-room-top {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto; align-items: center; gap: 10px 18px;
+  padding: 12px clamp(14px, 2.4vw, 24px);
+  border-bottom: 1px solid var(--stage-line);
+  background: linear-gradient(180deg, var(--viva-veil), transparent);
+}
+.viva-room-id { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-width: 0; }
+.viva-room-id .inscr { flex: 0 0 100%; font-size: 10px; letter-spacing: .24em; color: var(--stage-gold); }
+.viva-room-id b { min-width: 0; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: var(--font-display); font-size: 17px; font-weight: 720; letter-spacing: -0.02em; }
+.viva-progress { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 5px 10px; min-width: 0; }
+.viva-qcount { font-family: var(--font-display); font-size: 15px; font-weight: 760; letter-spacing: -0.015em; white-space: nowrap; }
+.viva-qcount i { font-style: normal; font-weight: 600; color: var(--stage-muted); }
+.viva-follow-chip.chip { justify-self: end; max-width: 100%; background: color-mix(in srgb, var(--stage-gold) 14%, transparent); border-color: color-mix(in srgb, var(--stage-gold) 44%, transparent); color: var(--stage-gold); }
+.viva-progress-bar { grid-column: 1 / -1; min-width: 0; }
+
+.viva-leave {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px clamp(14px, 2.4vw, 24px); font-size: 13.5px; color: var(--viva-soft-ink);
+  background: color-mix(in srgb, var(--stage-pathos) 10%, var(--viva-night)); border-bottom: 1px solid var(--stage-line);
+}
+
+/* The dais: a raised step under the bench where the question lands */
+.viva-dais {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 172px; gap: clamp(14px, 2.4vw, 28px);
+  padding: clamp(20px, 2.8vw, 30px) clamp(14px, 2.6vw, 28px) clamp(16px, 2.6vw, 26px);
+  background:
+    radial-gradient(55% 150px at 50% 0%, color-mix(in srgb, var(--stage-gold) 8%, transparent), transparent 80%),
+    linear-gradient(180deg, color-mix(in srgb, var(--stage-ink) 7%, var(--viva-night)), var(--viva-night) 76%);
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--stage-ink) 22%, transparent), 0 -18px 30px -18px var(--shade);
+}
+.viva-dais::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 10px; background: var(--stage-gold); opacity: .3;
+  -webkit-mask: var(--meander) repeat-x 0 50% / 10px 10px; mask: var(--meander) repeat-x 0 50% / 10px 10px;
+}
+.viva-speech { min-width: 0; min-height: 190px; }
+.viva-speaker { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin-bottom: 10px; }
+.viva-speaker .inscr { font-size: 12.5px; letter-spacing: .24em; transition: color .5s; }
+.viva-role { font-family: var(--font-greek); font-style: italic; font-size: 16px; color: var(--stage-muted); }
+.viva-lead { margin-bottom: 8px; font-family: var(--font-greek); font-style: italic; font-size: clamp(16px, 1.8vw, 19px); line-height: 1.3; color: var(--stage-muted); }
+.viva-q {
+  font-family: var(--font-greek); font-size: clamp(25px, 3.5vw, 40px); line-height: 1.2; letter-spacing: -0.004em;
+  color: var(--stage-ink); text-wrap: pretty; overflow-wrap: anywhere;
+
+}
+.viva-q-intro { font-style: italic; font-size: clamp(22px, 3vw, 33px); }
+.viva-room.is-closing .viva-speaker .inscr { color: var(--stage-gold) !important; }
+.viva-room.is-closing .viva-q { font-style: italic; color: var(--stage-gold); }
+.viva-caret {
+  display: inline-block; width: 2px; height: .95em; margin-right: -2px; vertical-align: -0.12em;
+  background: var(--stage-gold); animation: viva-caret 1s steps(1) infinite;
+}
+.viva-ghost { visibility: hidden; }
+.viva-rules { display: grid; gap: 6px; margin: 16px 0 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.4; color: var(--viva-soft-ink); }
+.viva-rules li { position: relative; padding-left: 20px; }
+.viva-rules li::before { content: ""; position: absolute; left: 0; top: .32em; width: 10px; height: 10px; background: var(--stage-gold); opacity: .8; -webkit-mask: var(--meander) center / 10px 10px no-repeat; mask: var(--meander) center / 10px 10px no-repeat; }
+.viva-say {
+  margin-top: 14px; padding: 10px 14px; border-left: 2px solid var(--stage-gold); border-radius: 0 12px 12px 0;
+  background: var(--viva-veil); animation: viva-say-in .35s var(--ease-out);
+}
+.viva-say .inscr { display: block; margin-bottom: 3px; font-size: 10.5px; letter-spacing: .2em; }
+.viva-say p { font-family: var(--font-greek); font-style: italic; font-size: 18.5px; line-height: 1.32; overflow-wrap: anywhere; }
+
+/* The water clock stands on its own ledge at the end of the bench */
+.viva-clock {
+  display: grid; justify-items: center; align-content: start; align-self: start; gap: 8px; min-width: 0; padding: 12px 12px 14px;
+  border: 1px solid var(--stage-line); border-radius: 43px 43px 8px 8px / 60px 60px 8px 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--stage-ink) 7%, transparent), var(--viva-veil) 60%, transparent);
+}
+.viva-clock .klep { gap: 0; padding-top: 6px; }
+.viva-clock .klep-time { order: -1; margin-bottom: 2px; font-size: 25px; line-height: 1.1; transition: color .3s; }
+.viva-clock .klep svg { }
+.viva-clock .klep::after {
+  content: ""; justify-self: center; width: 118%; height: 9px; margin-top: -9px;
+  border-radius: 2px 2px 3px 3px; background: linear-gradient(180deg, var(--viva-marble-mid), var(--viva-marble-lo));
+  box-shadow: 0 7px 12px -4px var(--shade);
+}
+.viva-clock-label { font-family: var(--font-inscr); font-size: 10.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--stage-muted); transition: color .3s; }
+.viva-clock-label.over { color: var(--stage-pathos); }
+.viva-meter { display: grid; gap: 4px; width: 100%; padding-top: 10px; border-top: 1px solid var(--stage-line); }
+.viva-meter-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.viva-meter-head .inscr { font-size: 9.5px; letter-spacing: .18em; color: var(--stage-muted); }
+.viva-meter-head b { font-family: var(--font-display); font-size: 21px; font-weight: 780; letter-spacing: -0.03em; }
+.viva-meter-row { display: grid; grid-template-columns: 11px minmax(0, 1fr) 20px; align-items: center; gap: 6px; }
+.viva-meter-l { font-family: var(--font-inscr); font-size: 10px; font-weight: 700; color: var(--stage-muted); }
+.viva-meter-track { display: block; height: 4px; overflow: hidden; border-radius: 2px; background: var(--stage-line); }
+.viva-meter-track i { display: block; height: 100%; border-radius: inherit; transition: width .9s var(--ease-out); }
+.viva-meter-v { font-size: 10.5px; line-height: 1; text-align: right; color: var(--stage-muted); }
+
+/* The lectern: your side of the room */
+.viva-lectern {
+  position: relative; display: grid; gap: 12px; padding: 18px clamp(14px, 2.6vw, 28px) clamp(16px, 2.4vw, 24px);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--stage-ink) 10%, var(--stage-bg)), var(--viva-night) 90%);
+  border-top: 1px solid color-mix(in srgb, var(--stage-ink) 18%, transparent);
+}
+.viva-lectern::before {
+  content: ""; position: absolute; left: 50%; top: -10px; translate: -50% 0; width: min(54%, 320px); height: 9px;
+  background: linear-gradient(180deg, var(--viva-marble-lo), var(--viva-plinth-lo));
+  clip-path: polygon(7% 0, 93% 0, 100% 100%, 0 100%);
+}
+.viva-lectern > .btn, .viva-lectern > .btn-cta { justify-self: start; }
+.viva-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; font-weight: 560; line-height: 1.35; color: var(--viva-soft-ink); }
+.viva-status.over { color: var(--stage-pathos); }
+.viva-onair {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 3px 8px 3px 7px; border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--stage-pathos) 70%, transparent);
+  background: color-mix(in srgb, var(--stage-pathos) 14%, transparent); color: var(--stage-pathos);
+
+}
+.viva-onair::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--stage-pathos); animation: viva-onair 1.5s ease-in-out infinite; }
+.viva-onair::after { content: "Speak now"; font-family: var(--font-inscr); font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.viva-controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.viva-controls .chip:disabled { opacity: .45; cursor: not-allowed; }
+.viva-ask { display: flex; align-items: center; gap: 8px; }
+.viva-ask .input { flex: 1; font-size: 16px; }
+.viva-answer { display: grid; gap: 10px; }
+.viva-textarea { min-height: 140px; font-size: 16px; line-height: 1.5; }
+.viva-weigh { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--stage-muted); }
+.viva-weigh .spin { color: var(--stage-gold); }
+
+/* Self-marking: you hold the examiner's pen */
+.viva-self { display: grid; gap: 14px; }
+.viva-self-why { color: var(--stage-muted); }
+.viva-self-answer {
+  margin: 0; padding: 10px 14px; border-left: 2px solid var(--stage-line); max-height: 180px; overflow-y: auto;
+  font-family: var(--font-greek); font-size: 17px; line-height: 1.4; color: var(--viva-soft-ink); overflow-wrap: anywhere;
+}
+.viva-self .inscr { color: var(--stage-muted); }
+.viva-kp.chip { height: auto; max-width: 100%; padding: 5px 10px; line-height: 1.25; text-align: left; white-space: normal; }
+.viva-self-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.viva-self-row { display: grid; align-content: space-between; gap: 8px; min-width: 0; padding: 10px 12px; border: 1px solid var(--stage-line); border-radius: 6px; background: var(--viva-veil); }
+.viva-self-pips { display: flex; gap: 5px; }
+.viva-self-pips button {
+  flex: 1 1 0; min-width: 0; height: 40px; padding: 0; border: 1px solid var(--stage-line); border-radius: 9px;
+  background: var(--viva-veil); color: var(--stage-ink); font-family: var(--font-display); font-size: 15px; font-weight: 720;
+  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
+}
+.viva-self-pips button:hover { border-color: var(--c); }
+.viva-self-pips button[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: var(--stage-bg); }
+
+/* Below the room */
+.viva-below { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.viva-log summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; border-radius: 8px; }
+.viva-log summary::-webkit-details-marker { display: none; }
+.viva-log summary > span { display: grid; gap: 3px; min-width: 0; }
+.viva-log summary b { font-family: var(--font-display); font-size: 17px; font-weight: 720; letter-spacing: -0.015em; }
+.viva-log-chev { flex: none; color: var(--muted); transition: transform .2s var(--ease-out); }
+.viva-log[open] .viva-log-chev { transform: rotate(90deg); }
+.viva-log > p { margin-top: 10px; }
+.viva-log-list { display: grid; gap: 14px; margin: 14px 0 0; padding: 0; list-style: none; overflow-wrap: anywhere; }
+.viva-log-list li { display: grid; gap: 3px; padding-top: 12px; border-top: 1px solid var(--line); }
+.viva-log-q { font-family: var(--font-greek); font-size: 17px; line-height: 1.3; color: var(--ink); }
+.viva-tip { display: grid; gap: 8px; justify-items: start; }
+.viva-tip .inscr { font-size: 10.5px; color: var(--muted); }
+
+/* ================================================================
+   The verdict
+   ================================================================ */
+.viva-verdict {
+  display: grid; justify-items: center; gap: clamp(12px, 2vw, 20px); text-align: center; border-radius: 14px;
+  padding: clamp(22px, 3.6vw, 40px) clamp(16px, 4vw, 48px) clamp(24px, 3.6vw, 40px);
+  background: radial-gradient(70% 340px at 50% 0%, var(--stage-bg-2), transparent 78%), var(--viva-night);
+}
+.viva-verdict:has(.viva-seal.is-stamping) { animation: viva-thud .4s .9s ease-out; }
+.viva-verdict.grade-distinction { box-shadow: var(--stage-shadow), 0 0 0 1px color-mix(in srgb, var(--stage-gold) 34%, transparent); }
+.viva-verdict-lights { position: absolute; inset: 0 0 auto 0; z-index: -1; width: 100%; height: 350px; pointer-events: none; }
+.viva-verdict-cone { mix-blend-mode: screen; }
+.viva-verdict-glow { display: none; }
+.viva-verdict-seal { position: relative; display: grid; place-items: center; }
+.viva-verdict-seal .viva-seal { display: block; max-width: min(210px, 58vw); height: auto; filter: drop-shadow(0 18px 22px var(--shade)); }
+.viva-verdict-seal:has(.is-stamping)::after {
+  content: ""; position: absolute; left: 50%; top: 43%; width: 168px; aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; pointer-events: none; opacity: 0;
+  border: 2px solid color-mix(in srgb, var(--stage-gold) 70%, transparent);
+  animation: viva-shock .7s .9s ease-out both;
+}
+.viva-verdict-text { display: grid; justify-items: center; gap: 10px; min-width: 0; max-width: 64ch; }
+.viva-verdict-text > .inscr { letter-spacing: .24em; font-size: 11px; }
+.viva-verdict h1 { font-size: clamp(38px, 6.6vw, 74px); line-height: .98; letter-spacing: -0.046em; overflow-wrap: anywhere; }
+.viva-verdict-pct { font-size: .58em; font-weight: 620; letter-spacing: -0.03em; color: var(--stage-muted); }
+.viva-verdict.grade-distinction h1 { color: var(--stage-gold); }
+.viva-verdict.grade-merit h1 { }
+.viva-verdict.grade-pass h1 { }
+.viva-verdict.grade-not-yet h1 { color: var(--viva-soft-ink); }
+.viva-verdict-line { font-family: var(--font-greek); font-style: italic; font-size: clamp(18px, 2.3vw, 24px); line-height: 1.28; text-wrap: balance; }
+.viva-verdict-summary { font-size: 15px; line-height: 1.55; color: var(--viva-soft-ink); text-wrap: pretty; }
+.viva-verdict .row { justify-content: center; }
+.viva-verdict .chip { height: auto; min-height: 24px; max-width: 100%; padding-block: 3px; white-space: normal; overflow-wrap: anywhere; }
+
+/* The wax seal. Tokens only, so it is the same object in a card, in a list and on the stage. */
+.viva-seal { overflow: visible; }
+.viva-seal-body { transform-origin: 100px 100px; }
+.viva-seal-laurel { opacity: .92; }
+.viva-seal-num { font-family: var(--font-display); font-size: 42px; font-weight: 800; letter-spacing: -0.04em; fill: var(--stage-ink); paint-order: stroke; stroke: var(--viva-wax-deep); stroke-width: 2.2px; }
+.viva-seal-pct { font-size: 17px; font-weight: 700; letter-spacing: 0; }
+.viva-ribbon { transform-origin: 100px 126px; }
+.viva-ribbon.r2 { opacity: .82; }
+.viva-banner { fill: var(--stage-bg-2); stroke: color-mix(in srgb, var(--stage-gold) 62%, transparent); stroke-width: 1.2; }
+.viva-banner-text { font-family: var(--font-inscr); font-size: 13px; font-weight: 800; letter-spacing: .14em; fill: var(--stage-gold); }
+/* Lifted high, held, then slammed down at .9s: the same moment viva.js plays the thud */
+.viva-seal.is-stamping { transform-origin: 50% 44%; animation: viva-stamp 1.05s cubic-bezier(.5, 0, .9, .4) both; }
+.viva-seal.is-stamping .viva-seal-body { animation: viva-squash .34s .9s ease-out; }
+.viva-seal.is-stamping .viva-ribbon { animation: viva-ribbon-in .55s .9s var(--ease-spring) backwards; }
+.viva-seal.is-stamping .viva-ribbon.r2 { animation-name: viva-ribbon-in-2; }
+
+.viva-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.viva-report-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+
+/* Rubric diamond */
+.viva-radar { display: block; margin-inline: auto; overflow: visible; }
+.viva-radar-ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.viva-radar-ring:last-of-type { stroke: var(--line-2); stroke-width: 1.4; }
+.viva-radar-axis { stroke: var(--line); stroke-width: 1; }
+.viva-radar-shape { fill: color-mix(in srgb, var(--gold) 24%, transparent); stroke: var(--gold); stroke-width: 2.2; stroke-linejoin: round; transform-origin: 110px 110px; animation: viva-radar-in 1s var(--ease-spring) backwards; }
+.viva-radar-label { font-family: var(--font-body); font-size: 12.5px; font-weight: 620; fill: var(--ink-2); }
+.viva-radar-val { font-family: var(--font-display); font-size: 14px; font-weight: 800; fill: var(--ink); }
+.viva-rub-row { display: grid; gap: 4px; }
+.viva-rub-row b { font-size: 14px; }
+.viva-rub-v { font-family: var(--font-display); font-size: 21px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+
+.viva-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.viva-metric { display: grid; gap: 2px; align-content: start; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--muted); line-height: 1.2; }
+.viva-metric b { font-family: var(--font-display); font-size: 25px; font-weight: 800; letter-spacing: -0.035em; color: var(--ink); line-height: 1.05; }
+.viva-metric.good b { color: var(--good); }
+.viva-metric.warn b { color: var(--warn); }
+.viva-notes { display: grid; gap: 8px; margin: 0; padding: 0 0 0 20px; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.viva-notes li::marker { color: var(--muted); font-weight: 700; }
+.viva-notes.good li::marker { color: var(--good); }
+
+.viva-panel-notes { display: grid; gap: 12px; }
+.viva-panel-notes.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.viva-panel-note { display: flex; align-items: flex-start; gap: 14px; min-width: 0; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow-sm); }
+.viva-panel-note > div { display: grid; gap: 4px; min-width: 0; }
+.viva-panel-note .inscr { font-size: 11px; }
+.viva-panel-note blockquote { margin: 0; font-family: var(--font-greek); font-size: 17.5px; line-height: 1.34; color: var(--ink); text-wrap: pretty; }
+.viva-panel-note .viva-niche { padding: 0 6px; }
+
+.viva-gaps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.viva-gap { position: relative; display: grid; gap: 10px; align-content: start; justify-items: start; padding-right: clamp(40px, 4vw, 56px); }
+.viva-gap h3 { overflow-wrap: anywhere; }
+.viva-gap-num { position: absolute; top: 12px; right: 16px; font-family: var(--font-inscr); font-size: 26px; font-weight: 700; line-height: 1; color: color-mix(in srgb, var(--pathos) 62%, var(--line-2)); }
+.viva-outline { display: grid; gap: 4px; margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.viva-outline li::marker { font-weight: 700; color: var(--muted); }
+
+/* The transcript, marked up like a returned paper */
+.viva-transcript { display: grid; }
+.viva-tq { border-top: 1px solid var(--line); }
+.viva-tq:first-child { border-top: 0; }
+.viva-tq summary { display: flex; align-items: center; gap: 12px; padding: 10px 2px; cursor: pointer; list-style: none; border-radius: 8px; }
+.viva-tq summary::-webkit-details-marker { display: none; }
+.viva-tq summary::after { content: ""; flex: none; width: 8px; height: 8px; margin: 0 4px 0 2px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); rotate: -45deg; transition: rotate .2s var(--ease-out); }
+.viva-tq[open] summary::after { rotate: 45deg; }
+.viva-tq-n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--surface-3); font-family: var(--font-display); font-size: 13.5px; font-weight: 780; }
+.viva-tq-score { flex: none; margin-left: auto; font-family: var(--font-display); font-size: 21px; font-weight: 800; letter-spacing: -0.03em; }
+.viva-tq-body { display: grid; gap: 14px; padding: 2px 2px 16px; overflow-wrap: anywhere; }
+.viva-tq-turn { display: grid; gap: 8px; padding-left: 12px; border-left: 2px solid var(--line-2); }
+/* The turn kind doubles as a class, and the shell owns .main: undo its page padding */
+.viva-tq-turn.main { padding: 0 0 0 12px; border-left-color: var(--ink-2); }
+.viva-tq-turn.follow { margin-left: clamp(8px, 2vw, 18px); border-left-style: dashed; }
+.viva-tq-q { font-family: var(--font-greek); font-size: 18px; line-height: 1.3; color: var(--ink); }
+.viva-tq-q .inscr { display: block; margin-bottom: 2px; font-family: var(--font-inscr); font-size: 10.5px; }
+.viva-tq-a { font-size: 14.5px; line-height: 1.5; color: var(--ink-2); white-space: pre-wrap; }
+.viva-tq-a .tiny { display: block; margin-bottom: 2px; white-space: normal; }
+.viva-tq-aside { padding: 6px 10px; border-radius: 8px; background: var(--surface-2); color: var(--ink-2); }
+.viva-tq-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* The examiner's pen: small inked marks, never quite straight */
+.viva-tq-mark {
+  --c: var(--ink-2);
+  display: inline-flex; align-items: baseline; gap: 4px; padding: 2px 7px; border-radius: 4px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 58%, transparent); color: var(--c);
+  font-family: var(--font-inscr); font-size: 10.5px; font-weight: 800; rotate: -1.4deg;
+}
+.viva-tq-mark:nth-child(even) { rotate: 1.1deg; }
+.viva-tq-mark b { font-family: var(--font-display); font-size: 14px; font-weight: 800; letter-spacing: -0.02em; }
+.viva-tq-note { padding: 6px 10px; border-left: 2px solid var(--ethos); background: var(--ethos-soft); border-radius: 0 8px 8px 0; color: var(--ink-2); }
+.viva-tq-note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+
+/* ================================================================
+   Revise: tablets that really turn over
+   ================================================================ */
+.viva-card {
+  display: block; width: 100%; max-width: 660px; margin-inline: auto; padding: 0; border: 0; border-radius: 11px;
+  background: none; color: inherit; text-align: center; perspective: 1500px;
+}
+.viva-card-inner { display: grid; transform-style: preserve-3d; transition: transform .78s cubic-bezier(.3, .9, .28, 1); }
+.viva-card.is-flipped .viva-card-inner { transform: rotateY(180deg); }
+/* A small lean toward the pointer. Touch screens keep :hover after a tap, so only where it can leave. */
+@media (hover: hover) {
+  .viva-card:hover .viva-card-inner { transform: rotateY(5deg) rotateX(1.5deg); }
+  .viva-card.is-flipped:hover .viva-card-inner { transform: rotateY(175deg) rotateX(-1.5deg); }
+}
+.viva-card-face {
+  grid-area: 1 / 1; position: relative; display: grid; align-content: center; justify-items: center; gap: 14px; min-width: 0;
+  min-height: clamp(280px, 40vw, 360px); padding: clamp(34px, 5vw, 46px) clamp(20px, 4vw, 40px);
+  border-radius: 11px; box-shadow: var(--shadow-lg);
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+}
+.viva-card-face::before, .viva-card-face::after {
+  content: ""; position: absolute; left: 18px; right: 18px; height: 10px; background: currentColor; opacity: .16;
+  -webkit-mask: var(--meander) repeat-x 0 50% / 10px 10px; mask: var(--meander) repeat-x 0 50% / 10px 10px;
+}
+.viva-card-face::before { top: 12px; }
+.viva-card-face::after { bottom: 12px; }
+.viva-card-face.front { background: linear-gradient(170deg, var(--surface), var(--surface-2)); border: 1px solid var(--line-2); color: var(--ink); }
+.viva-card-face.front .inscr { color: var(--muted); }
+.viva-card-face.back {
+  transform: rotateY(180deg); border: 1px solid color-mix(in srgb, var(--stage-gold) 42%, transparent); color: var(--stage-ink);
+  background: radial-gradient(90% 80% at 50% 0%, var(--stage-bg-2), var(--stage-bg) 78%);
+}
+.viva-card-face.back .inscr { color: var(--stage-gold); }
+.viva-card-text { font-family: var(--font-greek); font-size: clamp(21px, 3vw, 30px); line-height: 1.24; text-wrap: balance; overflow-wrap: anywhere; }
+.viva-card-text.small-text { font-family: var(--font-body); font-size: clamp(15px, 1.8vw, 18px); line-height: 1.52; text-wrap: pretty; }
+.viva-card-hint { color: var(--muted); }
+.viva-revise-done { display: grid; justify-items: center; gap: 12px; text-align: center; color: var(--ink); }
+.viva-revise-done > svg { color: var(--gold); }
+.viva-revise-done p { max-width: 52ch; }
+
+/* ================================================================
+   Motion
+   ================================================================ */
+@keyframes viva-think-breathe { 50% { opacity: .42; } }
+@keyframes viva-nod { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-1.2deg) translateY(.4px); } 65% { transform: rotate(1deg) translateY(-.3px); } }
+@keyframes viva-ponder { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(2deg) translateY(1px); } }
+@keyframes viva-mouth { from { transform: scaleY(.8); } to { transform: scaleY(3.1); } }
+@keyframes viva-ripple { 0% { opacity: 0; } 22% { opacity: .9; } 100% { opacity: 0; } }
+@keyframes viva-dot { 0%, 100% { transform: translateY(0); opacity: .4; } 45% { transform: translateY(-4px); opacity: 1; } }
+@keyframes viva-beam { 0%, 100% { opacity: 1; } 50% { opacity: .78; } }
+@keyframes viva-idle { 0%, 100% { opacity: .62; } 50% { opacity: .9; } }
+@keyframes viva-mote { from { transform: translate(-3px, 6px); opacity: .18; } 50% { opacity: .68; } to { transform: translate(5px, -14px); opacity: .3; } }
+/* A lamp catching: two flickers, then steady */
+@keyframes viva-strike { 0% { opacity: 0; } 12% { opacity: .8; } 20% { opacity: .08; } 34% { opacity: .9; } 42% { opacity: .3; } 100% { } }
+@keyframes viva-rise { from { opacity: .03; } }
+@keyframes viva-live { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--logos) 45%, transparent); } 70%, 100% { box-shadow: 0 0 0 10px transparent; } }
+@keyframes viva-over { 50% { opacity: .55; } }
+@keyframes viva-caret { 50% { opacity: 0; } }
+@keyframes viva-say-in { from { opacity: 0; transform: translateX(-8px); } }
+@keyframes viva-onair { 50% { opacity: .35; box-shadow: 0 0 2px var(--stage-pathos); } }
+@keyframes viva-glow { 50% { opacity: .68; } }
+@keyframes viva-stamp {
+  0% { opacity: 0; transform: scale(2.4) rotate(-13deg); }
+  16% { opacity: .9; transform: scale(2.1) rotate(-11deg); }
+  70% { opacity: 1; transform: scale(1.86) rotate(-9deg); }
+  85.7% { transform: scale(.93) rotate(0); animation-timing-function: var(--ease-out); }
+  92% { transform: scale(1.035) rotate(-.5deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes viva-squash { 0% { transform: scale(1.09, .93); } 55% { transform: scale(.98, 1.02); } }
+@keyframes viva-ribbon-in { from { transform: rotate(16deg) scaleY(.3); } }
+@keyframes viva-ribbon-in-2 { from { transform: rotate(-16deg) scaleY(.3); } }
+@keyframes viva-shock { 0% { opacity: .9; transform: scale(.72); } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes viva-thud { 0%, 100% { transform: translateY(0); } 22% { transform: translateY(4px); } 52% { transform: translateY(-1.5px); } }
+@keyframes viva-radar-in { from { transform: scale(.25); opacity: .2; } }
+
+/* Still states: the global rule shortens durations, these remove delays and leave a composed frame */
+@media (prefers-reduced-motion: reduce) {
+  .viva-room *, .viva-room::after, .viva-hero *, .viva-verdict, .viva-verdict *, .viva-verdict *::after,
+  .viva-seal, .viva-seal *, .viva-radar-shape, .viva-row-ic, .viva-niche * { animation: none !important; }
+  .viva-caret { opacity: 1; }
+  .viva-card:hover .viva-card-inner { transform: none; }
+  .viva-card.is-flipped:hover .viva-card-inner { transform: rotateY(180deg); }
+  .viva-lesson:hover { transform: none; }
+}
+
+/* ================================================================
+   Narrow screens
+   ================================================================ */
+@media (max-width: 900px) {
+  .viva-setup { grid-template-columns: minmax(0, 1fr); }
+  .viva-brief { position: static; }
+  .viva-report-grid, .viva-below { grid-template-columns: minmax(0, 1fr); }
+  .viva-panel-notes.n3 { grid-template-columns: minmax(0, 1fr); }
+  .viva-lessons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .viva-hero { grid-template-columns: minmax(0, 1fr); gap: 4px; padding-top: 22px; }
+  .viva-hero-text { padding-bottom: 10px; }
+  .viva-hero-eyebrow::after { display: none; }
+  .viva-hero-bench { width: min(100%, 440px); margin-inline: auto; }
+
+  /* The room stacks: bench, question, clock strip, lectern */
+  .viva-room { border-radius: 11px; }
+  .viva-room-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .viva-progress { grid-column: 1 / -1; order: 3; }
+  .viva-dais { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .viva-speech { min-height: 0; }
+  .viva-q { font-size: clamp(24px, 6.9vw, 31px); line-height: 1.2; }
+  .viva-q-intro { font-size: clamp(21px, 6vw, 27px); }
+  .viva-clock {
+    grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "klep label" "klep meter";
+    justify-items: stretch; align-items: start; align-self: stretch; gap: 6px 16px; padding: 10px 14px 10px 12px; border-radius: 7px;
+  }
+  .viva-clock .klep { grid-area: klep; width: 60px !important; align-self: center; padding-top: 0; }
+  .viva-clock .klep svg { width: 60px; height: auto; }
+  .viva-clock .klep-time { font-size: 19px; }
+  .viva-clock-label { grid-area: label; }
+  .viva-meter { grid-area: meter; padding-top: 6px; }
+  .viva-lectern > .btn, .viva-lectern > .btn-cta { justify-self: stretch; }
+  .viva-lectern .btn-cta { width: 100%; white-space: normal; }
+  .viva-lectern .row > .btn-cta { flex: 1 1 100%; }
+  .viva-lectern .row-between { align-items: stretch; flex-direction: column; }
+  .viva-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .viva-controls .chip { justify-content: flex-start; min-height: 44px; padding: 6px 10px; border-radius: 6px; line-height: 1.2; text-align: left; white-space: normal; }
+  .viva-controls .chip svg, .viva-controls .chip .spin { flex: none; }
+  .viva-self-grid { grid-template-columns: minmax(0, 1fr); }
+  .viva-leave .row > .btn { flex: 1 1 100%; }
+  .viva-cone, .viva-verdict-cone, .viva-sweep { filter: none; }
+
+  .viva-verdict { border-radius: 11px; }
+  .viva-actions > * { flex: 1 1 100%; }
+  .viva-opts, .viva-opts.two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .viva-row-main { grid-template-columns: 48px minmax(0, 1fr); }
+  .viva-row-go { display: none; }
+  .viva-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .viva-panel-note { flex-direction: column; }
+  .viva-card-text { font-size: clamp(20px, 5.8vw, 24px); }
+  .viva-revise .row > .btn-cta { flex: 1 1 100%; }
+}
+
+/* ================================================================
+   Rehearsal: the room gets out of the way, the report tells the truth
+   ================================================================ */
+/* Room lockdown while an exam is live. Leave stays visible in the room itself. */
+html[data-exam=live] .rail .nav-item, html[data-exam=live] .rail .rail-level, html[data-exam=live] .topbar .btn-ink, html[data-exam=live] .topbar .lvl-pill, html[data-exam=live] .tabbar { display: none; }
+/* Keep the question, the clock and the answer box on one screen. */
+.viva-room[data-phase=answer] .viva-bench, .viva-room[data-phase=check] .viva-bench, .viva-room[data-phase=jot] .viva-bench, .viva-room[data-phase=said] .viva-bench { max-height: 22vh; }
+
+/* Setup */
+.viva-more { border-top: 1px solid var(--line); padding-top: 12px; }
+.viva-more > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; border-radius: 6px; }
+.viva-more > summary::-webkit-details-marker { display: none; }
+.viva-more > summary:focus-visible { outline: 2px solid var(--ethos); outline-offset: 3px; }
+.viva-more[open] > summary .viva-log-chev { transform: rotate(90deg); }
+.viva-more-body { display: grid; gap: 18px; padding-top: 16px; min-width: 0; }
+.viva-enter { display: grid; gap: 8px; min-width: 0; }
+.viva-brief-facts .viva-range { font-size: 17px; white-space: nowrap; }
+
+/* Weak concepts on the exam page */
+.viva-weak-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.viva-weak-row:first-child { border-top: 0; }
+
+/* The two taps, the jot and "how much did you say" */
+.viva-check { display: grid; gap: 14px; justify-items: start; min-width: 0; }
+.viva-check-row { display: grid; gap: 8px; min-width: 0; }
+.viva-check-q { margin: 0; font-size: 15px; line-height: 1.4; color: var(--stage-ink); }
+
+/* Verdict without a seal */
+.viva-verdict-plain { display: grid; justify-items: center; gap: 4px; width: min(190px, 58vw); padding: 26px 14px; border: 1px dashed var(--stage-line); border-radius: 50%; aspect-ratio: 1; align-content: center; text-align: center; }
+.viva-verdict-plain b { font-family: var(--font-display); font-size: clamp(46px, 7vw, 64px); font-weight: 780; letter-spacing: -0.03em; line-height: 1; color: var(--stage-ink); }
+.viva-verdict-plain span { font-size: 13px; line-height: 1.3; color: var(--stage-muted); }
+.viva-verdict-cap { font-size: 14px; line-height: 1.45; color: var(--stage-gold); }
+.viva-honesty { font-size: 13px; line-height: 1.45; color: var(--stage-muted); }
+
+/* Report sections */
+.viva-conclusion { display: grid; gap: 10px; min-width: 0; }
+.viva-conclusion h2 { overflow-wrap: anywhere; }
+.viva-concl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; margin: 4px 0 0; }
+.viva-concl-grid dt { font-family: var(--font-inscr); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.viva-concl-grid dd { margin: 4px 0 0; font-size: 15px; line-height: 1.45; }
+.viva-compare { display: grid; gap: 12px; min-width: 0; }
+.viva-compare-rows { display: grid; gap: 2px; min-width: 0; }
+.viva-compare-row { display: grid; grid-template-columns: minmax(0, 1fr) 44px 44px 58px; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.viva-compare-row.head { border-top: 0; font-size: 12px; color: var(--muted); }
+.viva-compare-row .num { text-align: right; }
+.viva-gap-status { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.viva-gap-status li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.viva-conduct, .viva-hear { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); justify-items: start; min-width: 0; }
+.viva-conduct .inscr, .viva-hear .inscr { color: var(--muted); }
+
+@media (max-width: 900px) {
+  /* On a phone the way in sits right after the form, ahead of the briefing. */
+  .viva-enter { order: -1; }
+}
+
+.viva-verdict-greek { font-family: var(--font-greek); font-style: italic; font-size: clamp(21px, 2.4vw, 27px); line-height: 1.1; color: var(--stage-gold); }

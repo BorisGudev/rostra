@@ -1,0 +1,86 @@
+/* ================================================================
+   Polish pass: each quieter screen gets one Greek gesture and no more.
+   Loads last. Screens are scoped through :has(), so a browser without
+   :has() drops these rules and keeps the base look.
+   ================================================================ */
+
+/* ---------- Analyze: the dropzone is a plain recess ---------- */
+.page:has(> .analyze-grid) .drop { border-radius: var(--r); border: 1px dashed var(--line-2); background: var(--surface-2); transition: border-color .15s, background-color .15s; }
+.page:has(> .analyze-grid) .drop > :not(input) { position: relative; z-index: 1; }
+.page:has(> .analyze-grid) .drop input { z-index: 2; }
+.page:has(> .analyze-grid) .drop:hover, .page:has(> .analyze-grid) .drop.over { border-color: var(--gold); background: var(--surface); }
+.page:has(> .analyze-grid) .drop:has(input:focus-visible) { outline: 3px solid var(--gold); outline-offset: 2px; }
+.page:has(> .analyze-grid) .step-n:not(.ok) { color: var(--gold-ink); background: var(--surface); border-color: var(--line-2); }
+
+/* ---------- Prepare: the three angles are three doors under a pediment ---------- */
+.page:has(> .stepper) > .stepper button.is-on { border-color: var(--gold); }
+.page:has(> .stepper) > .stepper button.is-on b { background: var(--gold); color: var(--on-gold); }
+.page:has(> .stepper) .angle { position: relative; padding: 46px 22px 26px; border-radius: 4px; border: 1px solid var(--line-2); background: var(--surface); box-shadow: none; }
+.page:has(> .stepper) .angle::before {
+  content: ""; position: absolute; top: 14px; left: 22px; right: 22px; height: 22px; pointer-events: none;
+  background: var(--line-2);
+  -webkit-mask: var(--pediment) center / 100% 100% no-repeat;
+  mask: var(--pediment) center / 100% 100% no-repeat;
+}
+.page:has(> .stepper) .angle .muted { color: var(--ink-2); }
+.page:has(> .stepper) .angle:hover { border-color: var(--gold); }
+.page:has(> .stepper) .angle.is-on { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.page:has(> .stepper) .angle.is-on::before, .page:has(> .stepper) .angle:hover::before { background: var(--gold); }
+
+/* ---------- Learn: each track is a column with a capital and a base ---------- */
+.page:has(.path-grid) .path-grid { padding-inline: 6px; }
+.page:has(.path-grid) .track { position: relative; padding: 26px clamp(18px, 2.2vw, 26px); border-radius: 2px; border: 1px solid var(--line-2); background: var(--surface); box-shadow: none; }
+.page:has(.path-grid) .track::before, .page:has(.path-grid) .track::after { content: ""; position: absolute; left: -6px; right: -6px; height: 9px; pointer-events: none; background: var(--pc); }
+.page:has(.path-grid) .track::before { top: -1px; }
+.page:has(.path-grid) .track::after { bottom: -1px; }
+.page:has(.path-grid) .track .track-node:hover { background: var(--surface-3); }
+.page:has(.path-grid) .track .track-node:not(.done) .node-ball { background: var(--surface); }
+
+/* ---------- Library: plaques with a cut line inside the edge ---------- */
+.page:has(> .lib-grid) .lib-card { position: relative; padding: 24px 22px 22px; border-radius: 3px; border: 1px solid var(--line-2); background: var(--surface); box-shadow: none; }
+.page:has(> .lib-grid) .lib-card::before { content: ""; position: absolute; inset: 6px; pointer-events: none; border: 1px solid var(--line); }
+.page:has(> .lib-grid) .lib-card:hover { border-color: var(--gold); }
+.page:has(> .lib-grid) .lib-card:hover::before { border-color: color-mix(in srgb, var(--gold) 50%, var(--line)); }
+.page:has(> .lib-grid) .lib-year { display: block; font-size: 13px; font-weight: 600; color: var(--gold-ink); }
+.page:has(> .lib-grid) .lib-title { margin-top: 6px; font-size: 21px; }
+
+/* ---------- Speech page: the text is set in the old voice, the sidebar stays quiet ---------- */
+@media (max-width: 1280px) { .page:has(> .lib-detail) > .lib-detail { grid-template-columns: minmax(0, 1fr); } }
+.page:has(> .lib-detail) .transcript { font-family: var(--font-greek); font-size: clamp(18px, 1.5vw, 20px); line-height: 1.72; }
+.page:has(> .lib-detail) .lib-detail > .stack > .card { background: var(--surface-2); }
+
+/* ---------- Trophies: the badge wall is a dark niche in both themes ---------- */
+.page:has(> .level-hero) > section.stack:has(> .badge-grid) {
+  --ink: var(--stage-ink); --ink-2: var(--stage-ink); --muted: var(--stage-muted);
+  --line: var(--stage-line); --line-2: var(--stage-line);
+  --good: var(--stage-logos); --gold: var(--stage-gold); --gold-ink: var(--stage-gold);
+  padding: clamp(24px, 4vw, 40px) clamp(12px, 2.6vw, 30px) clamp(14px, 2.6vw, 30px);
+  border-radius: var(--r-lg);
+  background: var(--stage-bg);
+  color: var(--stage-ink);
+}
+.page:has(> .level-hero) > section.stack:has(> .badge-grid) > div:first-child { text-align: center; }
+.page:has(> .level-hero) .badge-grid { gap: 8px; }
+.page:has(> .level-hero) .badge-cell { align-content: start; border-color: transparent; box-shadow: none; color: var(--stage-ink); background: rgb(255 255 255 / .05); border-radius: var(--r-sm); }
+.page:has(> .level-hero) .badge-cell:not(.locked):hover { border-color: var(--stage-gold); }
+.page:has(> .level-hero) .badge-cell.locked { opacity: 1; background: transparent; border-color: rgb(255 255 255 / .07); }
+.page:has(> .level-hero) .badge-cell.locked .medal-svg { filter: grayscale(1) brightness(.62); opacity: .74; }
+.page:has(> .level-hero) .badge-cell.locked:hover { background: rgb(255 255 255 / .04); border-color: var(--stage-line); }
+.page:has(> .level-hero) .badge-cell:focus-visible { outline-color: var(--stage-gold); }
+.page:has(> .level-hero) .stat { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 2px; }
+
+/* ---------- Lesson: open text, and a quotation that takes the stage ---------- */
+.stack > .lesson-head { padding: 0 0 clamp(14px, 2vw, 20px); background: none; border: 0; border-radius: 0; border-bottom: 3px solid var(--pc); box-shadow: none; }
+.stack > .lesson-head h1 { font-size: clamp(34px, 5.4vw, 62px); line-height: .98; overflow-wrap: break-word; }
+.stack:has(> .lesson-head) > .card.prose { background: transparent; border: 0; box-shadow: none; border-radius: 0; padding: 4px clamp(2px, 2vw, 14px); max-width: 70ch; font-size: 17px; line-height: 1.68; }
+.stack:has(> .lesson-head) .term { border-radius: 4px; border-top: 3px solid var(--line-2); background: var(--surface); }
+.stack:has(> .lesson-head) > .quote-block {
+  --ink: var(--stage-ink); --muted: var(--stage-muted);
+  gap: 14px; padding: clamp(26px, 5vw, 52px) clamp(22px, 5vw, 56px);
+  border: 0; border-radius: var(--r-lg);
+  background: var(--stage-bg); color: var(--stage-ink);
+  box-shadow: none;
+}
+.stack:has(> .lesson-head) > .quote-block q { display: block; quotes: none; color: var(--stage-ink); font-size: clamp(24px, 3.7vw, 38px); line-height: 1.26; text-wrap: pretty; }
+.stack:has(> .lesson-head) > .quote-block .eyebrow { color: var(--stage-gold); }
+.stack:has(> .lesson-head) > .quote-block figcaption { max-width: 62ch; }

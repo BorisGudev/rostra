@@ -1,0 +1,57 @@
+/* Shared kit: the stage (a deliberately dark set piece in both themes), klepsydra, meander */
+:root {
+  --stage-bg: #0A0C1C;
+  --stage-bg-2: #12152F;
+  --stage-ink: #F2F3FF;
+  --stage-muted: #9CA2CC;
+  --stage-line: rgb(255 255 255 / .12);
+  --stage-ethos: #6F8CFF;
+  --stage-pathos: #FF5E8A;
+  --stage-logos: #2FE0B6;
+  --stage-gold: #E8B64A;
+  --stage-shadow: none;
+  --stage-edge: transparent;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --stage-edge: rgb(255 255 255 / .1); } }
+:root[data-theme="dark"] { --stage-edge: rgb(255 255 255 / .1); }
+.stage {
+  position: relative; overflow: hidden; isolation: isolate;
+  border-radius: var(--r-lg);
+  background: var(--stage-bg);
+  color: var(--stage-ink);
+  border: 0;
+  outline: 1px solid var(--stage-edge); outline-offset: -1px;
+  box-shadow: var(--stage-shadow);
+}
+.stage .muted, .stage .hint { color: var(--stage-muted); }
+.stage .eyebrow { color: var(--stage-muted); }
+.stage .btn { background: rgb(255 255 255 / .07); border-color: var(--stage-line); color: var(--stage-ink); }
+.stage .btn:hover { background: rgb(255 255 255 / .12); border-color: rgb(255 255 255 / .28); }
+.stage .chip { background: rgb(255 255 255 / .07); border-color: var(--stage-line); color: var(--stage-ink); }
+.stage .chip[aria-pressed="true"] { background: var(--stage-ink); color: var(--stage-bg); border-color: var(--stage-ink); }
+.stage .input, .stage .textarea { background: rgb(255 255 255 / .05); border-color: var(--stage-line); color: var(--stage-ink); }
+.stage .input::placeholder, .stage .textarea::placeholder { color: rgb(242 243 255 / .45); }
+
+.klep { display: grid; justify-items: center; gap: 4px; flex: none; }
+.klep svg { display: block; overflow: visible; }
+.klep-vessel { fill: color-mix(in srgb, var(--surface-2) 70%, transparent); stroke: var(--ink-2); stroke-width: 2; stroke-linejoin: round; }
+.stage .klep-vessel { fill: rgb(255 255 255 / .05); stroke: rgb(255 255 255 / .55); }
+.klep-water { transition: y .25s linear, fill .4s; opacity: .9; }
+.klep-spout { fill: var(--ink-2); }
+.stage .klep-spout { fill: rgb(255 255 255 / .55); }
+.klep-stream line { stroke-width: 1.6; stroke-dasharray: 3 3; animation: klepFlow .5s linear infinite; }
+.klep-drop { animation: klepDrop .9s ease-in infinite; }
+.klep-drop.d2 { animation-delay: .45s; }
+.klep-mark { stroke: var(--muted); stroke-width: 1.4; }
+.stage .klep-mark { stroke: rgb(255 255 255 / .4); }
+.klep-rim { stroke: var(--ink-2); stroke-width: 2.4; stroke-linecap: round; }
+.stage .klep-rim { stroke: rgb(255 255 255 / .6); }
+.klep-time { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+.klep-time.low { color: var(--warn); }
+.klep-time.over { color: var(--bad); }
+@keyframes klepFlow { to { stroke-dashoffset: -6; } }
+@keyframes klepDrop { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(26px); opacity: 0; } }
+
+.meander-bar { display: block; overflow: hidden; border-radius: 3px; }
+.meander-clip { transition: width .9s cubic-bezier(.2, .9, .2, 1); }
+.meander { display: block; color: var(--line-2); }

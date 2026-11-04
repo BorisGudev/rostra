@@ -1,0 +1,819 @@
+/* ================================================================
+   The Gym (palaestra). Five small sets, one building.
+   Home        a poster, a colonnade of tallies, an honours board
+   I   Breath  a night stage: three lights, one orb, one breath
+   II  Warm-up a dressing-room mirror ringed with bulbs
+   III Twisters a karaoke screen and a brass metronome
+   IV  Roulette a game-show wheel, a spotlight clock
+   V   Lab     a chemist's bench: labels, glass and a prism
+   Colors come from tokens only. Base styles are the still frames:
+   animations only add life on top, so reduced motion reads complete.
+   ================================================================ */
+:root {
+  /* Ten gels cut from the three stage lights and the gold. Fixed across themes: the wheel lives on a dark stage. */
+  --gym-w0: var(--stage-ethos);
+  --gym-w1: var(--stage-gold);
+  --gym-w2: var(--stage-pathos);
+  --gym-w3: var(--stage-logos);
+  --gym-w4: color-mix(in srgb, var(--stage-pathos) 42%, var(--stage-gold));
+  --gym-w5: color-mix(in srgb, var(--stage-ethos) 42%, var(--stage-logos));
+  --gym-w6: color-mix(in srgb, var(--stage-ethos) 55%, var(--stage-pathos));
+  --gym-w7: color-mix(in srgb, var(--stage-logos) 42%, var(--stage-gold));
+  --gym-w8: color-mix(in srgb, var(--stage-pathos) 58%, var(--stage-ink));
+  --gym-w9: color-mix(in srgb, var(--stage-ethos) 40%, var(--stage-ink));
+  --gym-brass: color-mix(in srgb, var(--stage-gold) 64%, var(--stage-bg));
+  --gym-brass-2: color-mix(in srgb, var(--stage-gold) 30%, var(--stage-bg));
+  --gym-bulb: color-mix(in srgb, var(--stage-gold) 55%, var(--stage-ink));
+  --gym-glow: color-mix(in srgb, var(--stage-gold) 62%, transparent);
+  --gym-faint: color-mix(in srgb, var(--stage-ink) 6%, transparent);
+}
+
+/* ---------- Shared frame ---------- */
+.gym { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+.gym .stage :focus-visible { outline-color: var(--stage-ink); }
+.gym .stage .btn-cta.gold { --c: var(--stage-gold); }
+.gym .stage .btn-cta.logos { --c: var(--stage-logos); --c-ink: var(--stage-bg); }
+.gym .stage .btn-cta.pathos { --c: var(--stage-pathos); --c-ink: var(--stage-bg); }
+.gym-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.gym-ctl { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.gym-ctl .btn-cta.wide { flex: 1 1 170px; width: auto; }
+.gym-panel { display: grid; gap: 16px; align-content: start; min-width: 0; border-top: 3px solid var(--gym-room, var(--line-2)); }
+/* Each room carries its own light into its side panel */
+.gym-home { gap: clamp(18px, 2.4vw, 28px); }
+.gym-breath { --gym-room: var(--ethos); }
+.gym-warm { --gym-room: var(--gold); }
+.gym-tw { --gym-room: var(--logos); }
+.gym-imp { --gym-room: var(--pathos); }
+.gym-lab { --gym-room: var(--violet); }
+.gym-toggle svg { flex: none; }
+.gym-toggle:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Station header: a big carved numeral and a small ornament that belongs to the room you are in */
+.gym-head { --sc: var(--ethos); display: grid; gap: 12px; justify-items: start; min-width: 0; }
+.gym-back svg { flex: none; }
+.gym-head-row { display: flex; align-items: flex-start; gap: clamp(12px, 2vw, 22px); width: 100%; min-width: 0; }
+.gym-head-num {
+  flex: none; min-width: 1.05em; font-family: var(--font-inscr); font-weight: 800; line-height: .94;
+  font-size: clamp(42px, 7vw, 86px); color: var(--gold-ink);
+}
+.gym-head-text { display: grid; gap: 7px; flex: 1 1 0; min-width: 0; }
+.gym-head-text h1 { font-size: clamp(31px, 5vw, 58px); line-height: .98; letter-spacing: -0.042em; }
+.gym-head-text .eyebrow { display: flex; align-items: center; gap: 12px; color: var(--ink-2); }
+.gym-head-text .eyebrow { white-space: nowrap; }
+.gym-head-text .eyebrow::after { content: ""; flex: 1 1 0; min-width: 0; max-width: 124px; height: 8px; }
+.gym-head-breath .eyebrow::after { height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--ethos) 0 33%, var(--logos) 33% 66%, var(--pathos) 66%); }
+.gym-head-warmup .eyebrow::after { background: radial-gradient(circle at center, var(--gold) 0 3px, transparent 3.6px) 0 50% / 13px 8px repeat-x; }
+.gym-head-twisters .eyebrow::after { background: repeating-linear-gradient(90deg, var(--logos) 0 3px, transparent 3px 7px); -webkit-mask: linear-gradient(90deg, currentColor, transparent); mask: linear-gradient(90deg, currentColor, transparent); }
+.gym-head-impromptu .eyebrow::after { background: radial-gradient(circle at center, var(--pathos) 0 3px, transparent 3.6px) 0 50% / 26px 8px repeat-x, radial-gradient(circle at center, var(--gold) 0 3px, transparent 3.6px) 13px 50% / 26px 8px repeat-x; }
+.gym-head-lab .eyebrow::after { height: 9px; background: var(--violet); opacity: .8; -webkit-mask: var(--meander) repeat-x 0 50% / 9px 9px; mask: var(--meander) repeat-x 0 50% / 9px 9px; }
+
+/* Finish card: a laurel and a way forward */
+.gym-finish { display: grid; justify-items: center; text-align: center; gap: 10px; padding: 6px 0; }
+.gym-finish h2 { text-wrap: balance; }
+.gym-finish-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+.gym-laurel { display: block; flex: none; overflow: visible; animation: gymLaurel .7s var(--ease-spring); }
+.gym-laurel-tri { fill: none; stroke: var(--ink-2); stroke-width: 1.6; stroke-linejoin: round; }
+.stage .gym-laurel-tri { stroke: var(--stage-ink); }
+.gym-why { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-left: 3px solid var(--ethos); border-radius: 0 12px 12px 0; background: var(--ethos-soft); color: var(--ink-2); font-size: 14px; }
+.gym-why svg { flex: none; margin-top: 2px; color: var(--ethos); }
+.gym-why b { display: block; color: var(--ink); font-family: var(--font-display); font-size: 15px; margin-bottom: 2px; }
+
+/* Coach feedback, shared by the roulette and the lab */
+.gym-fb { display: grid; gap: 12px; padding: clamp(14px, 2vw, 18px); border-radius: var(--r); background: var(--surface-2); border: 1px solid var(--line); animation: gymRise .4s var(--ease-out); }
+.gym-fb-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.gym-fb-head .coach-avatar { flex: none; }
+.gym-fb-head > div { min-width: 0; }
+.gym-fb-verdict { margin-top: 2px; font-family: var(--font-display); font-weight: 750; font-size: 17px; line-height: 1.25; letter-spacing: -0.012em; }
+.gym-fb-rows { margin: 0; display: grid; gap: 10px; }
+.gym-fb-rows dt { font-family: var(--font-inscr); font-weight: 700; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.gym-fb-rows dd { margin: 2px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--ink-2); }
+
+/* ================================================================
+   Home: poster, tiles, call sheet, honours board
+   ================================================================ */
+.gym-hero {
+  position: relative; isolation: isolate; overflow: hidden; min-width: 0;
+  display: grid; grid-template-columns: minmax(0, 1.14fr) minmax(0, 1fr); gap: clamp(18px, 3vw, 44px); align-items: end;
+  padding: clamp(22px, 4vw, 50px) clamp(18px, 4vw, 50px) 0;
+  border-radius: var(--r-lg);
+  background: var(--stage-bg);
+  color: var(--stage-ink);
+}
+.gym-hero::before {
+  content: ""; position: absolute; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    conic-gradient(from 138deg at 10% -8%, transparent 0 7deg, color-mix(in srgb, var(--stage-ethos) 42%, transparent) 7deg 20deg, transparent 20deg),
+    conic-gradient(from 165deg at 56% -14%, transparent 0 8deg, color-mix(in srgb, var(--stage-pathos) 40%, transparent) 8deg 22deg, transparent 22deg),
+    conic-gradient(from 192deg at 92% -8%, transparent 0 7deg, color-mix(in srgb, var(--stage-logos) 38%, transparent) 7deg 20deg, transparent 20deg);
+  background-blend-mode: screen;
+  animation: gymHeroLights 9s ease-in-out infinite alternate;
+}
+.gym-hero::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 12px; z-index: 1;
+  background: var(--stage-gold); opacity: .55;
+  -webkit-mask: var(--meander) repeat-x 0 50% / 12px 12px; mask: var(--meander) repeat-x 0 50% / 12px 12px;
+}
+.gym-hero-text { display: grid; gap: 12px; min-width: 0; padding-bottom: clamp(22px, 4vw, 48px); }
+.gym-hero .eyebrow { color: var(--stage-gold); }
+.gym-hero h1 { font-size: clamp(35px, 5.8vw, 70px); line-height: .95; letter-spacing: -0.048em; max-width: 13ch; }
+.gym-hero .lead { color: color-mix(in srgb, var(--stage-ink) 78%, transparent); max-width: 46ch; font-size: clamp(15.5px, 1.5vw, 17.5px); }
+.gym-plinths { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(4px, .8vw, 10px); align-items: end; min-width: 0; padding-bottom: 12px; }
+.gym-plinth {
+  --pl: color-mix(in srgb, var(--sc) 72%, var(--stage-ink));
+  position: relative; display: grid; justify-items: center; align-content: start; gap: 4px; min-width: 0;
+  padding: 16px 4px 10px; text-align: center; border-radius: 5px 5px 0 0;
+  border: 1px solid var(--stage-line); border-bottom: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--pl) 26%, transparent), color-mix(in srgb, var(--pl) 4%, transparent) 88%),
+    repeating-linear-gradient(90deg, var(--gym-faint) 0 1px, transparent 1px 7px);
+}
+.gym-plinth:nth-child(1) { min-height: 128px; }
+.gym-plinth:nth-child(2) { min-height: 152px; }
+.gym-plinth:nth-child(3) { min-height: 176px; }
+.gym-plinth:nth-child(4) { min-height: 200px; }
+.gym-plinth:nth-child(5) { min-height: 224px; }
+.gym-plinth-cap { position: absolute; top: -1px; left: 12%; right: 12%; height: 5px; border-radius: 0 0 3px 3px; background: var(--pl); }
+.gym-plinth b { font-family: var(--font-display); font-weight: 800; font-size: clamp(22px, 2.9vw, 36px); line-height: 1; letter-spacing: -0.03em; }
+.gym-plinth > span:last-child { font-size: 11px; line-height: 1.15; color: var(--stage-muted); max-width: 100%; overflow-wrap: anywhere; }
+
+.gym-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 18px); min-width: 0; }
+.gym-tile {
+  --sc: var(--ethos); --sc-ink: color-mix(in srgb, var(--sc) 78%, var(--ink));
+  grid-column: span 2; position: relative; display: grid; grid-template-rows: auto 1fr; min-width: 0; width: 100%; padding: 0; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); text-align: left;
+  box-shadow: var(--shadow), inset 0 1px 0 var(--card-sheen);
+  transition: transform .22s var(--ease-out), box-shadow .22s, border-color .2s;
+}
+.gym-tile:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--sc) 55%, var(--line)); box-shadow: var(--shadow), 0 22px 44px -26px var(--sc); }
+.gym-tile:active { transform: translateY(0) scale(.996); }
+.gym-tile:focus-visible { outline: 3px solid var(--sc); outline-offset: 3px; border-radius: var(--r-lg); }
+.gym-tile.is-done { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
+.gym-tile-impromptu, .gym-tile-lab { grid-column: span 3; grid-template-columns: minmax(0, .86fr) minmax(0, 1fr); grid-template-rows: auto; }
+.gym-tile-impromptu .gym-tile-art, .gym-tile-lab .gym-tile-art { height: auto; min-height: 208px; }
+.gym-tile-art { position: relative; isolation: isolate; display: grid; place-items: center; height: clamp(150px, 15vw, 186px); min-width: 0; overflow: hidden; color: var(--stage-ink); }
+.gym-tile-breath .gym-tile-art { background: radial-gradient(90% 100% at 50% -6%, var(--stage-bg-2), var(--stage-bg) 72%); }
+.gym-tile-warmup .gym-tile-art { background: radial-gradient(75% 90% at 50% 46%, var(--gym-brass-2), var(--stage-bg) 82%); }
+.gym-tile-twisters .gym-tile-art {
+  background:
+    repeating-linear-gradient(0deg, var(--gym-faint) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, var(--stage-bg), color-mix(in srgb, var(--stage-logos) 20%, var(--stage-bg)));
+}
+.gym-tile-impromptu .gym-tile-art { background: repeating-conic-gradient(from 6deg at 50% 50%, color-mix(in srgb, var(--stage-pathos) 22%, var(--stage-bg)) 0 12deg, var(--stage-bg) 12deg 24deg); }
+.gym-tile-lab .gym-tile-art { background: linear-gradient(170deg, var(--surface-2), var(--surface-3)); color: var(--ink); }
+.gym-tile-lab .gym-tile-art::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 13px; z-index: -1; border-top: 1px solid var(--line-2); background: color-mix(in srgb, var(--ink) 10%, var(--surface-3)); }
+.gym-tile-body { display: flex; flex-direction: column; gap: 8px; padding: 14px clamp(14px, 1.6vw, 18px); min-width: 0; }
+.gym-tile-body h3 { font-size: clamp(19px, 1.9vw, 23px); font-weight: 800; letter-spacing: -0.025em; }
+.gym-tile-body p { font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.gym-tile-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.gym-tile-num { font-family: var(--font-inscr); font-weight: 800; font-size: 14px; letter-spacing: .08em; color: var(--sc-ink); }
+.gym-tile-mins { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gym-quest { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 50px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent); font-size: 11.5px; font-weight: 800; white-space: nowrap; }
+.gym-quest svg { color: var(--gold); }
+.gym-tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12.5px; }
+.gym-tile-tally { color: var(--muted); min-width: 0; }
+.gym-tile-tally b { color: var(--ink); font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.gym-go { display: inline-flex; align-items: center; gap: 4px; flex: none; font-weight: 800; color: var(--sc-ink); transition: gap .2s var(--ease-out); }
+.gym-tile:hover .gym-go { gap: 9px; }
+.gym-done-tick { display: inline-flex; align-items: center; gap: 4px; flex: none; font-weight: 800; color: var(--good); }
+
+/* Tile art: every one a small illustration of its room */
+.gym-art { display: block; min-width: 0; }
+.gym-art-breath { width: min(72%, 188px); height: auto; overflow: visible; }
+.gym-ab-fill { transform-box: fill-box; transform-origin: 50% 40%; transform: scale(.74); animation: gymAbSwell 9s ease-in-out infinite; }
+.gym-ab-side { fill: none; stroke-width: 5; stroke-linecap: round; }
+.gym-ab-halo { fill: var(--stage-ink); opacity: .26; transform: translate(23px, 18px); animation: gymAbOrb 9s linear infinite; }
+.gym-ab-orb { fill: var(--stage-ink); transform: translate(23px, 18px); animation: gymAbOrb 9s linear infinite; }
+
+.gym-art-mirror { width: min(52%, 132px); }
+.gym-am-frame { position: relative; aspect-ratio: 1 / 1.1; border-radius: 6px; border: 1.5px solid var(--gym-brass); background: linear-gradient(160deg, var(--gym-brass-2), var(--stage-bg) 58%, var(--gym-brass-2)); }
+.gym-am-bulbs { position: absolute; inset: 7%; }
+.gym-am-bulb { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--gym-bulb); transform: translate(-50%, -50%); animation: gymTwinkle 2.6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.gym-am-glass { position: absolute; inset: 15%; border-radius: 4px; overflow: hidden; background: linear-gradient(150deg, color-mix(in srgb, var(--stage-ink) 20%, var(--stage-bg-2)), var(--stage-bg-2) 62%); }
+.gym-am-glass svg { display: block; width: 100%; height: 100%; }
+.gym-am-line { fill: none; stroke: var(--stage-ink); stroke-width: 3; opacity: .82; }
+.gym-am-sheen { fill: none; stroke: var(--stage-ink); stroke-width: 2.4; stroke-linecap: round; opacity: .36; }
+
+.gym-art-lyric { display: grid; justify-items: center; gap: 12px; width: 90%; }
+.gym-al-line { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: .3em; padding-top: 20px; font-family: var(--font-display); font-weight: 800; font-size: clamp(18px, 1.9vw, 23px); letter-spacing: -0.02em; line-height: 1.1; color: color-mix(in srgb, var(--stage-ink) 45%, transparent); }
+.gym-al-line span { animation: gymAlWord 3.2s steps(1) infinite; animation-delay: calc((var(--i) - 4) * .8s); }
+.gym-al-line span:nth-child(2) { color: var(--stage-gold); }
+.gym-al-ball { position: absolute; top: 2px; left: 30%; width: 13px; height: 12px; background: var(--stage-ink); clip-path: polygon(50% 0, 100% 100%, 0 100%); animation: gymAlBall 3.2s ease-in-out infinite; }
+.gym-al-speeds { display: flex; align-items: flex-end; gap: 4px; }
+.gym-al-speeds b { width: 15px; border-radius: 2px; background: var(--stage-logos); }
+.gym-al-speeds b:nth-child(1) { height: 4px; }
+.gym-al-speeds b:nth-child(2) { height: 7px; }
+.gym-al-speeds b:nth-child(3) { height: 10px; }
+.gym-al-speeds b:nth-child(4) { height: 13px; }
+.gym-al-speeds b:nth-child(5) { height: 16px; }
+.gym-al-speeds b.off { background: var(--stage-line); }
+
+.gym-art-wheel { width: min(70%, 142px); height: auto; overflow: visible; }
+.gym-tile-impromptu .gym-art-wheel { width: min(78%, 176px); }
+.gym-aw-rim { fill: var(--gym-brass); }
+.gym-aw-spin { transform-origin: 0 0; animation: gymSpin 38s linear infinite; }
+.gym-aw-sep { stroke: var(--stage-bg); stroke-width: 1.6; }
+.gym-aw-bulb { fill: var(--gym-bulb); animation: gymChase 1.2s steps(1) infinite; }
+.gym-aw-bulb.b { opacity: .4; animation-delay: -.6s; }
+.gym-aw-hub { fill: var(--stage-bg); stroke: var(--gym-brass); stroke-width: 3; }
+.gym-aw-tri { fill: var(--stage-ink); }
+.gym-aw-ptr { fill: var(--stage-ink); }
+
+.gym-art-prism { width: min(86%, 232px); height: auto; overflow: visible; }
+.gym-ap-in { fill: none; stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
+.gym-ap-out { fill: none; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 0; animation: gymDraw 3.8s var(--ease-out) infinite; }
+.gym-ap-glass { fill: color-mix(in srgb, var(--violet) 12%, var(--surface)); stroke: var(--ink-2); stroke-width: 2.5; stroke-linejoin: round; }
+.gym-ap-edge { fill: none; stroke: color-mix(in srgb, var(--ink) 35%, transparent); stroke-width: 1.5; }
+
+.gym-lower { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(12px, 1.6vw, 18px); min-width: 0; }
+.gym-callsheet { display: grid; gap: 12px; align-content: start; border-top: 3px double var(--line-2); }
+.gym-cs-count { font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 4vw, 46px); line-height: 1; letter-spacing: -0.04em; }
+.gym-cs-count small { font-size: .46em; font-weight: 700; color: var(--muted); letter-spacing: 0; }
+.gym-cs-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.gym-cs-list li { border-bottom: 1px solid var(--line); min-width: 0; }
+.gym-cs-list li:first-child { border-top: 1px solid var(--line); }
+.gym-cs-row { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 11px 6px; border: 0; border-radius: 8px; background: transparent; color: inherit; text-align: left; transition: background .15s; }
+.gym-cs-row:hover { background: var(--surface-2); }
+.gym-cs-n { flex: none; width: 2em; font-family: var(--font-inscr); font-weight: 800; font-size: 12.5px; color: color-mix(in srgb, var(--sc) 78%, var(--ink)); }
+.gym-cs-name { min-width: 0; font-weight: 700; font-size: 14.5px; }
+.gym-cs-dots { flex: 1 1 14px; min-width: 10px; border-bottom: 2px dotted var(--line-2); transform: translateY(-3px); }
+.gym-cs-state { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gym-cs-row.is-done .gym-cs-name { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--sc); }
+.gym-cs-row.is-done .gym-cs-state { color: var(--good); font-weight: 800; }
+
+/* The honours board: dark timber and gilt letters in both themes */
+.gym-honours {
+  position: relative; isolation: isolate; display: grid; gap: 4px; align-content: start;
+  background: linear-gradient(170deg, var(--stage-bg-2), var(--stage-bg));
+  border-color: color-mix(in srgb, var(--stage-gold) 40%, transparent);
+  box-shadow: var(--stage-shadow);
+  color: var(--stage-ink);
+}
+.gym-honours::before { content: ""; position: absolute; inset: 7px; z-index: -1; border: 1px solid color-mix(in srgb, var(--stage-gold) 28%, transparent); border-radius: calc(var(--r-lg) - 6px); pointer-events: none; }
+.gym-honours .eyebrow { color: var(--stage-gold); }
+.gym-honours .muted { color: var(--stage-muted); }
+.gym-honours h2 { margin-bottom: 6px; }
+.gym-honour { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 12px; align-items: center; padding: 11px 0; border-top: 1px solid color-mix(in srgb, var(--stage-gold) 22%, transparent); }
+.gym-honour-body { display: grid; gap: 3px; min-width: 0; }
+.gym-honour-body > b { font-family: var(--font-display); font-weight: 760; font-size: 16px; color: var(--stage-ink); }
+.gym-honour.is-earned .gym-honour-body > b { color: var(--stage-gold); }
+
+/* ================================================================
+   I. Triangle breathing: calm, slow, lit from above
+   ================================================================ */
+.gym-breath-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr); gap: clamp(12px, 1.8vw, 20px); align-items: start; min-width: 0; }
+.gym-breath-stage { display: grid; align-content: start; gap: 2px; padding: clamp(14px, 2.2vw, 24px); min-width: 0; }
+.gym-beams, .gym-dust { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+/* Hard shafts of light: a conic wedge with sharp edges that fades on its way down */
+.gym-beam {
+  position: absolute; top: -6%; left: var(--x); width: 170%; height: 125%; margin-left: -85%; transform-origin: 50% 0;
+  background: conic-gradient(from 160deg at 50% 0, transparent 0 12deg, color-mix(in srgb, var(--c) 66%, transparent) 12deg 28deg, transparent 28deg);
+  -webkit-mask: linear-gradient(180deg, black 16%, transparent 94%); mask: linear-gradient(180deg, black 16%, transparent 94%);
+  mix-blend-mode: screen; transition: opacity .9s ease;
+}
+.gym-beam-0 { --x: 12%; transform: rotate(-13deg); }
+.gym-beam-1 { --x: 50%; }
+.gym-beam-2 { --x: 88%; transform: rotate(13deg); }
+.gym-dust i { position: absolute; border-radius: 50%; background: var(--stage-ink); opacity: .26; animation-name: gymDust; animation-timing-function: linear; animation-iteration-count: infinite; }
+.gym-breath-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.gym-pips { display: inline-flex; gap: 5px; }
+.gym-pips i { display: block; width: 12px; height: 11px; background: color-mix(in srgb, var(--stage-ink) 20%, transparent); clip-path: polygon(0 0, 100% 0, 50% 100%); transition: background .4s; }
+.gym-pips i.is-now { background: var(--stage-ink); }
+.gym-pips i.is-done { background: var(--stage-gold); }
+.gym-breath-round { font-size: 12.5px; color: var(--stage-muted); }
+.gym-breath-svg { display: block; width: 100%; max-width: 500px; height: auto; margin: 0 auto; overflow: visible; transition: opacity .5s; }
+.gym-breath-stage.is-paused .gym-breath-svg { opacity: .68; }
+.gym-tri-track { fill: none; stroke: var(--stage-line); stroke-width: 6; stroke-linejoin: round; }
+.gym-breath-stage.is-run .gym-tri-track { stroke: color-mix(in srgb, var(--stage-ink) 9%, transparent); }
+.gym-halo { fill: var(--stage-ink); transition: opacity .5s; }
+.gym-fill { pointer-events: none; }
+.gym-fill-base { fill: color-mix(in srgb, var(--stage-bg-2) 60%, var(--stage-bg)); }
+.gym-fill-edge { fill: none; stroke: color-mix(in srgb, var(--stage-ink) 34%, transparent); stroke-width: 1.5; stroke-linejoin: round; }
+.gym-side { fill: none; stroke-width: 5; stroke-linecap: round; transition: opacity .6s; }
+.gym-side-glow { fill: none; stroke-width: 11; stroke-linecap: round; opacity: .8; }
+.gym-vertex { fill: var(--stage-bg); stroke: var(--stage-muted); stroke-width: 2; }
+.gym-orb { pointer-events: none; }
+.gym-orb-core { fill: var(--stage-ink); }
+.gym-breath-stage.is-idle .gym-orb-core { transform-box: fill-box; transform-origin: center; animation: gymPulse 3s ease-in-out infinite; }
+.gym-breath-stage.is-done .gym-fill-edge { stroke: var(--stage-ink); stroke-width: 2.5; }
+.gym-breath-stage.is-done .gym-vertex { stroke: var(--stage-gold); }
+.gym-cue { position: relative; display: grid; justify-items: center; gap: 5px; min-height: 100px; padding: 2px 8px 6px; text-align: center; }
+.gym-cue-word {
+  font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 5.4vw, 50px); line-height: 1.04; letter-spacing: -0.035em;
+  color: var(--cc, var(--stage-ink));
+  animation: gymCueIn .7s ease;
+}
+.gym-cue-sub { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; min-height: 34px; font-size: 14.5px; line-height: 1.3; color: var(--stage-muted); }
+.gym-cue-count { display: inline-grid; place-items: center; min-width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--stage-line); background: var(--gym-faint); color: var(--stage-ink); font-family: var(--font-display); font-weight: 800; font-size: 18px; animation: gymPop .45s var(--ease-spring); }
+.gym-presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gym-preset { display: grid; justify-items: center; gap: 2px; min-width: 0; padding: 10px 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font-size: 13px; transition: border-color .15s, background .15s, opacity .15s; }
+.gym-preset:hover:not(:disabled) { border-color: var(--line-2); background: var(--surface); }
+.gym-preset:disabled { opacity: .5; cursor: not-allowed; }
+.gym-preset:focus-visible { border-radius: 6px; }
+.gym-preset.is-on { border-color: var(--ethos); background: var(--ethos-soft); color: var(--ink); box-shadow: 0 0 0 1px var(--ethos); }
+.gym-preset b { font-family: var(--font-display); font-weight: 750; font-size: 14px; }
+.gym-preset .num { font-size: 12px; color: var(--muted); }
+.gym-glyph { display: block; margin-bottom: 2px; }
+.gym-glyph path { fill: none; stroke-linecap: round; }
+
+/* ================================================================
+   II. Vocal warm-up: the dressing-room mirror
+   ================================================================ */
+.gym-warm-layout { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(12px, 1.8vw, 22px); align-items: start; min-width: 0; }
+.gym-mirror {
+  position: sticky; top: 84px; isolation: isolate; width: 100%; max-width: 540px; margin-inline: auto; aspect-ratio: 1 / 1.1;
+  border-radius: 13px; border: 2px solid var(--gym-brass);
+  background: linear-gradient(155deg, var(--gym-brass-2), var(--stage-bg) 52%, var(--gym-brass-2));
+  box-shadow: var(--stage-shadow), inset 0 0 0 5px color-mix(in srgb, var(--stage-bg) 55%, transparent), 0 0 80px -24px var(--gym-glow);
+}
+.gym-mirror-bulbs { position: absolute; inset: 4.4%; z-index: 2; pointer-events: none; }
+.gym-bulb {
+  position: absolute; width: 4.8%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--stage-ink) 18%, var(--stage-bg-2)), var(--gym-brass-2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--stage-gold) 34%, transparent);
+  transition: background .35s, box-shadow .35s;
+}
+.gym-bulb.is-lit { background: radial-gradient(circle at 40% 35%, var(--stage-ink), var(--gym-bulb) 55%, var(--stage-gold)); }
+.gym-bulb.is-next { background: radial-gradient(circle at 40% 35%, var(--gym-bulb), var(--gym-brass)); animation: gymBulbNext 1.3s ease-in-out infinite; }
+.gym-mirror.is-flash .gym-bulb { animation: gymBulbChase .9s ease-in-out 2; animation-delay: var(--d, 0s); }
+.gym-glass {
+  position: absolute; inset: 9.4%; z-index: 1; overflow: hidden; display: grid; place-items: center; border-radius: 6px;
+  background: radial-gradient(95% 72% at 50% 14%, color-mix(in srgb, var(--stage-gold) 17%, var(--stage-bg-2)), var(--stage-bg-2) 56%, var(--stage-bg));
+  box-shadow: inset 0 0 0 1px var(--gym-brass), inset 0 0 46px -8px var(--gym-glow);
+}
+.gym-mirror.is-flash .gym-glass { background: radial-gradient(95% 80% at 50% 18%, color-mix(in srgb, var(--stage-gold) 34%, var(--stage-bg-2)), var(--stage-bg-2) 66%, var(--stage-bg)); }
+.gym-glass-sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 22%, var(--gym-faint) 22% 36%, transparent 36% 42%, var(--gym-faint) 42% 46%, transparent 46%); }
+.gym-glass-label { position: absolute; left: 50%; bottom: 4.5%; transform: translateX(-50%); max-width: 92%; padding: 3px 10px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; letter-spacing: .14em; color: var(--stage-gold); background: color-mix(in srgb, var(--stage-bg) 72%, transparent); border: 1px solid color-mix(in srgb, var(--stage-gold) 28%, transparent); }
+
+/* The step drawings, chalked on the glass */
+.gym-wa { --wa: var(--stage-gold); display: block; width: min(76%, 320px); height: auto; margin-bottom: 6%; overflow: visible; animation: gymRise .5s var(--ease-out); }
+.gym-wa-posture { --wa: var(--stage-ink); }
+.gym-wa-trills { --wa: var(--stage-pathos); }
+.gym-wa-siren { --wa: var(--stage-gold); width: min(84%, 340px); }
+.gym-wa-jaw { --wa: var(--stage-logos); }
+.gym-wa-resonance { --wa: var(--stage-gold); }
+.gym-wa-project { --wa: var(--stage-ethos); width: min(84%, 340px); }
+.gym-wa-ink { fill: none; stroke: var(--stage-ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.gym-wa-say { fill: var(--stage-gold); font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.01em; }
+.gym-wa-say.small { font-size: 16px; }
+.gym-wa-tag { fill: var(--stage-muted); font-family: var(--font-inscr); font-weight: 700; font-size: 10px; letter-spacing: .14em; }
+.gym-wa-thread { fill: none; stroke: var(--stage-gold); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 4 5; }
+.gym-wa-thread.solid { stroke-dasharray: none; }
+.gym-wa-rise { animation: gymWaRise 3s ease-in-out infinite alternate; }
+.gym-wa-floor { fill: none; stroke: var(--stage-muted); stroke-width: 3; stroke-linecap: round; }
+.gym-wa-guide { fill: none; stroke: var(--stage-gold); stroke-width: 2; stroke-dasharray: 5 5; opacity: .7; }
+.gym-wa-flutter { animation: gymWaFlutter .12s linear infinite alternate; }
+.gym-wa-lips { fill: color-mix(in srgb, var(--stage-pathos) 36%, transparent); stroke: var(--stage-pathos); stroke-width: 3.4; stroke-linejoin: round; }
+.gym-wa-buzz { fill: none; stroke: var(--stage-gold); stroke-width: 3; stroke-linecap: round; opacity: .75; animation: gymBreathe 1.1s ease-in-out infinite alternate; }
+.gym-wa-air { fill: none; stroke: var(--stage-ethos); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 8 6; animation: gymWaAir .8s linear infinite; }
+.gym-wa-air.d2 { opacity: .6; animation-delay: -.3s; }
+.gym-wa-staff { fill: none; stroke: var(--stage-line); stroke-width: 1.5; }
+.gym-wa-curve-bg { fill: none; stroke: var(--stage-line); stroke-width: 7; stroke-linecap: round; }
+.gym-wa-curve { fill: none; stroke: var(--stage-gold); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 0; animation: gymDrawBack 6s ease-in-out infinite alternate; }
+.gym-wa-drop { animation: gymWaDrop 2.4s ease-in-out infinite alternate; }
+.gym-wa-mouth { fill: color-mix(in srgb, var(--stage-pathos) 30%, var(--stage-bg)); stroke: var(--stage-ink); stroke-width: 3; }
+.gym-wa-hand { fill: none; stroke: var(--stage-gold); stroke-width: 7; stroke-linecap: round; opacity: .55; }
+.gym-wa-arrow { fill: none; stroke: var(--stage-gold); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; animation: gymWaDrop 2.4s ease-in-out infinite alternate; }
+.gym-wa-ring { fill: none; stroke: var(--stage-gold); stroke-width: 3; transform-origin: 100px 100px; animation: gymWaRing 2.4s ease-out infinite; }
+.gym-wa-ring.r1 { opacity: .85; }
+.gym-wa-ring.r2 { opacity: .5; animation-delay: -.8s; }
+.gym-wa-ring.r3 { opacity: .26; animation-delay: -1.6s; }
+.gym-wa-num { fill: var(--stage-ink); font-family: var(--font-display); font-weight: 800; animation: gymWaCount 5s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .35s - 5s); }
+.gym-wa-wall { fill: none; stroke: var(--stage-gold); stroke-width: 4; stroke-linecap: round; }
+
+.gym-warm-panel { gap: 14px; }
+.gym-warm-step { display: grid; gap: 12px; min-width: 0; }
+.gym-warm-step .row-between { flex-wrap: nowrap; align-items: flex-start; }
+.gym-warm-step .row-between > div:first-child { min-width: 0; }
+.gym-how { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.gym-how li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.gym-how-n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); color: var(--ink); font-weight: 800; font-size: 12.5px; }
+.gym-feel { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 6px; background: var(--gold-soft); font-size: 13.5px; line-height: 1.4; color: var(--ink-2); }
+.gym-feel svg { flex: none; margin-top: 1px; color: var(--gold); }
+.gym-steps { list-style: none; margin: 2px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 6px; }
+.gym-steps-b { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 36px; padding: 5px 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 650; line-height: 1.15; text-align: left; transition: background .15s, color .15s; }
+.gym-steps-b:hover { background: var(--surface-2); color: var(--ink); }
+.gym-steps-n { flex: none; display: grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: var(--surface-3); color: var(--ink-2); font-size: 11px; font-weight: 800; }
+.gym-steps-b.is-now { background: var(--gold-soft); border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--ink); }
+.gym-steps-b.is-now .gym-steps-n { background: var(--gold); color: var(--on-accent); }
+.gym-steps-b.is-done .gym-steps-n { background: var(--good-soft); color: var(--good); }
+
+/* ================================================================
+   III. Tongue twisters: karaoke screen, brass metronome
+   ================================================================ */
+.gym-sing { display: grid; gap: 10px; padding: clamp(14px, 2.2vw, 26px); min-width: 0; }
+.gym-sing::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(0deg, var(--gym-faint) 0 1px, transparent 1px 4px); }
+.gym-sing::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 45%; z-index: -1; pointer-events: none; background: radial-gradient(70% 100% at 50% 100%, color-mix(in srgb, var(--stage-logos) 20%, transparent), transparent); opacity: .5; transition: opacity .5s; }
+.gym-sing.is-run::after { opacity: 1; }
+.gym-sing.is-mark .gym-lyric { border-block-color: color-mix(in srgb, var(--stage-logos) 45%, transparent); }
+.gym-sing-top { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap; }
+.gym-sing-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
+.gym-sing-meta .inscr { color: var(--stage-muted); }
+.gym-reps { display: inline-flex; gap: 5px; }
+.gym-reps i { display: block; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--stage-muted); transition: background .15s; }
+.gym-reps i.is-done { background: var(--stage-logos); border-color: var(--stage-logos); }
+.gym-reps i.is-now { background: var(--stage-gold); border-color: var(--stage-gold); }
+.gym-sing-tempo { display: flex; align-items: center; gap: 10px; font-size: 12.5px; line-height: 1.25; color: var(--stage-muted); }
+.gym-metro { flex: none; width: clamp(36px, 4.4vw, 48px); }
+.gym-metro svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 4px 8px var(--gym-glow)); }
+.gym-metro-body { fill: var(--gym-brass); stroke: var(--stage-gold); stroke-width: 1.4; stroke-linejoin: round; }
+.gym-metro-line { fill: none; stroke: var(--stage-bg); stroke-width: 2; }
+.gym-metro-arm { transform-origin: 20px 44px; transform: rotate(-13deg); }
+.gym-metro-arm path { fill: none; stroke: var(--stage-ink); stroke-width: 2.2; stroke-linecap: round; }
+.gym-metro-arm rect { fill: var(--stage-ink); }
+.gym-metro.is-on .gym-metro-arm { animation: gymMetro var(--beat, .6s) ease-in-out infinite alternate; }
+.gym-lyric {
+  position: relative; display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; justify-content: center; gap: .62em .3em;
+  min-height: clamp(180px, 25vw, 270px); padding: 42px clamp(4px, 2vw, 22px) 18px; text-align: center;
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(28px, 5.4vw, 54px); line-height: 1.1; letter-spacing: -0.024em;
+  border-block: 1px solid var(--stage-line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--stage-bg) 55%, transparent), transparent);
+}
+/* Words never change size, so the ball's measurements hold. The now-word flips instantly: at six syllables a second a fade would lag. */
+.gym-w { display: inline-block; position: relative; padding: 0 .1em; border-radius: .16em; color: color-mix(in srgb, var(--stage-ink) 68%, transparent); overflow-wrap: anywhere; }
+.gym-w.is-past { color: var(--stage-logos); }
+.gym-w.is-now { color: var(--stage-bg); background: var(--stage-gold); box-shadow: 0 0 0 .05em var(--stage-gold), 0 0 30px 2px var(--gym-glow); }
+.gym-sing.is-count .gym-w { color: color-mix(in srgb, var(--stage-ink) 38%, transparent); }
+.gym-ball { position: absolute; left: 0; top: 0; z-index: 2; width: 20px; height: 18px; margin-left: -10px; pointer-events: none; will-change: transform; }
+.gym-ball svg { display: block; width: 100%; height: 100%; }
+.gym-ball path { fill: var(--stage-ink); }
+.gym-sing.is-ready .gym-ball, .gym-sing.is-count .gym-ball { opacity: .55; }
+.gym-count {
+  position: absolute; inset: 0; z-index: 3; display: grid; place-items: center;
+  font-size: clamp(88px, 16vw, 150px); color: var(--stage-gold);
+  background: color-mix(in srgb, var(--stage-bg) 66%, transparent);
+  animation: gymPop .4s var(--ease-spring);
+}
+.gym-sing-foot { display: grid; align-items: center; min-height: 60px; }
+.gym-ready { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 12px; text-align: center; font-size: 14px; }
+.gym-mark { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.gym-mark-q { font-family: var(--font-display); font-weight: 760; font-size: 18px; letter-spacing: -0.015em; }
+.gym-stumble { --c: color-mix(in srgb, var(--stage-muted) 50%, var(--stage-bg-2)); color: var(--stage-ink); }
+.gym-flash { display: inline-block; padding: 8px 14px; border-radius: 6px; font-weight: 700; font-size: 14.5px; line-height: 1.35; text-wrap: balance; animation: gymRise .35s var(--ease-out); }
+.gym-flash.is-clean { background: color-mix(in srgb, var(--stage-logos) 15%, transparent); color: var(--stage-logos); }
+.gym-flash.is-unlock { background: color-mix(in srgb, var(--stage-gold) 16%, transparent); color: var(--stage-gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--stage-gold) 50%, transparent), 0 0 34px -8px var(--gym-glow); }
+.gym-flash.is-stumble { background: var(--gym-faint); color: var(--stage-ink); }
+.gym-tw-layout { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: clamp(12px, 1.8vw, 20px); align-items: start; min-width: 0; }
+.gym-paces { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.gym-pace { display: grid; justify-items: center; gap: 4px; min-width: 0; padding: 8px 1px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--ink-2); transition: border-color .15s, background .15s; }
+.gym-pace:hover:not(:disabled) { border-color: var(--line-2); background: var(--surface); }
+.gym-pace:disabled { cursor: not-allowed; }
+.gym-pace:focus-visible { border-radius: 6px; }
+.gym-pace-gauge { position: relative; isolation: isolate; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(var(--logos) calc((var(--n, 0) + 1) * 72deg), var(--surface-3) 0); }
+.gym-pace-gauge::before { content: ""; position: absolute; inset: 4px; z-index: -1; border-radius: 50%; background: var(--surface); }
+.gym-pace-gauge b { font-family: var(--font-display); font-weight: 800; font-size: 11.5px; }
+.gym-pace-name { font-size: 11px; font-weight: 700; line-height: 1.1; }
+.gym-pace.is-on { border-color: var(--logos); background: var(--logos-soft); color: var(--ink); box-shadow: 0 0 0 1px var(--logos); }
+.gym-pace.is-cleared .gym-pace-gauge { color: var(--logos); }
+.gym-pace.is-locked { opacity: .55; }
+.gym-pace.is-locked .gym-pace-gauge { background: var(--surface-3); color: var(--muted); }
+.gym-shelf { display: grid; gap: 12px; min-width: 0; }
+.gym-shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 6px; }
+.gym-shelf-item { display: grid; gap: 6px; align-content: space-between; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: inherit; text-align: left; transition: border-color .15s, background .15s; }
+.gym-shelf-item:hover { border-color: var(--line-2); background: var(--surface); }
+.gym-shelf-item:focus-visible { border-radius: 6px; }
+.gym-shelf-item.is-on { border-color: var(--logos); background: var(--logos-soft); box-shadow: 0 0 0 1px var(--logos); }
+.gym-shelf-text { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.gym-shelf-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.gym-shelf-pips { display: inline-flex; gap: 3px; flex: none; }
+.gym-shelf-pips i { display: block; width: 8px; height: 8px; border-radius: 2px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line-2); }
+.gym-shelf-pips i.on { background: var(--logos); box-shadow: none; }
+
+/* ================================================================
+   IV. Impromptu roulette: the game show
+   ================================================================ */
+.gym-show { display: grid; gap: 14px; padding: clamp(14px, 2.4vw, 28px); min-width: 0; }
+.gym-show-lights { position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.gym-show-lights i {
+  position: absolute; top: -6%; left: var(--x); width: 130%; height: 128%; margin-left: -65%; transform-origin: 50% 0; transform: rotate(var(--a));
+  background: conic-gradient(from 166deg at 50% 0, transparent 0 8deg, color-mix(in srgb, var(--c) 46%, transparent) 8deg 20deg, transparent 20deg);
+  -webkit-mask: linear-gradient(180deg, black 20%, transparent 92%); mask: linear-gradient(180deg, black 20%, transparent 92%);
+  mix-blend-mode: screen; animation: gymSweep 9s ease-in-out infinite alternate; transition: opacity .6s;
+}
+.gym-show-lights i:nth-child(1) { --x: 8%; --c: var(--stage-ethos); --a: -20deg; --b: 8deg; }
+.gym-show-lights i:nth-child(2) { --x: 50%; --c: var(--stage-pathos); --a: -9deg; --b: 9deg; animation-delay: -3s; }
+.gym-show-lights i:nth-child(3) { --x: 92%; --c: var(--stage-logos); --a: 20deg; --b: -8deg; animation-delay: -6s; }
+.gym-show.is-spinning .gym-show-lights i { animation-duration: 1.4s; }
+.gym-show.is-prep .gym-show-lights i:not(:nth-child(2)), .gym-show.is-speak .gym-show-lights i:not(:nth-child(2)) { opacity: .25; }
+.gym-show.is-review { background: radial-gradient(110% 120% at 50% -20%, var(--gym-brass-2), var(--stage-bg) 70%); }
+.gym-show-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: clamp(16px, 3vw, 36px); align-items: center; min-width: 0; }
+.gym-wheel-col { position: relative; isolation: isolate; container-type: inline-size; display: grid; justify-items: center; gap: 14px; min-width: 0; }
+.gym-rays {
+  position: absolute; z-index: -1; left: 50%; top: calc(14px + min(100cqw, 440px) / 2); width: min(132cqw, 600px); aspect-ratio: 1; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--stage-gold) 20%, transparent) 0 9deg, transparent 9deg 18deg);
+  -webkit-mask: radial-gradient(closest-side, black 42%, transparent); mask: radial-gradient(closest-side, black 42%, transparent);
+  opacity: .55; transition: opacity .5s;
+  animation: gymRays 60s linear infinite;
+}
+.gym-show.is-wheel .gym-rays { opacity: .55; }
+.gym-show.is-spinning .gym-rays { opacity: .85; animation-duration: 12s; }
+.gym-show.is-landed .gym-rays { opacity: 1; }
+.gym-wheel { position: relative; width: min(100%, 440px); aspect-ratio: 1; margin-top: 14px; }
+.gym-pointer { position: absolute; z-index: 3; top: -4.5%; left: 44.25%; width: 11.5%; transform-origin: 50% 29%; pointer-events: none; filter: drop-shadow(0 4px 6px var(--stage-bg)); }
+.gym-pointer svg { display: block; width: 100%; height: auto; }
+.gym-pointer-body { fill: var(--stage-ink); stroke: var(--gym-brass); stroke-width: 2; stroke-linejoin: round; }
+.gym-pointer-pin { fill: var(--stage-pathos); }
+.gym-wheel-btn { display: block; width: 100%; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; transition: transform .25s var(--ease-out), filter .25s; filter: drop-shadow(0 18px 34px var(--stage-bg)); }
+.gym-wheel-btn:hover:not(:disabled) { transform: scale(1.012); }
+.gym-wheel-btn:disabled { cursor: default; }
+.gym-wheel-btn:focus-visible { outline: 3px solid var(--stage-ink); outline-offset: 4px; border-radius: 50%; }
+.gym-wheel-btn svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gym-rim { fill: var(--gym-brass); stroke: var(--stage-gold); stroke-width: 1.5; }
+.gym-rim-inner { fill: var(--stage-bg); }
+.gym-rim-bulb { fill: var(--gym-bulb); animation: gymChase 1.6s steps(1) infinite; }
+.gym-rim-bulb.b { opacity: .38; animation-delay: -.8s; }
+.gym-wheel.is-spinning .gym-rim-bulb { animation-duration: .34s; }
+.gym-wheel.is-spinning .gym-rim-bulb.b { animation-delay: -.17s; }
+.gym-wheel.is-flash .gym-rim-bulb, .gym-wheel.is-landed .gym-rim-bulb { fill: var(--stage-ink); opacity: 1; animation: none; }
+.gym-wheel.is-flash .gym-rim-bulb { animation: gymRimFlash .3s steps(1) infinite; }
+.gym-seg { stroke: none; transition: opacity .35s, filter .35s; }
+.gym-seg-sep { stroke: var(--stage-bg); stroke-width: 2.4; }
+.gym-peg { fill: var(--stage-ink); stroke: var(--stage-bg); stroke-width: 1.2; }
+.gym-seg-label { fill: var(--stage-bg); font-family: var(--font-display); font-weight: 800; font-size: 21px; letter-spacing: -0.01em; pointer-events: none; }
+.gym-hub { fill: var(--gym-brass); stroke: var(--stage-gold); stroke-width: 1.5; }
+.gym-hub-in { fill: var(--stage-bg); }
+.gym-hub-tri { fill: none; stroke: var(--stage-ink); stroke-width: 2.4; stroke-linejoin: round; }
+.gym-wheel.is-landed .gym-seg:not(.is-win) { opacity: .42; }
+.gym-seg.is-win { filter: brightness(1.14) saturate(1.1); stroke: var(--stage-ink); stroke-width: 3; }
+.gym-wheel.is-flash .gym-seg.is-win { animation: gymWinFlash .4s ease-in-out infinite alternate; }
+.gym-wheel.is-flash::after {
+  content: ""; position: absolute; inset: -7%; z-index: 2; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, transparent 60%, var(--gym-glow) 78%, transparent);
+  opacity: 0; animation: gymWheelFlash 1.5s ease-out;
+}
+.gym-spin-btn { min-width: min(100%, 250px); }
+.gym-card-col { min-width: 0; scroll-margin-top: 72px; }
+.gym-rules { display: grid; gap: 14px; align-content: center; }
+.gym-rules-kicker { color: var(--stage-gold); }
+.gym-rules-title { font-size: clamp(40px, 6vw, 72px); font-weight: 800; line-height: .94; letter-spacing: -0.045em; }
+.gym-rules-title span { display: block; }
+.gym-rules-title span:nth-child(1) { color: var(--stage-ethos); }
+.gym-rules-title span:nth-child(2) { color: var(--stage-pathos); }
+.gym-rules-title span:nth-child(3) { color: var(--stage-logos); }
+.gym-rules-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.gym-rules-list li { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; font-size: 14px; line-height: 1.35; color: var(--stage-muted); }
+.gym-rules-list b { color: var(--stage-ink); font-weight: 750; }
+.gym-legend { display: flex; flex-wrap: wrap; gap: 4px 11px; font-size: 12px; color: var(--stage-muted); }
+.gym-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.gym-legend i { display: block; width: 9px; height: 9px; border-radius: 2px; }
+.gym-prompt { display: grid; gap: 12px; min-width: 0; padding: clamp(14px, 2vw, 22px); border-radius: var(--r); border: 1px solid var(--stage-line); background: linear-gradient(180deg, color-mix(in srgb, var(--stage-ink) 9%, transparent), color-mix(in srgb, var(--stage-ink) 3%, transparent)); box-shadow: 0 22px 50px -30px var(--stage-bg); animation: gymDeal .5s var(--ease-spring); }
+.gym-cat-tag { justify-self: start; display: inline-block; padding: 3px 11px; border-radius: 6px; background: var(--c); color: var(--stage-bg); font-family: var(--font-inscr); font-weight: 800; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; }
+.gym-prompt-text { font-family: var(--font-display); font-weight: 760; font-size: clamp(22px, 2.8vw, 31px); line-height: 1.14; letter-spacing: -0.026em; text-wrap: balance; }
+.gym-struct-head .inscr { color: var(--stage-muted); }
+.gym-scaffold { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.gym-scaffold li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 10px; border: 1px solid var(--stage-line); border-radius: 6px; transition: background .3s, border-color .3s, opacity .3s; }
+.gym-scaffold-n { flex: none; display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: var(--gym-faint); font-weight: 800; font-size: 12px; }
+.gym-scaffold-body { display: grid; min-width: 0; line-height: 1.25; }
+.gym-scaffold-body b { font-size: 14px; font-weight: 750; }
+.gym-scaffold-body span { font-size: 12.5px; color: var(--stage-muted); }
+.gym-scaffold li.is-now { background: color-mix(in srgb, var(--stage-gold) 15%, transparent); border-color: var(--stage-gold); }
+.gym-scaffold li.is-now .gym-scaffold-n { background: var(--stage-gold); color: var(--stage-bg); }
+.gym-scaffold li.is-done { opacity: .55; }
+.gym-times { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 10px; align-items: center; }
+.gym-times-l { font-size: 12.5px; font-weight: 700; color: var(--stage-muted); }
+.gym-seg-stage { justify-self: start; background: var(--gym-faint); border-color: var(--stage-line); }
+.gym-seg-stage button { padding: 6px 11px; color: var(--stage-muted); }
+.gym-seg-stage button:hover { color: var(--stage-ink); }
+.gym-seg-stage button[aria-pressed="true"] { background: var(--stage-ink); color: var(--stage-bg); box-shadow: none; }
+.gym .stage .gym-go-btn { --c: var(--stage-logos); color: var(--stage-bg); }
+
+/* The spotlight clock: one light, one speaker, one vessel of water */
+.gym-spot { display: grid; grid-template-columns: minmax(190px, .62fr) minmax(0, 1.38fr); gap: clamp(16px, 3vw, 36px); align-items: center; min-width: 0; }
+.gym-spot-clock { position: relative; isolation: isolate; display: grid; justify-items: center; gap: 8px; padding: 22px 8px 18px; }
+.gym-spot-clock::before { content: ""; position: absolute; z-index: -1; left: 50%; top: -64px; bottom: 0; width: min(150%, 360px); transform: translateX(-50%); background: conic-gradient(from 158deg at 50% 0, transparent 0deg, color-mix(in srgb, var(--stage-gold) 46%, transparent) 22deg, transparent 44deg); -webkit-mask: linear-gradient(180deg, black 62%, transparent); mask: linear-gradient(180deg, black 62%, transparent); }
+.gym-spot-clock::after { content: ""; position: absolute; z-index: -1; left: 50%; bottom: 2px; width: min(92%, 230px); height: 24px; transform: translateX(-50%); border-radius: 50%; background: color-mix(in srgb, var(--stage-gold) 24%, transparent); filter: blur(3px); }
+.gym-spot-clock .inscr { color: var(--stage-muted); }
+.gym-spot-clock .klep-time { font-size: 30px; }
+.gym-spot-body { display: grid; gap: 12px; min-width: 0; }
+.gym-cue-banner { --bc: var(--stage-muted); margin: 0; padding: 10px 14px; border-left: 4px solid var(--bc); border-radius: 4px 6px 6px 4px; background: var(--gym-faint); font-weight: 650; font-size: 15.5px; line-height: 1.35; animation: gymRise .35s var(--ease-out); }
+.gym-cue-banner.is-open, .gym-cue-banner.is-part0 { --bc: var(--stage-ethos); }
+.gym-cue-banner.is-part1, .gym-cue-banner.is-half { --bc: var(--stage-logos); }
+.gym-cue-banner.is-part2, .gym-cue-banner.is-part3 { --bc: var(--stage-ethos); }
+.gym-cue-banner.is-close { --bc: var(--stage-gold); background: color-mix(in srgb, var(--stage-gold) 13%, transparent); }
+.gym-cue-banner.is-time { --bc: var(--stage-pathos); background: color-mix(in srgb, var(--stage-pathos) 15%, transparent); }
+.gym-bravo { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: clamp(12px, 2vw, 26px); padding: clamp(4px, 1.4vw, 14px) 0; }
+.gym-bravo > div { min-width: 0; flex: 0 1 560px; display: grid; gap: 3px; }
+.gym-bravo .inscr { color: var(--stage-gold); }
+.gym-bravo-prompt { font-size: 14px; color: var(--stage-muted); }
+.gym-review { display: grid; gap: 16px; min-width: 0; }
+.gym-sliders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; }
+.gym-slider { --c: var(--ethos); display: grid; gap: 3px; min-width: 0; }
+.gym-slider-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.gym-slider-val { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: color-mix(in srgb, var(--c) 80%, var(--ink)); }
+.gym-slider input[type="range"] { width: 100%; height: 28px; margin: 0; accent-color: var(--gold); cursor: pointer; }
+.gym-recent { display: grid; gap: 6px; min-width: 0; }
+.gym-recent ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.gym-recent li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.gym-recent-dot { flex: none; display: block; width: 10px; height: 10px; border-radius: 3px; }
+.gym-recent-text { flex: 1 1 220px; min-width: 0; font-size: 14px; line-height: 1.35; color: var(--ink-2); }
+.gym-recent-text b { margin-right: 3px; color: var(--ink); }
+
+/* ================================================================
+   V. Device lab: a chemist's bench, labels and glass
+   ================================================================ */
+.gym-chiprail { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.gym-bench {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) clamp(120px, 16vw, 200px) minmax(0, 1.25fr); gap: 16px; align-items: start; min-width: 0;
+  padding: clamp(14px, 2.4vw, 26px); border-radius: var(--r-lg);
+  border: 1px solid var(--line-2); border-bottom: 7px solid color-mix(in srgb, var(--ink) 20%, var(--surface-3));
+  background:
+    linear-gradient(color-mix(in srgb, var(--ink) 4%, transparent) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 4%, transparent) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(180deg, var(--surface), var(--surface-2));
+  box-shadow: var(--shadow), inset 0 1px 0 var(--card-sheen);
+}
+.gym-bench > .gym-label-card, .gym-bench > .gym-ctl, .gym-bench > .gym-peek, .gym-bench > .gym-model, .gym-bench > .gym-fb { grid-column: 1 / -1; }
+.gym-label-card {
+  display: grid; gap: 6px; min-width: 0; padding: 14px 18px; border-radius: 4px;
+  background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  box-shadow: var(--shadow-sm), inset 0 0 0 3px var(--surface), inset 0 0 0 4px color-mix(in srgb, var(--gold) 42%, transparent);
+}
+.gym-label-top { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; }
+.gym-label-top .greek { font-size: 21px; line-height: 1.1; color: var(--ink-2); }
+.gym-label-def { font-size: 15.5px; font-weight: 600; line-height: 1.4; }
+.gym-label-recipe { font-size: 13.5px; line-height: 1.4; color: var(--ink-2); }
+.gym-label-recipe b { margin-right: 6px; font-family: var(--font-inscr); font-weight: 800; font-size: 10.5px; letter-spacing: .15em; text-transform: uppercase; }
+.gym-tag { justify-self: start; display: inline-block; padding: 2px 8px; border: 1px solid var(--line-2); border-radius: 3px; background: var(--surface); font-family: var(--font-inscr); font-weight: 700; font-size: 10.5px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
+.gym-tag.lit { background: var(--violet-soft); border-color: color-mix(in srgb, var(--violet) 45%, transparent); color: var(--ink); }
+.gym-plain, .gym-rewrite { display: grid; gap: 6px; min-width: 0; }
+.gym-plain-text { padding: 12px 14px; border: 1px dashed var(--line-2); border-radius: 6px; background: color-mix(in srgb, var(--surface-3) 45%, transparent); font-size: 17px; line-height: 1.35; color: var(--ink-2); }
+.gym-rewrite-ta { min-height: 92px; font-size: 16px; border-color: color-mix(in srgb, var(--violet) 40%, var(--line-2)); }
+.gym-rewrite-ta:focus { border-color: var(--violet); box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 18%, transparent); }
+.gym-meter { display: flex; align-items: flex-start; gap: 9px; min-height: 22px; color: var(--ink-2); }
+.gym-meter-lights { flex: none; display: inline-flex; gap: 4px; padding-top: 4px; }
+.gym-meter-lights i { display: block; width: 11px; height: 11px; border-radius: 50%; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--line-2); transition: background .25s, box-shadow .25s; }
+.gym-meter-lights i.k0.on { background: var(--ethos); }
+.gym-meter-lights i.k1.on { background: var(--pathos); }
+.gym-meter-lights i.k2.on { background: var(--logos); }
+.gym-prism { display: flex; align-items: center; align-self: center; min-width: 0; height: 84px; }
+.gym-prism-in, .gym-prism-out { display: block; flex: 1 1 0; min-width: 0; height: 40px; overflow: visible; }
+.gym-prism-in path, .gym-prism-out path { fill: none; stroke-width: 2.6; stroke-linecap: round; }
+.gym-prism-in path { stroke: var(--ink-2); }
+.gym-prism-out { opacity: .22; transform-origin: 0 50%; }
+.gym-prism-glass { position: relative; z-index: 1; flex: none; display: block; width: clamp(54px, 6vw, 70px); margin-inline: -13px; height: auto; overflow: visible; }
+.gym-prism-body { fill: color-mix(in srgb, var(--violet) 11%, var(--surface)); stroke: var(--ink-2); stroke-width: 2; stroke-linejoin: round; transition: fill .4s, stroke .4s; }
+.gym-prism-edge { fill: none; stroke: color-mix(in srgb, var(--ink) 30%, transparent); stroke-width: 1; }
+.gym-prism.is-lit .gym-prism-out { opacity: 1; animation: gymRayOut .7s var(--ease-out); }
+.gym-prism.is-lit .gym-prism-body { fill: color-mix(in srgb, var(--violet) 24%, var(--surface)); stroke: var(--violet); }
+.gym-peek { justify-self: start; }
+.gym-model { display: grid; gap: 8px; min-width: 0; padding: clamp(14px, 2vw, 20px); border-radius: var(--r); border: 1px solid color-mix(in srgb, var(--violet) 40%, var(--line)); background: linear-gradient(115deg, var(--ethos-soft), var(--pathos-soft) 52%, var(--logos-soft)); box-shadow: 0 18px 40px -26px var(--violet); animation: gymDeal .5s var(--ease-out); }
+.gym-model-text { font-family: var(--font-display); font-weight: 760; font-size: clamp(20px, 2.6vw, 28px); line-height: 1.24; letter-spacing: -0.02em; text-wrap: pretty; }
+.gym-mk { padding: .02em .16em; border-radius: .18em; color: inherit; -webkit-box-decoration-break: clone; box-decoration-break: clone; animation: gymMkIn .6s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * .12s); }
+.gym-mk.k0 { background: color-mix(in srgb, var(--ethos) 26%, transparent); box-shadow: inset 0 -2px 0 var(--ethos); }
+.gym-mk.k1 { background: color-mix(in srgb, var(--pathos) 24%, transparent); box-shadow: inset 0 -2px 0 var(--pathos); }
+.gym-mk.k2 { background: color-mix(in srgb, var(--logos) 26%, transparent); box-shadow: inset 0 -2px 0 var(--logos); }
+.gym-score { flex: none; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--flame); font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; }
+.gym-score.mid { border-color: var(--gold); }
+.gym-score.hi { border-color: var(--good); color: var(--good); }
+.gym-lab-fb { background: var(--surface); box-shadow: var(--shadow-sm); }
+.gym-selfcheck { background: var(--surface); box-shadow: var(--shadow-sm); }
+.gym-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.gym-checks li { display: flex; align-items: flex-start; gap: 8px; font-size: 14.5px; line-height: 1.4; color: var(--ink-2); }
+.gym-checks svg { flex: none; margin-top: 2px; color: var(--violet); }
+
+/* ================================================================
+   Motion (every keyframe adds to a base style that already reads)
+   ================================================================ */
+@keyframes gymRise { from { transform: translateY(8px); opacity: .3; } to { transform: none; opacity: 1; } }
+@keyframes gymDeal { from { transform: translateY(14px) rotate(-1.2deg) scale(.98); opacity: .3; } to { transform: none; opacity: 1; } }
+@keyframes gymPop { from { transform: scale(.72); opacity: .35; } to { transform: none; opacity: 1; } }
+@keyframes gymLaurel { from { transform: scale(.7) rotate(-8deg); } to { transform: none; } }
+@keyframes gymPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+@keyframes gymBreathe { from { opacity: .35; } to { opacity: .9; } }
+@keyframes gymTwinkle { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@keyframes gymChase { 0% { opacity: 1; } 50% { opacity: .22; } }
+@keyframes gymSpin { to { transform: rotate(360deg); } }
+@keyframes gymRays { from { transform: translate(-50%, -50%) rotate(0); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes gymSweep { from { transform: rotate(var(--a)); } to { transform: rotate(var(--b)); } }
+@keyframes gymDraw { 0% { stroke-dashoffset: 100; } 42%, 100% { stroke-dashoffset: 0; } }
+@keyframes gymDrawBack { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes gymHeroLights { from { opacity: .72; } to { opacity: 1; } }
+@keyframes gymDust { 0% { transform: translate(0, 0); opacity: .05; } 30% { opacity: .42; } 100% { transform: translate(18px, -74px); opacity: .04; } }
+@keyframes gymCueIn { from { opacity: .15; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes gymAbSwell { 0%, 100% { transform: scale(.42); } 33%, 66% { transform: scale(1); } }
+@keyframes gymAbOrb {
+  0% { transform: translate(100px, 150px); }
+  33.3% { transform: translate(23px, 18px); }
+  66.6% { transform: translate(177px, 18px); }
+  100% { transform: translate(100px, 150px); }
+}
+@keyframes gymAlWord { 0% { color: var(--stage-gold); } 25%, 100% { color: color-mix(in srgb, var(--stage-ink) 45%, transparent); } }
+@keyframes gymAlBall {
+  0%, 100% { left: 8%; transform: translateY(0); }
+  12% { transform: translateY(-8px); }
+  25% { left: 30%; transform: translateY(0); }
+  37% { transform: translateY(-8px); }
+  50% { left: 57%; transform: translateY(0); }
+  62% { transform: translateY(-8px); }
+  75% { left: 85%; transform: translateY(0); }
+  87% { transform: translateY(-8px); }
+}
+@keyframes gymBulbNext { 0%, 100% { box-shadow: 0 0 2px 0 var(--gym-glow); } 50% { box-shadow: 0 0 12px 3px var(--gym-glow); } }
+@keyframes gymBulbChase { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes gymWaRise { from { transform: translateY(5px); } to { transform: translateY(-4px); } }
+@keyframes gymWaFlutter { from { transform: translateY(-1.3px); } to { transform: translateY(1.3px); } }
+@keyframes gymWaAir { to { stroke-dashoffset: -14; } }
+@keyframes gymWaDrop { from { transform: translateY(0); } to { transform: translateY(9px); } }
+@keyframes gymWaRing { from { transform: scale(.72); } to { transform: scale(1.1); opacity: .06; } }
+@keyframes gymWaCount { 0%, 100% { opacity: .5; } 30% { opacity: 1; } }
+@keyframes gymMetro { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+@keyframes gymRimFlash { 0% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes gymWinFlash { from { filter: brightness(1.05); } to { filter: brightness(1.42) saturate(1.2); } }
+@keyframes gymWheelFlash { 0% { opacity: 0; transform: scale(.9); } 18% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1); } }
+@keyframes gymRayOut { from { transform: scaleX(.1); opacity: .3; } to { transform: none; opacity: 1; } }
+@keyframes gymMkIn { from { background: transparent; box-shadow: inset 0 0 0 transparent; } }
+
+/* ================================================================
+   Width: everything folds down to a 375px phone with no sideways scroll
+   ================================================================ */
+@media (max-width: 1040px) {
+  .gym-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gym-tile { grid-column: span 1; }
+  .gym-tile-impromptu { grid-column: span 1; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .gym-tile-impromptu .gym-tile-art { height: 178px; min-height: 0; }
+  .gym-tile-impromptu .gym-art-wheel { width: 148px; }
+  .gym-tile-lab { grid-column: 1 / -1; }
+}
+@media (max-width: 920px) {
+  .gym-breath-layout, .gym-warm-layout, .gym-tw-layout { grid-template-columns: minmax(0, 1fr); }
+  .gym-mirror { position: relative; top: auto; max-width: 480px; }
+  .gym-lower { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .gym-hero { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .gym-hero-text { padding-bottom: 18px; }
+  .gym-show-grid { grid-template-columns: minmax(0, 1fr); }
+  .gym-bench { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .gym-prism { height: 56px; }
+  .gym-prism-in, .gym-prism-out { height: 30px; }
+  .gym-prism-glass { width: 48px; margin-inline: -9px; }
+}
+@media (max-width: 680px) {
+  .gym-spot { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .gym-spot-clock { padding-top: 14px; }
+  .gym-spot-clock .klep svg { width: 92px; height: 134px; }
+  .gym-sliders { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .gym-grid { grid-template-columns: minmax(0, 1fr); }
+  .gym-tile-lab { grid-column: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .gym-tile-lab .gym-tile-art { height: 150px; min-height: 0; }
+  /* The device rail becomes one sideways strip that bleeds to the screen edge, inside its own scroller */
+  .gym-chiprail { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 2px 16px 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .gym-chiprail::-webkit-scrollbar { display: none; }
+  .gym-chiprail .chip { flex: none; }
+}
+@media (max-width: 560px) {
+  .gym-hero { padding: 22px 16px 0; }
+  .gym-hero h1 { max-width: none; }
+  /* The colonnade turns on its side: five steps you can still read */
+  .gym-plinths { grid-template-columns: minmax(0, 1fr); gap: 4px; padding-bottom: 20px; }
+  .gym-plinth { display: flex; align-items: center; gap: 10px; min-height: 0; padding: 6px 12px 6px 14px; text-align: left; border: 1px solid var(--stage-line); border-left: 0; border-radius: 0 6px 6px 0; background: linear-gradient(90deg, color-mix(in srgb, var(--pl) 26%, transparent), color-mix(in srgb, var(--pl) 5%, transparent)); }
+  .gym-plinth:nth-child(1) { min-height: 0; width: 66%; }
+  .gym-plinth:nth-child(2) { min-height: 0; width: 74%; }
+  .gym-plinth:nth-child(3) { min-height: 0; width: 82%; }
+  .gym-plinth:nth-child(4) { min-height: 0; width: 91%; }
+  .gym-plinth:nth-child(5) { min-height: 0; width: 100%; }
+  .gym-plinth-cap { top: 0; bottom: 0; left: 0; right: auto; width: 4px; height: auto; border-radius: 0 3px 3px 0; }
+  .gym-plinth b { font-size: 21px; min-width: 1.4em; }
+  .gym-plinth > span:last-child { font-size: 12px; }
+  .gym-head-text h1 { font-size: clamp(30px, 9vw, 40px); }
+  .gym-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gym-mirror { aspect-ratio: 1.14 / 1; }
+  .gym-wa { width: 58%; margin-bottom: 8%; }
+  .gym-wa-siren, .gym-wa-project { width: 62%; }
+  .gym-bench .gym-ctl .btn { flex: 1 1 auto; }
+  .gym-mark-q { flex: 1 0 100%; text-align: center; }
+  .gym-mark .btn-cta { flex: 1 1 130px; padding: 0 14px; }
+  .gym-sing-tempo { flex: 1 1 100%; justify-content: space-between; }
+  .gym-cue { min-height: 92px; }
+  .gym-times { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .gym-seg-stage { margin-bottom: 4px; }
+  .gym-spin-btn { width: 100%; }
+  .gym-bravo { justify-content: flex-start; }
+  .gym-ctl .btn-cta:not(.wide) { flex: 1 1 auto; }
+}
+
+/* ================================================================
+   Reduced motion: the global rule stops the clocks; these are the still frames
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .gym-ab-fill { transform: scale(.74); }
+  .gym-wa-ring.r1 { transform: scale(.82); }
+  .gym-wa-ring.r2 { transform: scale(1); }
+  .gym-wa-ring.r3 { transform: scale(1.16); }
+  .gym-wa-buzz { opacity: .75; }
+  .gym-metro.is-on .gym-metro-arm { transform: rotate(16deg); }
+  .gym-wheel.is-spinning .gym-rim-bulb { opacity: 1; }
+  .gym-dust i { opacity: .3; }
+  .gym-wheel.is-flash::after { opacity: .7; }
+  .gym-tile:hover, .gym-wheel-btn:hover:not(:disabled) { transform: none; }
+}
+
+/* Round too short to count, shown on the landed prompt card */
+.gym-too-short { margin: 0; padding: 8px 12px; border-radius: 6px; font-size: 14px; color: var(--stage-ink); background: color-mix(in srgb, var(--stage-pathos) 22%, transparent); border: 1px solid color-mix(in srgb, var(--stage-pathos) 55%, transparent); }
+
+/* Trophies: badge cells are buttons that lead to the way of earning them */
+button.badge-cell { width: 100%; font: inherit; color: inherit; cursor: pointer; }
+button.badge-cell.locked:hover { opacity: .85; border-color: var(--line-2); }
+.badge-cell-progress { display: grid; gap: 4px; width: 100%; }
