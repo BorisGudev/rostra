@@ -1,0 +1,31 @@
+{
+  "name": "rostra",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Rostra: an AI coach for speaking. Oral exam rehearsal and speech feedback for schools.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "npm run build && npm run test:unit && npm run test:e2e",
+    "test:unit": "node scripts/test-unit.mjs",
+    "test:e2e": "playwright test --trace off"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@supabase/supabase-js": "^2.119.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/onest": "^5.3.1",
+    "@fontsource/gfs-didot": "^5.3.0",
+    "@playwright/test": "^1.63.0",
+    "htm": "^3.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

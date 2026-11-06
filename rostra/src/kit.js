@@ -40,8 +40,8 @@ function Scholion({ fig, note, sub, def, mark, children, className = '' }) {
   if (!top) return html`<div className=${'scho ' + className}><p className="scho-line">${children}</p></div>`;
   return html`<div className=${'scho ' + className + (open ? ' is-open' : '') + (open || hot ? ' is-lit' : '')}>
     <p className="scho-line">${scholionParts(children, mark)}</p>
-    <button type="button" className="scho-note" aria-expanded=${open} aria-controls=${id} onClick=${() => setOpen(!open)} onMouseEnter=${() => setHot(true)} onMouseLeave=${() => setHot(false)} onFocus=${() => setHot(true)} onBlur=${() => setHot(false)} title="What is this?"><span className="greek" lang="grc">${top}</span><span className="scho-en">${sub || (F && F.name)}</span></button>
-    ${open ? html`<div className="scho-def" id=${id}><p>${def || (F && F.def)}</p>${F && F.lab ? html`<button type="button" className="scho-go" onClick=${() => go('gym', 'lab')}>Practice it in the Device Lab<${Icon} name="arrowR" size=${14} /></button>` : null}</div>` : null}
+    <button type="button" className="scho-note" aria-expanded=${open} aria-controls=${id} onClick=${() => setOpen(!open)} onMouseEnter=${() => setHot(true)} onMouseLeave=${() => setHot(false)} onFocus=${() => setHot(true)} onBlur=${() => setHot(false)} title=${t('What is this?')}><span className="greek" lang="grc">${top}</span><span className="scho-en">${sub || (F && F.name)}</span></button>
+    ${open ? html`<div className="scho-def" id=${id}><p>${def || (F && F.def)}</p>${F && F.lab ? html`<button type="button" className="scho-go" onClick=${() => go('gym', 'lab')}>${t('Practice it in the Device Lab')}<${Icon} name="arrowR" size=${14} /></button>` : null}</div>` : null}
   </div>`;
 }
 /* ---------- Page head: the modern word in bold, the Greek one whispered above it ---------- */
@@ -91,7 +91,7 @@ function Klepsydra({ total, remaining, size = 120, running = false, label = true
   const upperTop = 12 + (1 - f) * 36.6;
   const lowerTop = 136 - (1 - f) * 50 - (over ? 4 : 0);
   const secs = Math.abs(remaining);
-  return html`<div className="klep" style=${{ width: size }} role="timer" aria-label=${over ? `${fmtTime(secs)} over time` : `${fmtTime(secs)} remaining`}>
+  return html`<div className="klep" style=${{ width: size }} role="timer" aria-label=${over ? t`${fmtTime(secs)} over time` : t`${fmtTime(secs)} remaining`}>
     <svg viewBox="0 0 100 146" width=${size} height=${size * 1.46} aria-hidden="true">
       <defs>
         <clipPath id=${'ku' + rid}><path d=${KLEP_UPPER} /></clipPath>
@@ -119,7 +119,7 @@ const MEANDER_D = 'M0 17.5H20M2.5 17.5V4.5H17.5V14.5H7.5V8.5H12.5V11.5';
 function MeanderBar({ value, color = 'var(--gold)', height = 16, label }) {
   const rid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const v = clamp(value || 0, 0, 100);
-  return html`<svg className="meander-bar" width="100%" height=${height} preserveAspectRatio="none" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow=${Math.round(v)} aria-label=${label || 'Progress'}>
+  return html`<svg className="meander-bar" width="100%" height=${height} preserveAspectRatio="none" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow=${Math.round(v)} aria-label=${label || t('Progress')}>
     <defs>
       <pattern id=${'mf' + rid} width=${height * (20 / 20)} height=${height} patternUnits="userSpaceOnUse" viewBox="0 0 20 20" preserveAspectRatio="none">
         <path d=${MEANDER_D} style=${{ fill: 'none', stroke: 'var(--line-2)', strokeWidth: 2.2, strokeLinecap: 'square' }} />
@@ -145,18 +145,27 @@ function Meander({ className = '', height = 12 }) {
 const Voice = {
   get ok() { try { return typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance === 'function'; } catch (e) { return false; } },
   enabled: true,
-  voices() {
-    try { const vs = window.speechSynthesis.getVoices(); const en = vs.filter((v) => /^en/i.test(v.lang)); return en.length ? en : vs; } catch (e) { return []; }
+  /* Voices for a language ('en' or 'bg'); falls back to the interface language, then to anything installed. */
+  voices(lang) {
+    try {
+      const vs = window.speechSynthesis.getVoices();
+      const want = (lang || (typeof I18N !== 'undefined' ? I18N.lang : 'en') || 'en').slice(0, 2).toLowerCase();
+      const hit = vs.filter((v) => String(v.lang || '').slice(0, 2).toLowerCase() === want);
+      if (hit.length) return hit;
+      const en = vs.filter((v) => /^en/i.test(v.lang));
+      return en.length ? en : vs;
+    } catch (e) { return []; }
   },
   speak(text, opts = {}) {
-    const { rate = 1, pitch = 1, voiceIndex = 0, onend } = opts;
+    const { rate = 1, pitch = 1, voiceIndex = 0, onend, lang } = opts;
     const done = () => { if (onend) onend(); };
     if (!this.ok || !this.enabled || !text) { done(); return; }
     try {
       window.speechSynthesis.cancel();
       const u = new window.SpeechSynthesisUtterance(text);
-      const vs = this.voices();
-      if (vs.length) u.voice = vs[Math.abs(voiceIndex) % vs.length];
+      const vs = this.voices(lang);
+      if (vs.length) { u.voice = vs[Math.abs(voiceIndex) % vs.length]; u.lang = u.voice.lang; }
+      else u.lang = (lang || (typeof I18N !== 'undefined' ? I18N.lang : 'en')) === 'bg' ? 'bg-BG' : 'en-GB';
       u.rate = rate; u.pitch = pitch;
       u.onend = done; u.onerror = done;
       window.speechSynthesis.speak(u);

@@ -748,3 +748,13 @@ html[data-exam=live] .rail .nav-item, html[data-exam=live] .rail .rail-level, ht
 }
 
 .viva-verdict-greek { font-family: var(--font-greek); font-style: italic; font-size: clamp(21px, 2.4vw, 27px); line-height: 1.1; color: var(--stage-gold); }
+
+/* ---------- Speaking: the microphone strip under the question ---------- */
+.viva-mic { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--stage-line); border-radius: var(--r); background: var(--stage-bg-2); min-width: 0; }
+.viva-mic-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.viva-mic-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--stage-pathos); animation: viva-onair 1.5s ease-in-out infinite; flex: none; }
+.viva-mic-label { font-family: var(--font-inscr); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--stage-ink); white-space: nowrap; }
+.viva-mic-meter { flex: 1 1 60px; height: 8px; border-radius: 4px; background: var(--stage-line); overflow: hidden; min-width: 40px; }
+.viva-mic-meter > span { display: block; height: 100%; width: 100%; transform-origin: left center; background: var(--stage-gold); transition: transform .08s linear; }
+.viva-mic-live { margin: 0; font-size: 14px; line-height: 1.45; color: var(--stage-muted); font-style: italic; }
+@media (prefers-reduced-motion: reduce) { .viva-mic-dot { animation: none; } }

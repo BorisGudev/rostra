@@ -231,10 +231,10 @@ function Triangle({ scores, ghost, trail, mode = 'now', selected, onSelect, size
   const measured = POLE_KEYS.some((k) => sc[k] != null);
   const pick = (k) => onSelect && onSelect(selected === k ? null : k);
   const trailPts = mode === 'journey' && trail ? trail.map((t) => stylePoint({ ethos: t.e, pathos: t.p, logos: t.l })) : [];
-  const label = POLE_KEYS.map((k) => `${POLES[k].name} ${sc[k] == null ? 'not measured' : Math.round(sc[k])}`).join(', ');
+  const label = POLE_KEYS.map((k) => `${POLES[k].name} ${sc[k] == null ? t('not measured') : Math.round(sc[k])}`).join(', ');
   const full = triPath({ ethos: 100, pathos: 100, logos: 100 });
   return html`<div className=${'tri tri-' + size + (selected ? ' has-sel' : '') + (measured ? '' : ' is-empty')} style=${{ '--tri-light': light }}>
-    <svg viewBox="0 0 420 420" role="img" aria-label=${'Rhetorical triangle: ' + label}>
+    <svg viewBox="0 0 420 420" role="img" aria-label=${t`Rhetorical triangle: ${label}`}>
       <defs>
         <clipPath id=${'clip' + rid}><path d=${shape} /></clipPath>
         <filter id=${'glow' + rid} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="20" /></filter>
@@ -267,8 +267,8 @@ function Triangle({ scores, ghost, trail, mode = 'now', selected, onSelect, size
       ${trailPts.length ? html`<g>
         <path d=${smoothPath(trailPts)} className="tri-trail" />
         ${trailPts.map((p, i) => html`<circle key=${'t' + i} cx=${p[0]} cy=${p[1]} r=${i === trailPts.length - 1 ? 8 : 5} className=${'tri-trail-dot' + (i === trailPts.length - 1 ? ' is-last' : '')}><title>${`Speech ${i + 1}: E ${trail[i].e ?? '–'} · P ${trail[i].p ?? '–'} · L ${trail[i].l ?? '–'}`}</title></circle>`)}
-        <text x=${trailPts[0][0] + 10} y=${trailPts[0][1] + 16} className="tri-trail-label">Start</text>
-        <text x=${trailPts[trailPts.length - 1][0] + 12} y=${trailPts[trailPts.length - 1][1] - 10} className="tri-trail-label">Now</text>
+        <text x=${trailPts[0][0] + 10} y=${trailPts[0][1] + 16} className="tri-trail-label">${t('Start')}</text>
+        <text x=${trailPts[trailPts.length - 1][0] + 12} y=${trailPts[trailPts.length - 1][1] - 10} className="tri-trail-label">${t('Now')}</text>
       </g>` : null}
     </svg>
     ${POLE_KEYS.map((k) => html`<button key=${k} type="button" className=${'tri-label tri-label-' + k + (selected === k ? ' is-on' : '')} onClick=${() => pick(k)} aria-pressed=${selected === k} style=${{ '--c': POLES[k].color }}>
@@ -300,7 +300,7 @@ function Sparkline({ values, color, w = 280, h = 56 }) {
   const pts = values.map((v, i) => [4 + (i / (values.length - 1)) * (w - 8), h - 8 - ((v - min) / (max - min)) * (h - 16)]);
   const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
   const last = pts[pts.length - 1];
-  return html`<svg viewBox=${`0 0 ${w} ${h}`} width="100%" height=${h} preserveAspectRatio="none" aria-label=${`Trend from ${values[0]} to ${values[values.length - 1]}`}>
+  return html`<svg viewBox=${`0 0 ${w} ${h}`} width="100%" height=${h} preserveAspectRatio="none" aria-label=${t`Trend from ${values[0]} to ${values[values.length - 1]}`}>
     <path d=${`${d} L${last[0]} ${h} L${pts[0][0]} ${h} Z`} style=${{ fill: color, opacity: 0.12 }} />
     <path d=${d} style=${{ fill: 'none', stroke: color, strokeWidth: 2.5, strokeLinejoin: 'round', strokeLinecap: 'round' }} vectorEffect="non-scaling-stroke" />
     <circle cx=${last[0]} cy=${last[1]} r="4" style=${{ fill: color, stroke: 'var(--surface)', strokeWidth: 2 }} />
@@ -308,7 +308,7 @@ function Sparkline({ values, color, w = 280, h = 56 }) {
 }
 function Waveform({ wave, duration, pauses }) {
   const W = 960, H = 84, n = wave.length, bw = W / n;
-  return html`<svg className="wave" viewBox=${`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Waveform of the recording with pauses marked">
+  return html`<svg className="wave" viewBox=${`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label=${t('Waveform of the recording with pauses marked')}>
     ${(pauses || []).filter((p) => p.d >= 0.7).map((p, i) => html`<rect key=${'p' + i} x=${(p.t / duration) * W} y="0" width=${Math.max(3, (p.d / duration) * W)} height=${H} rx="3" className=${p.d > 2 ? 'wave-pause-l' : 'wave-pause-d'} />`)}
     ${wave.map((v, i) => { const hh = Math.max(1.2, (v / 100) * (H / 2 - 3)); return html`<rect key=${i} x=${i * bw + bw * 0.18} y=${H / 2 - hh} width=${bw * 0.64} height=${hh * 2} rx=${bw * 0.3} className="wave-bar" />`; })}
   </svg>`;
@@ -324,13 +324,13 @@ function ArcChart({ timeline, duration }) {
   const n = timeline.length;
   const x = (i) => pl + ((W - pl - pr) * i) / Math.max(1, n - 1);
   const series = [];
-  if (timeline.some((b) => b.loud != null)) series.push({ key: 'loud', label: 'Energy', color: 'var(--pathos)', min: 0, max: 1, area: true });
-  if (timeline.some((b) => b.pitch != null)) { const vs = timeline.map((b) => b.pitch).filter((v) => v != null); const mx = Math.max(3, ...vs.map(Math.abs)); series.push({ key: 'pitch', label: 'Pitch', color: 'var(--ethos)', min: -mx, max: mx }); }
-  if (timeline.some((b) => b.rate)) { const vs = timeline.map((b) => b.rate).filter(Boolean); series.push({ key: 'rate', label: 'Pace', color: 'var(--logos)', min: Math.min(...vs) * 0.85, max: Math.max(...vs) * 1.1, dash: '6 6' }); }
+  if (timeline.some((b) => b.loud != null)) series.push({ key: 'loud', label: t('Energy'), color: 'var(--pathos)', min: 0, max: 1, area: true });
+  if (timeline.some((b) => b.pitch != null)) { const vs = timeline.map((b) => b.pitch).filter((v) => v != null); const mx = Math.max(3, ...vs.map(Math.abs)); series.push({ key: 'pitch', label: t('Pitch'), color: 'var(--ethos)', min: -mx, max: mx }); }
+  if (timeline.some((b) => b.rate)) { const vs = timeline.map((b) => b.rate).filter(Boolean); series.push({ key: 'rate', label: t('Pace'), color: 'var(--logos)', min: Math.min(...vs) * 0.85, max: Math.max(...vs) * 1.1, dash: '6 6' }); }
   const y = (v, s) => pt + (H - pt - pb) * (1 - (v - s.min) / Math.max(1e-6, s.max - s.min));
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => ({ f, t: (timeline[0] ? timeline[0].t : 0) + f * ((timeline[n - 1] ? timeline[n - 1].t : duration) - (timeline[0] ? timeline[0].t : 0)) }));
   return html`<div>
-    <svg className="chart" viewBox=${`0 0 ${W} ${H}`} role="img" aria-label="How energy, pitch and pace moved through the speech">
+    <svg className="chart" viewBox=${`0 0 ${W} ${H}`} role="img" aria-label=${t('How energy, pitch and pace moved through the speech')}>
       ${[0.25, 0.5, 0.75].map((f) => html`<line key=${f} x1=${pl} x2=${W - pr} y1=${pt + (H - pt - pb) * f} y2=${pt + (H - pt - pb) * f} className="chart-grid" strokeDasharray="2 6" />`)}
       ${series.map((s) => {
         const pts = timeline.map((b, i) => (b[s.key] == null ? null : [x(i), y(b[s.key], s)]));
@@ -344,7 +344,7 @@ function ArcChart({ timeline, duration }) {
       <line x1=${pl} x2=${W - pr} y1=${H - pb} y2=${H - pb} className="chart-grid" />
       ${ticks.map((tk) => html`<text key=${tk.f} x=${pl + (W - pl - pr) * tk.f} y=${H - 8} className="chart-label" textAnchor=${tk.f === 0 ? 'start' : tk.f === 1 ? 'end' : 'middle'}>${fmtTime(tk.t)}</text>`)}
     </svg>
-    <div className="legend" style=${{ marginTop: 6 }}>${series.map((s) => html`<span key=${s.key}><i style=${{ background: s.color }}></i>${s.label}</span>`)}<span>Relative to your own range</span></div>
+    <div className="legend" style=${{ marginTop: 6 }}>${series.map((s) => html`<span key=${s.key}><i style=${{ background: s.color }}></i>${s.label}</span>`)}<span>${t('Relative to your own range')}</span></div>
   </div>`;
 }
 function Gauge({ value, min, max, band }) {
@@ -527,7 +527,7 @@ function FxLayer() {
         if (chip) { chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
         Sound.play('xp');
       } else if (type === 'quest') {
-        FX.emit('toast', { text: `Quest complete: ${d.label} · +${d.xp} XP`, kind: 'gold' });
+        FX.emit('toast', { text: t`Quest complete: ${d.label} · +${d.xp} XP`, kind: 'gold' });
         Sound.play('quest');
         celebrate({ count: 50, power: 0.7, y: window.innerHeight * 0.85 });
       } else if (type === 'chest' || type === 'badge' || type === 'levelup') {
@@ -546,28 +546,28 @@ function FxLayer() {
   return html`<${Fragment}>
     <canvas ref=${canvasRef} className="fx-canvas" aria-hidden="true"></canvas>
     <div className="toasts" role="status" aria-live="polite">
-      ${toasts.map((t) => html`<div key=${t.id} className=${'toast ' + (t.kind || '')}>${t.kind === 'gold' ? html`<${Icon} name="check" size=${18} />` : t.kind === 'bad' || t.kind === 'warn' ? html`<${Icon} name="alert" size=${18} />` : null}<span>${t.text}</span></div>`)}
+      ${toasts.map((ty) => html`<div key=${ty.id} className=${'toast ' + (ty.kind || '')}>${ty.kind === 'gold' ? html`<${Icon} name="check" size=${18} />` : ty.kind === 'bad' || ty.kind === 'warn' ? html`<${Icon} name="alert" size=${18} />` : null}<span>${ty.text}</span></div>`)}
     </div>
     ${floats.map((f) => html`<div key=${f.id} className="xp-float" style=${{ left: f.x, top: f.y }}>+${f.amount} XP</div>`)}
-    ${cur ? html`<${Modal} onClose=${close} label="Celebration">
+    ${cur ? html`<${Modal} onClose=${close} label=${t('Celebration')}>
       ${cur.type === 'levelup' ? html`<${Fragment}>
-        <div className="eyebrow">Level up</div>
+        <div className="eyebrow">${t('Level up')}</div>
         <${LaurelLevel} level=${cur.d.level} />
-        <h2>You are now ${/^[AEIOU]/.test(cur.d.info.title) ? 'an' : 'a'} ${cur.d.info.title}</h2>
-        <p className="muted">${(cur.d.info.need - cur.d.info.into).toLocaleString()} XP to the next title.</p>
-        <button className="btn-cta gold wide" onClick=${close}>Continue</button>
+        <h2>${t`You are now ${/^[AEIOU]/.test(cur.d.info.title) ? t('an') : t('a')} ${cur.d.info.title}`}</h2>
+        <p className="muted">${t`${(cur.d.info.need - cur.d.info.into).toLocaleString()} XP to the next title.`}</p>
+        <button className="btn-cta gold wide" onClick=${close}>${t('Continue')}</button>
       <//>` : cur.type === 'badge' ? html`<${Fragment}>
-        <div className="eyebrow">Badge earned · +${BADGE_XP} XP</div>
+        <div className="eyebrow">${t`Badge earned · +${BADGE_XP} XP`}</div>
         <div style=${{ animation: 'pop .6s cubic-bezier(.3,1.6,.5,1)' }} className="shine"><${BadgeMedal} badge=${cur.d} size=${140} /></div>
         <h2>${cur.d.name}</h2>
         <p className="muted">${cur.d.desc}</p>
-        <button className="btn-cta wide" onClick=${close}>Continue</button>
+        <button className="btn-cta wide" onClick=${close}>${t('Continue')}</button>
       <//>` : html`<${Fragment}>
-        <div className="eyebrow">All quests complete</div>
+        <div className="eyebrow">${t('All quests complete')}</div>
         <div className="tile-ic shine" style=${{ width: 96, height: 96, borderRadius: 28, background: 'var(--gold)', color: 'var(--on-accent)' }}><${Icon} name="gift" size=${52} /></div>
-        <h2>The laurel chest is open</h2>
-        <p className="muted">+${cur.d.xp} XP for finishing every quest today. New quests arrive tomorrow.</p>
-        <button className="btn-cta gold wide" onClick=${close}>Continue</button>
+        <h2>${t('The laurel chest is open')}</h2>
+        <p className="muted">${t`+${cur.d.xp} XP for finishing every quest today. New quests arrive tomorrow.`}</p>
+        <button className="btn-cta gold wide" onClick=${close}>${t('Continue')}</button>
       <//>`}
     <//>` : null}
   <//>`;

@@ -1,6 +1,6 @@
 # Rostra: Product Description
 
-*The app as it stands on 2 November 2026. Status: private prototype.*
+*The app as it stands on 6 November 2026. Status: pilot version for schools.*
 
 ## What Rostra is
 
@@ -81,8 +81,7 @@ Tailoring is the point of this module. Rostra shapes its approaches and sentence
 The report covers:
 
 - **Scores.** An overall score, the three appeals, nine sub-skills and the speaker's style.
-- **Delivery.** Pace, deliberate pauses versus frozen silences, pitch variety, volume dynamics and filler words, along with confidence and expressiveness scores.
-- **Presence.** A read of body language, for video.
+- **Delivery.** Pace, deliberate pauses versus frozen silences, pitch range, volume range and filler words, measured on the device. Rostra does not judge feelings from voice or face.
 - **Content.** A map of the speech's structure and an annotated transcript that highlights strengths, rhetorical devices, fallacies, contradictions, vague claims and weak wording, with suggested fixes.
 - **Coaching.** A note from the coach, three strengths, three next moves and three lessons written for the user's weak spots, each with a drill the coach grades.
 

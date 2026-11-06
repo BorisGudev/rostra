@@ -117,7 +117,7 @@ check('render HomePage new user (not onboarded, no data)', function () {
   return withState({ profile: freshProfile, speeches: [], preps: [], vivas: [] }, function () {
     HomePage({});
     var t = textOf(HomeStage({ scores: SAMPLE_PROFILE.scores, example: true, trail: SAMPLE_PROFILE.trail, ghost: SAMPLE_PROFILE.first, triLine: 'x', onPoster: function () {} }));
-    assert(t.indexOf('Example data') >= 0, 'example marker missing');
+    assert(t.indexOf('Example data') < 0 && t.indexOf('Journey') < 0, 'a new user sees no sample data and no journey toggle');
     return 'ok';
   });
 });
@@ -128,7 +128,7 @@ check('render HomeStage new user', function () {
     assert(t.indexOf('Find your three lights.') >= 0, 'first-run headline missing');
     var tree = HomeStage({ scores: SAMPLE_PROFILE.scores, example: true, onPoster: function () {} });
     var acts = homeActions(freshProfile, [], [], true);
-    assert(acts.length === 2 && acts[0].label === 'Analyze my first speech' && acts[1].to[1] === 'sample', 'first run offers one action and the sample');
+    assert(acts.length === 2 && acts[0].label === 'Get feedback on a speech' && acts[1].to[0] === 'viva', 'first run offers feedback first, then the exam');
     assert(t.indexOf('Make my poster') < 0, 'no poster until there is data');
     assert(t.indexOf('The Storyteller') < 0, 'no sample identity on first run');
     return tree ? 'ok' : 'no tree';
@@ -137,9 +137,9 @@ check('render HomeStage new user', function () {
 check('first run: an exam student gets the exam first', function () {
   var p = Object.assign({}, freshProfile, { goal: 'exam' });
   var acts = homeActions(p, [], [], true);
-  assert(acts[0].label === 'Take an oral exam' && acts[0].to[0] === 'viva', 'exam first');
+  assert(acts[0].label === 'Rehearse an oral exam' && acts[0].to[0] === 'viva', 'exam first');
   var later = homeActions(p, [], [{ id: 'd', status: 'done' }], true);
-  assert(later[0].label === 'Take an oral exam' && later.filter(function (a) { return a.id === 'viva'; }).length === 1, 'exam stays primary, listed once');
+  assert(later.length === 2 && later.filter(function (a) { return a.id === 'viva'; }).length === 1 && later.some(function (a) { return a.id === 'analyze'; }), 'the two core tools, the exam listed once');
   return 'ok';
 });
 check('homePrimary follows state', function () {
@@ -203,7 +203,8 @@ check('TabBar and More sheet', function () {
   assert(t.indexOf('More') >= 0, 'More tab');
   assert(NAV.find(function (n) { return n.id === 'viva'; }).label === 'Oral exam', 'nav label');
   var s = textOf(MoreSheet({ tab: 'gym', onClose: function () {} }));
-  ['Learn', 'Gym', 'Library', 'Trophies', 'Sound'].forEach(function (w) { assert(s.indexOf(w) >= 0, w + ' missing'); });
+  ['Learn', 'Gym', 'Library', 'Progress', 'Account', 'Sound'].forEach(function (w) { assert(s.indexOf(w) >= 0, w + ' missing'); });
+  assert(textOf(Rail({ tab: 'home' })).indexOf('Speech feedback') >= 0 && textOf(Rail({ tab: 'home' })).indexOf('Train') >= 0, 'rail groups');
   return 'ok';
 });
 check('Onboarding routes by goal', function () {
