@@ -1,0 +1,1 @@
+{ "name": "Rostra", "short_name": "Rostra", "start_url": "/", "display": "standalone", "background_color": "#EDE9DF", "theme_color": "#10142C", "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }] }
