@@ -18,6 +18,7 @@ for (const f of SCRIPTS) {
   if (f.startsWith('i18n')) continue;
   let src;
   try { src = readFileSync(path.join(SRC, f), 'utf8'); } catch (e) { continue; }
+  src = src.replace(/\/\*[\s\S]*?\*\//g, ''); // comments can mention t`...` without meaning it
   /* t('...') and t("...") */
   for (const m of src.matchAll(/\bt\(\s*(['"])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g)) add(unescapeJs(m[2]), f);
   /* t`...${x}...` : interpolations become {0}, {1}, ... */

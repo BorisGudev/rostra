@@ -8,9 +8,6 @@
  " · All done for today": [
   "pages-core.js"
  ],
- " · caption timing found": [
-  "pages-core.js"
- ],
  " · due {0}": [
   "teacher.js"
  ],
@@ -29,9 +26,6 @@
  " Dashed: your first speech. Dot: your center of gravity.": [
   "pages-core.js"
  ],
- " is a local variable (a turn) and would shadow the translator. */\nconst vivaThanks = () => t('Thank you.');\nconst vivaMicNote = (kind) => (kind === 'error' ? t('The transcription service did not answer.') : t('No words were picked up.'));\nfunction vivaNoMarkEval(reaction = '') {\n  return { scores: null, evidence: [], covered: [], missing: [], misconception: '', notes: '', reaction, next: { action: 'move_on', type: 'probe', question: '', examiner: null }, self: false, unmarked: true };\n}\n/* Aloud: nobody heard the candidate, so communication comes from their own two taps. */\nfunction vivaSelfCheckComm(sc) {\n  const c = sc && typeof sc === 'object' ? sc : {};\n  let v = 60;\n  if (c.first === true) v += 15; else if (c.first === false) v -= 15;\n  if (c.lost === true) v -= 15; else if (c.lost === false) v += 5;\n  if (c.said === 'all') v += 5; else if (c.said === 'some') v -= 10;\n  return clamp(v, 15, 85);\n}\nconst vivaOverClaim = (t) => !!t && wordsOf(t.answer).length > (Number(t.answerSec) || 0) * 2.5;\n\nfunction vivaChime(kind) {\n  if (!Sound.enabled) return;\n  try {\n    if (kind === 'ask') { Sound.tone(587.33, 0, 0.5, 'sine', 0.032); Sound.tone(880, 0.09, 0.6, 'sine', 0.022); }\n    else if (kind === 'think') Sound.tone(659.25, 0, 0.3, 'triangle', 0.028);\n    else if (kind === 'answer') { Sound.tone(783.99, 0, 0.25, 'triangle', 0.032); Sound.tone(1046.5, 0.08, 0.3, 'triangle', 0.026); }\n    else if (kind === 'over') { Sound.tone(392, 0, 0.35, 'sine', 0.04); Sound.tone(329.63, 0.18, 0.45, 'sine', 0.04); }\n    else if (kind === 'stamp') { Sound.tone(70, 0, 0.38, 'sine', 0.16); Sound.tone(140, 0, 0.12, 'triangle', 0.05); }\n    else if (kind === 'enter') [261.63, 392, 523.25].forEach((f, i) => Sound.tone(f, i * 0.2, 1.1, 'sine', 0.026));\n  } catch (e) { /* sound is optional */ }\n}\n\n/* ---------- Documents ---------- */\nfunction vivaNewDoc(over = {}) {\n  const fmt = vivaFormat(over.format);\n  const now = Date.now();\n  return {\n    id: uid('v_'), type: 'viva', subject: '', topic: '', level: 'undergrad', format: fmt.id, persona: fmt.panel ? 'panel' : 'socratic',\n    status: 'setup', created: now, updated: now, material: '', mode: 'speak', think: fmt.think, answer: fmt.answer, voice: true, practice: false, basis: 'course', discipline: 'general',\n    focus: [], source: null, title: '', opening: '', closing: '', plan: [], reserve: [], turns: [], report: null,\n    ...over,\n  };\n}\nfunction vivaMakeTurn({ qi, kind = 'main', fType = null, q, examiner, lead = '' }) {\n  return { id: uid('t'), qi, kind, fType: fType || null, q: vivaStr(q, 400), examiner, lead: vivaStr(lead, 240), answer: '', answered: false, aloud: false, thinkSec: null, answerSec: null, overtime: 0, moment: false, clarify: [], help: [], eval: null };\n}\n/* The turn the candidate still owes: unanswered, or answered and not yet marked. */\nfunction vivaCurrentTurn(doc) {\n  const ts = vivaArr(doc && doc.turns);\n  const last = ts[ts.length - 1];\n  if (!last) return null;\n  return !last.answered || !last.eval ? last : null;\n}\nfunction vivaResumePhase(doc) {\n  if (!doc) return 'setup';\n  if (doc.status === 'done') return 'done';\n  if (doc.status !== 'live') return 'setup';\n  const t = vivaCurrentTurn(doc);\n  if (!t) return 'verdict';\n  if (t.answered && !t.eval) return 'pending';\n  return 'intro';\n}\n\n/* ---------- Grounding: concepts from topic, retake gaps and pasted material ---------- */\nfunction vivaKeyTerms(text, max = 6) {\n  const words = String(text || '').toLowerCase().match(/[a-z][a-z'-]{2,}/g) || [];\n  const uni = {}, bi = {};\n  for (let i = 0; i < words.length; i++) {\n    const w = words[i];\n    if (VIVA_STOP.has(w) || w.length < 4) continue;\n    uni[w] = (uni[w] || 0) + 1;\n    const n = words[i + 1];\n    if (n && !VIVA_STOP.has(n) && n.length >= 4) { const b = w + ' ' + n; bi[b] = (bi[b] || 0) + 1; }\n  }\n  const cands = Object.entries(bi).filter(([, c]) => c >= 2).map(([t, c]) => [t, c * 2.4])\n    .concat(Object.entries(uni).filter(([, c]) => c >= 2).map(([t, c]) => [t, c]))\n    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));\n  const out = [];\n  for (const [t] of cands) {\n    if (out.some((o) => o.includes(t) || t.includes(o))) continue;\n    out.push(t);\n    if (out.length >= max) break;\n  }\n  return out;\n}\n/* A syllabus usually names its topics line by line: prefer those over word counts. */\nfunction vivaSyllabusTopics(text, max = 8) {\n  const out = [];\n  String(text || '').split('\n').forEach((line) => {\n    const m = line.match(/^\\s*(?:week|lecture|unit|chapter|topic|module|section)\\s*\\d*\\s*[:.\\-]\\s*(.+)$/i);\n    if (!m || out.length >= max) return;\n    const t = vivaStr(m[1], 70).replace(/[.;,]+$/, '');\n    if (t.length > 2 && !wordsOf(t).every((w) => VIVA_STOP.has(w.toLowerCase()))) out.push(t);\n  });\n  return out;\n}\nfunction vivaConcepts(doc) {\n  const out = [];\n  const add = (s) => { const t = vivaStr(s, 80); if (t && t.length > 1 && !out.some((o) => o.toLowerCase() === t.toLowerCase())) out.push(t); };\n  vivaArr(doc && doc.focus).forEach(add);\n  String((doc && doc.topic) || '').split(/[,;\n]+/).map((s) => s.trim()).filter((s) => s.length > 2).forEach(add);\n  vivaSyllabusTopics((doc && doc.material) || '').forEach(add);\n  vivaKeyTerms((doc && doc.material) || '').forEach(add);\n  if (!out.length) add((doc && doc.subject) || 'this subject');\n  return out;\n}\nfunction vivaFallbackPlan(doc) {\n  const fmt = vivaFormat(doc.format);\n  const kinds = VIVA_TEMPLATE_ORDER[fmt.id] || VIVA_TEMPLATE_ORDER.standard;\n  const cs = vivaConcepts(doc);\n  const ids = vivaPanelIds(doc);\n  const subj = vivaStr(doc.subject, 80) || 'the subject';\n  const work = doc.basis === 'work';\n  const bank = work ? VIVA_DEFENSE_TEMPLATES : VIVA_TEMPLATES;\n  const order = work ? VIVA_DEFENSE_ORDER[fmt.id] || VIVA_DEFENSE_ORDER.standard : kinds;\n  const make = (k, i) => {\n    const T = bank.find((t) => t.kind === k);\n    const c = work ? t('Your own work') : cs[i % cs.length];\n    const ex = ids.length > 1 ? (ids.includes(VIVA_ROLE_OF_KIND[k]) ? VIVA_ROLE_OF_KIND[k] : ids[i % ids.length]) : ids[0];\n    return { id: 'q' + (i + 1), q: T.q(c, subj), concept: c, difficulty: T.difficulty, keyPoints: T.keyPoints.slice(), examiner: ex, kind: k };\n  };\n  const questions = order.map(make);\n  const reserve = fmt.drill ? [] : bank.filter((t) => !order.includes(t.kind)).map((t, i) => ({ ...make(t.kind, questions.length + i), id: 'r' + (i + 1) }));\n  return { title: subj, opening: vivaEx(ids[0]).opening, questions, reserve };\n}\n\n/* ---------- AI: prompts and normalizers (every field validated) ---------- */\nfunction vivaContext(doc) {\n  const lvl = vivaLevel(doc.level);\n  const ex = vivaPanel(doc);\n  return [\n    ": [
-  "viva.js"
- ],
  " Tap a corner for detail.": [
   "pages-core.js"
  ],
@@ -39,9 +33,6 @@
   "pages-core.js"
  ],
  " Tomorrow’s first quest: {0}.": [
-  "pages-core.js"
- ],
- " Write about 30 seconds on it, as you would say it.": [
   "pages-core.js"
  ],
  "- **Pause first.** Two seconds gives you time to think and shows you are not rattled.\n- **Restate the real question** without the heat: “You’re asking whether the cost is justified.”\n- **Answer in one or two sentences**, with one piece of evidence.\n- **Link back to your main point**, then take the next question.\n\nIf you don’t know the answer, say so and say when you’ll find out.": [
@@ -115,9 +106,6 @@
  ],
  "[Your point], because [reason]. For example, [example].": [
   "pages-more.js"
- ],
- "{0}": [
-  "pages-core.js"
  ],
  "{0} · {1} min": [
   "pages-more.js"
@@ -287,9 +275,6 @@
  "{0} s": [
   "viva.js"
  ],
- "{0} sampled across your video.": [
-  "pages-core.js"
- ],
  "{0} seconds of slow breathing. Speak while the calm lasts.": [
   "gym.js"
  ],
@@ -335,9 +320,6 @@
  ],
  "{0} words · about {1} min at 140 wpm · target {2} min": [
   "pages-more.js"
- ],
- "{0} words · about {1} min spoken": [
-  "pages-core.js"
  ],
  "{0} words (the first {1} characters are used)": [
   "viva.js"
@@ -449,9 +431,6 @@
  ],
  "A forward buzz carries further without extra effort.": [
   "gym.js"
- ],
- "A full read in three layers": [
-  "pages-core.js"
  ],
  "A full teleprompter run earns 25 XP, once a day for each draft.": [
   "pages-more.js"
@@ -605,9 +584,6 @@
  "Add a comparison with “like” or “as”.": [
   "gym.js"
  ],
- "Add a recording or at least 30 words of transcript.": [
-  "pages-core.js"
- ],
  "Add one concrete moment: a time, a place and a person.": [
   "engine.js"
  ],
@@ -700,20 +676,11 @@
  "Analyze another": [
   "pages-core.js"
  ],
- "Analyze content": [
-  "pages-core.js"
- ],
- "Analyze delivery": [
-  "pages-core.js"
- ],
  "Analyze my first speech": [
   "pages-core.js"
  ],
  "Analyze my recording": [
   "pages-more.js"
- ],
- "Analyze speech": [
-  "pages-core.js"
  ],
  "Analyze this draft": [
   "pages-more.js"
@@ -792,9 +759,6 @@
  ],
  "Any device": [
   "gym.js"
- ],
- "Anything you want extra feedback on?": [
-  "pages-core.js"
  ],
  "Apologise and move on": [
   "viva.js"
@@ -898,9 +862,6 @@
  ],
  "At least {0} characters. Pick one you will remember: there is no email to reset it with.": [
   "auth.js"
- ],
- "At least 30 words": [
-  "pages-core.js"
  ],
  "At least 8 characters": [
   "teacher.js"
@@ -1207,6 +1168,9 @@
   "data.js",
   "gym.js"
  ],
+ "Clarity {0}": [
+  "pages-core.js"
+ ],
  "Class": [
   "teacher.js"
  ],
@@ -1253,7 +1217,6 @@
   "engine.js"
  ],
  "Clear": [
-  "pages-core.js",
   "pages-more.js"
  ],
  "Clear enough": [
@@ -1366,9 +1329,6 @@
   "data.js",
   "gym.js"
  ],
- "Confidence {0}": [
-  "pages-core.js"
- ],
  "Confirm delete": [
   "viva.js"
  ],
@@ -1382,9 +1342,6 @@
   "data.js"
  ],
  "Content check": [
-  "pages-core.js"
- ],
- "Context": [
   "pages-core.js"
  ],
  "Continue": [
@@ -1754,12 +1711,6 @@
  "Drills done": [
   "pages-more.js"
  ],
- "Drop a recording or browse": [
-  "pages-core.js"
- ],
- "Drop a transcript or browse": [
-  "pages-core.js"
- ],
  "Due (optional)": [
   "teacher.js"
  ],
@@ -1975,12 +1926,6 @@
  "Explains the mechanism": [
   "viva.js"
  ],
- "Expressive voice": [
-  "engine.js"
- ],
- "Expressiveness {0}": [
-  "pages-core.js"
- ],
  "Extension": [
   "viva.js"
  ],
@@ -2138,14 +2083,8 @@
  "Four habits examiners reward": [
   "viva.js"
  ],
- "Frame {0}": [
-  "pages-core.js"
- ],
  "From “{0}”": [
   "pages-more.js"
- ],
- "From {0}": [
-  "pages-core.js"
  ],
  "from captions": [
   "pages-core.js"
@@ -2428,6 +2367,9 @@
  ],
  "How it works": [
   "gym.js"
+ ],
+ "How much your pitch and volume moved": [
+  "pages-core.js"
  ],
  "How Rostra handles your data": [
   "auth.js"
@@ -3136,9 +3078,6 @@
  "Moves to steal": [
   "pages-more.js"
  ],
- "MP3, M4A, WAV, MP4, MOV · a phone voice memo works great": [
-  "pages-core.js"
- ],
  "Mute sounds": [
   "app.js"
  ],
@@ -3310,9 +3249,6 @@
  "No score yet": [
   "pages-more.js"
  ],
- "No speech handy?": [
-  "pages-core.js"
- ],
  "No words were picked up.": [
   "viva.js"
  ],
@@ -3392,9 +3328,6 @@
  "Nothing written yet.": [
   "pages-more.js"
  ],
- "Nothing yet": [
-  "pages-core.js"
- ],
  "Now": [
   "ui.js",
   "pages-core.js",
@@ -3407,7 +3340,6 @@
   "gym.js"
  ],
  "Occasion": [
-  "pages-core.js",
   "pages-more.js",
   "teacher.js"
  ],
@@ -3521,14 +3453,8 @@
  "Opinion": [
   "gym.js"
  ],
- "Optional": [
-  "pages-core.js"
- ],
  "Optional, a few lines is plenty": [
   "gym.js"
- ],
- "Optional. The coach will suggest one.": [
-  "pages-core.js"
  ],
  "Optional. Your answers shape the outline. The best material is already in your head.": [
   "pages-more.js"
@@ -3592,6 +3518,9 @@
  "Pace in the sweet spot": [
   "engine.js"
  ],
+ "Pace, pauses and filler words, combined": [
+  "pages-core.js"
+ ],
  "Pace, silences and filler words come from the recording of each answer, on your device. Filler words and silences over two seconds lower the communication mark by up to 12 points on that answer. Nothing about your voice was judged.": [
   "viva.js"
  ],
@@ -3618,12 +3547,6 @@
  ],
  "Paste notes or the syllabus section. Questions and marking follow it.": [
   "teacher.js"
- ],
- "Paste text": [
-  "pages-core.js"
- ],
- "Paste what you said, or the script you plan to say…": [
-  "pages-core.js"
  ],
  "Paste your essay, problem set, code or project write-up": [
   "viva.js"
@@ -3782,9 +3705,6 @@
   "pages-core.js",
   "app.js"
  ],
- "Presence": [
-  "pages-core.js"
- ],
  "Present": [
   "gym.js"
  ],
@@ -3938,9 +3858,6 @@
  ],
  "Read your line out loud, then answer honestly.": [
   "gym.js"
- ],
- "Reading body language": [
-  "pages-core.js"
  ],
  "Reading caption timing": [
   "pages-core.js"
@@ -5170,9 +5087,6 @@
  "The Advocate": [
   "data.js"
  ],
- "The AI coach isn’t available in this view, so content gets an on-device estimate instead of a full read.": [
-  "pages-core.js"
- ],
  "The AI coach isn’t available on this server right now.": [
   "engine.js"
  ],
@@ -5220,9 +5134,6 @@
  ],
  "the closing question": [
   "viva.js"
- ],
- "The coach calibrates pace and expectations to the occasion.": [
-  "pages-core.js"
  ],
  "The coach couldn’t be reached. Check your connection and try again.": [
   "engine.js"
@@ -5538,7 +5449,6 @@
   "pages-more.js"
  ],
  "Title": [
-  "pages-core.js",
   "pages-more.js"
  ],
  "Title students see": [
@@ -5607,12 +5517,8 @@
   "pages-more.js"
  ],
  "Transcript": [
-  "pages-core.js",
   "viva.js",
   "teacher.js"
- ],
- "Transcript input": [
-  "pages-core.js"
  ],
  "Transcript so far": [
   "viva.js"
@@ -5694,9 +5600,6 @@
  "Two structures make this automatic. BLUF (bottom line up front): state the conclusion, then the support. PREP: Point, Reason, Example, Point again. A PREP answer to “Why does ice float?” sounds like this: “Ice floats because it is less dense than liquid water. Hydrogen bonds lock the molecules into an open lattice that takes up more space. That is why lakes freeze from the top down. So floating comes down to density, and the density comes from the lattice.”": [
   "viva.js"
  ],
- "TXT, or VTT and SRT caption files (their timing is used for pacing)": [
-  "pages-core.js"
- ],
  "Type my answers (content drill)": [
   "viva.js"
  ],
@@ -5730,12 +5633,6 @@
  "unlock {0}": [
   "gym.js"
  ],
- "Unlocks a content estimate from word patterns: evidence, hedges and sweeping claims.": [
-  "pages-core.js"
- ],
- "Unlocks content analysis: structure, evidence, fallacies, inconsistencies and personal lessons.": [
-  "pages-core.js"
- ],
  "Unranked": [
   "engine.js"
  ],
@@ -5756,9 +5653,6 @@
   "pages-core.js"
  ],
  "Upload a speech and get coached on all three of Aristotle’s appeals. Prepare new ones with a coach that asks before it tells. Rehearse oral exams with an examiner who follows up. Earn your laurels.": [
-  "pages-core.js"
- ],
- "Upload file": [
   "pages-core.js"
  ],
  "Use “you” and “we” more to make the talk about the audience.": [
@@ -5791,6 +5685,9 @@
  "Using classic angles instead.": [
   "pages-more.js"
  ],
+ "Varied pitch": [
+  "engine.js"
+ ],
  "Verdict": [
   "viva.js"
  ],
@@ -5802,9 +5699,6 @@
  ],
  "Video": [
   "pages-core.js"
- ],
- "Video frames couldn’t be sent, so presence wasn’t scored.": [
-  "engine.js"
  ],
  "Visual: {0}": [
   "pages-more.js"
@@ -5824,6 +5718,9 @@
  ],
  "Vivid language": [
   "data.js"
+ ],
+ "Vocal variety {0}": [
+  "pages-core.js"
  ],
  "Vocal warm-up": [
   "gym.js"
@@ -6000,9 +5897,6 @@
  "What should your coach call you?": [
   "pages-core.js"
  ],
- "What the camera saw": [
-  "pages-core.js"
- ],
  "What the example shows about the general idea": [
   "viva.js"
  ],
@@ -6035,9 +5929,6 @@
  ],
  "What would have to be true for your answer to fail?": [
   "viva.js"
- ],
- "What you get": [
-  "pages-core.js"
  ],
  "What you know now that you did not know then": [
   "viva.js"
@@ -6077,9 +5968,6 @@
  ],
  "Where the question is still open": [
   "viva.js"
- ],
- "Where to get a transcript": [
-  "pages-core.js"
  ],
  "Where would I see {c} outside a textbook?": [
   "viva.js"
@@ -6190,9 +6078,6 @@
   "viva.js"
  ],
  "wpm": [
-  "pages-core.js"
- ],
- "Write 30 seconds on a prompt": [
   "pages-core.js"
  ],
  "Write a full line first, then check it.": [
@@ -6517,9 +6402,6 @@
  ],
  "Your accuracy kept this mark below a Pass.": [
   "viva.js"
- ],
- "Your analyses": [
-  "pages-core.js"
  ],
  "Your analysis of “{0}” is ready in Analyze.": [
   "pages-core.js"
