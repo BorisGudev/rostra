@@ -8,7 +8,7 @@ const Teach = {
   me() { return typeof Platform !== 'undefined' ? Platform.user : null; },
   async q(promise) {
     const { data, error } = await promise;
-    if (error) { const e = new Error(error.message || 'The database did not answer'); e.code = error.code; throw e; }
+    if (error) { const e = new Error(error.message || t('The database did not answer')); e.code = error.code; throw e; }
     return data;
   },
   classes() { return this.q(this.sb().from('classes').select('*').eq('teacher_id', this.me().id).order('created_at', { ascending: true })); },
@@ -31,12 +31,12 @@ function teachSummaryOf(doc) {
   if (!doc) return null;
   if (doc.type === 'viva') {
     const r = doc.report || {};
-    return { kind: 'viva', title: doc.subject || 'Oral exam', percent: r.percent != null ? r.percent : null, grade: r.grade || null, source: r.source || null, finished: doc.finished || doc.updated || null, mode: doc.mode || null };
+    return { kind: 'viva', title: doc.subject || t('Oral exam'), percent: r.percent != null ? r.percent : null, grade: r.grade || null, source: r.source || null, finished: doc.finished || doc.updated || null, mode: doc.mode || null };
   }
   if (doc.type === 'speech') {
     const sc = doc.scores || {};
     const vals = POLE_KEYS.map((k) => sc[k]).filter((v) => v != null);
-    return { kind: 'speech', title: doc.title || 'Speech', percent: vals.length ? Math.round(mean(vals)) : null, grade: null, scores: sc, finished: doc.date || doc.updated || null, words: doc.words || null };
+    return { kind: 'speech', title: doc.title || t('Speech'), percent: vals.length ? Math.round(mean(vals)) : null, grade: null, scores: sc, finished: doc.date || doc.updated || null, words: doc.words || null };
   }
   return null;
 }
@@ -47,7 +47,7 @@ function TeachPct({ value, grade }) {
 function TeachSpark({ values }) {
   const vs = (values || []).slice(-8);
   const max = Math.max(1, ...vs.map((v) => v || 0));
-  return html`<span className="spark" aria-label=${vs.length ? 'Last results: ' + vs.join(', ') : 'No results yet'}>${vs.map((v, i) => html`<i key=${i} className=${i === vs.length - 1 ? 'on' : ''} style=${{ height: Math.max(3, Math.round(((v || 0) / max) * 22)) + 'px' }}></i>`)}</span>`;
+  return html`<span className="spark" aria-label=${vs.length ? t('Last results:') + ' ' + vs.join(', ') : t('No results yet')}>${vs.map((v, i) => html`<i key=${i} className=${i === vs.length - 1 ? 'on' : ''} style=${{ height: Math.max(3, Math.round(((v || 0) / max) * 22)) + 'px' }}></i>`)}</span>`;
 }
 
 /* ---------- Teacher home: my classes ---------- */
@@ -63,28 +63,28 @@ function TeacherPage() {
     e.preventDefault();
     if (!name.trim() || busy) return;
     setBusy(true); setErr('');
-    try { const c = await Teach.createClass(name.trim().slice(0, 60)); setName(''); setClasses((cs) => [...(cs || []), c]); toast(`Class “${c.name}” created. Code: ${c.code}`, 'gold'); }
+    try { const c = await Teach.createClass(name.trim().slice(0, 60)); setName(''); setClasses((cs) => [...(cs || []), c]); toast(t`Class “${c.name}” created. Code: ${c.code}`, 'gold'); }
     catch (ex) { setErr(ex.message); }
     finally { setBusy(false); }
   }
-  if (!me || !Teach.sb()) return html`<div className="card empty"><${Icon} name="users" size=${30} /><h2>Classes need an account</h2><p className="small">Sign in as a teacher to create classes and set work.</p></div>`;
+  if (!me || !Teach.sb()) return html`<div className="card empty"><${Icon} name="users" size=${30} /><h2>${t('Classes need an account')}</h2><p className="small">${t('Sign in as a teacher to create classes and set work.')}</p></div>`;
   const live = (classes || []).filter((c) => !c.archived);
   const old = (classes || []).filter((c) => c.archived);
   return html`<div className="stack" style=${{ gap: 22 }}>
-    <${PageHead} label="Teacher" greek="διδάσκαλος" title="Your classes" line="Create a class, give students its code, set an exam or a speech, and watch the results come in." />
+    <${PageHead} label=${t('Teacher')} greek="διδάσκαλος" title=${t('Your classes')} line=${t('Create a class, give students its code, set an exam or a speech, and watch the results come in.')} />
     <form className="card row" onSubmit=${create} style=${{ gap: 10, alignItems: 'end' }}>
-      <div className="field" style=${{ flex: '1 1 240px' }}><label htmlFor="tc-name">New class</label><input id="tc-name" className="input" value=${name} onInput=${(e) => setName(e.target.value)} placeholder="e.g. 10B English, Debate club" maxLength="60" /></div>
-      <button className="btn-cta" type="submit" disabled=${busy || !name.trim()}><${Icon} name="plus" size=${17} />Create class</button>
+      <div className="field" style=${{ flex: '1 1 240px' }}><label htmlFor="tc-name">${t('New class')}</label><input id="tc-name" className="input" value=${name} onInput=${(e) => setName(e.target.value)} placeholder=${t('e.g. 10B English, Debate club')} maxLength="60" /></div>
+      <button className="btn-cta" type="submit" disabled=${busy || !name.trim()}><${Icon} name="plus" size=${17} />${t('Create class')}</button>
       ${err ? html`<span className="hint" style=${{ color: 'var(--bad)' }}>${err}</span>` : null}
     </form>
-    ${classes == null ? html`<p className="muted">Loading your classes…</p>` : !live.length ? html`<div className="card empty"><${Icon} name="users" size=${30} /><h2>No classes yet</h2><p className="small">Create one above. You get a six-character code; students join with it from the sign-in page.</p></div>`
+    ${classes == null ? html`<p className="muted">${t('Loading your classes…')}</p>` : !live.length ? html`<div className="card empty"><${Icon} name="users" size=${30} /><h2>${t('No classes yet')}</h2><p className="small">${t('Create one above. You get a six-character code; students join with it from the sign-in page.')}</p></div>`
       : html`<div className="teach-grid">${live.map((c) => html`<button key=${c.id} className="tile-btn teach-class" onClick=${() => go('class', c.id)}>
           <span className="tile-ic"><${Icon} name="users" /></span>
           <h3>${c.name}</h3>
-          <span className="teach-code">Code ${c.code}</span>
-          <span className="small muted">Created ${fmtDate(c.created_at)}</span>
+          <span className="teach-code">${t`Code ${c.code}`}</span>
+          <span className="small muted">${t`Created ${fmtDate(c.created_at)}`}</span>
         </button>`)}</div>`}
-    ${old.length ? html`<details className="details"><summary><b>Archived classes (${old.length})</b></summary><ul className="list-plain" style=${{ marginTop: 8 }}>${old.map((c) => html`<li key=${c.id} className="row-between"><span>${c.name}</span><button className="btn btn-sm" onClick=${async () => { await Teach.archiveClass(c.id, false); load(); }}>Restore</button></li>`)}</ul></details>` : null}
+    ${old.length ? html`<details className="details"><summary><b>${t`Archived classes (${old.length})`}</b></summary><ul className="list-plain" style=${{ marginTop: 8 }}>${old.map((c) => html`<li key=${c.id} className="row-between"><span>${c.name}</span><button className="btn btn-sm" onClick=${async () => { await Teach.archiveClass(c.id, false); load(); }}>${t('Restore')}</button></li>`)}</ul></details>` : null}
   </div>`;
 }
 
@@ -131,10 +131,10 @@ function ClassPage({ id }) {
   async function saveAssignment(e) {
     e.preventDefault();
     if (!draft || busy) return;
-    const title = draft.title.trim() || (draft.kind === 'viva' ? `Oral exam: ${draft.config.subject}` : `Speech: ${occasionOf(draft.config.occasion).label}`);
-    if (draft.kind === 'viva' && !draft.config.subject.trim()) { setErr('Name the subject of the exam.'); return; }
+    const title = draft.title.trim() || (draft.kind === 'viva' ? t`Oral exam: ${draft.config.subject}` : t`Speech: ${occasionOf(draft.config.occasion).label}`);
+    if (draft.kind === 'viva' && !draft.config.subject.trim()) { setErr(t('Name the subject of the exam.')); return; }
     setBusy('save'); setErr('');
-    try { const a = await Teach.createAssignment({ class_id: id, kind: draft.kind, title: title.slice(0, 120), config: draft.config, due_at: draft.due || null }); setAssignments((as) => [a, ...(as || [])]); setDraft(null); toast('Assigned. Students see it on their Home page.', 'gold'); }
+    try { const a = await Teach.createAssignment({ class_id: id, kind: draft.kind, title: title.slice(0, 120), config: draft.config, due_at: draft.due || null }); setAssignments((as) => [a, ...(as || [])]); setDraft(null); toast(t('Assigned. Students see it on their Home page.'), 'gold'); }
     catch (ex) { setErr(ex.message); }
     finally { setBusy(''); }
   }
@@ -149,62 +149,62 @@ function ClassPage({ id }) {
     e.preventDefault();
     if (!reset || busy) return;
     setBusy('reset');
-    try { await Platform.account('reset', { username: reset.username, newPassword: reset.pw }); toast(`New password set for ${reset.name}.`, 'gold'); setReset(null); }
+    try { await Platform.account('reset', { username: reset.username, newPassword: reset.pw }); toast(t`New password set for ${reset.name}.`, 'gold'); setReset(null); }
     catch (ex) { toast(authErrorText(ex), 'bad'); }
     finally { setBusy(''); }
   }
-  if (!me || !Teach.sb()) return html`<div className="card empty"><h2>Sign in as a teacher</h2></div>`;
-  if (cls === null && !err) return html`<p className="muted">Loading…</p>`;
-  if (!cls) return html`<div className="card empty"><h2>That class isn’t yours</h2><button className="btn" onClick=${() => go('teacher')}>All classes</button></div>`;
+  if (!me || !Teach.sb()) return html`<div className="card empty"><h2>${t('Sign in as a teacher')}</h2></div>`;
+  if (cls === null && !err) return html`<p className="muted">${t('Loading…')}</p>`;
+  if (!cls) return html`<div className="card empty"><h2>${t('That class isn’t yours')}</h2><button className="btn" onClick=${() => go('teacher')}>${t('All classes')}</button></div>`;
   const setC = (k, v) => setDraft((d) => ({ ...d, config: { ...d.config, [k]: v } }));
   const subsOf = (aid) => subs.filter((s) => s.assignment_id === aid);
   return html`<div className="stack" style=${{ gap: 22 }}>
-    <${PageHead} label="Class" greek="τάξις" title=${cls.name} line=${`Students join with the code ${cls.code} from the sign-in page.`} end=${html`<div className="row" style=${{ gap: 8 }}><span className="chip auth-code">${cls.code}</span><button className="btn btn-sm" onClick=${async () => { await Teach.archiveClass(cls.id, true); go('teacher'); }}>Archive class</button></div>`} />
+    <${PageHead} label=${t('Class')} greek="τάξις" title=${cls.name} line=${t`Students join with the code ${cls.code} from the sign-in page.`} end=${html`<div className="row" style=${{ gap: 8 }}><span className="chip auth-code">${cls.code}</span><button className="btn btn-sm" onClick=${async () => { await Teach.archiveClass(cls.id, true); go('teacher'); }}>${t('Archive class')}</button></div>`} />
     ${err ? html`<p className="notice notice-warn"><${Icon} name="alert" size=${18} /><span>${err}</span></p>` : null}
 
     <section className="stack" style=${{ gap: 12 }}>
-      <div className="sec-head"><div><div className="eyebrow">Set work</div><h2>Assignments</h2></div>
-        ${!draft ? html`<div className="row" style=${{ gap: 8 }}><button className="btn-cta" onClick=${() => setDraft(teachNewAssignment('viva'))}><${Icon} name="scroll" size=${17} />Set an oral exam</button><button className="btn" onClick=${() => setDraft(teachNewAssignment('speech'))}><${Icon} name="mic" size=${16} />Set a speech</button></div>` : null}</div>
+      <div className="sec-head"><div><div className="eyebrow">${t('Set work')}</div><h2>${t('Assignments')}</h2></div>
+        ${!draft ? html`<div className="row" style=${{ gap: 8 }}><button className="btn-cta" onClick=${() => setDraft(teachNewAssignment('viva'))}><${Icon} name="scroll" size=${17} />${t('Set an oral exam')}</button><button className="btn" onClick=${() => setDraft(teachNewAssignment('speech'))}><${Icon} name="mic" size=${16} />${t('Set a speech')}</button></div>` : null}</div>
       ${draft ? html`<form className="card teach-assign" onSubmit=${saveAssignment}>
-        <div className="field"><label htmlFor="ta-title">Title students see</label><input id="ta-title" className="input" value=${draft.title} onInput=${(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder=${draft.kind === 'viva' ? 'e.g. Photosynthesis, oral check' : 'e.g. Three-minute persuasive speech'} maxLength="120" /></div>
+        <div className="field"><label htmlFor="ta-title">${t('Title students see')}</label><input id="ta-title" className="input" value=${draft.title} onInput=${(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder=${draft.kind === 'viva' ? t('e.g. Photosynthesis, oral check') : t('e.g. Three-minute persuasive speech')} maxLength="120" /></div>
         ${draft.kind === 'viva' ? html`<${Fragment}>
           <div className="grid-2">
-            <div className="field"><label htmlFor="ta-subject">Subject</label><input id="ta-subject" className="input" value=${draft.config.subject} onInput=${(e) => setC('subject', e.target.value)} placeholder="Photosynthesis" maxLength="120" required /></div>
-            <div className="field"><label htmlFor="ta-topic">Topic focus (optional)</label><input id="ta-topic" className="input" value=${draft.config.topic} onInput=${(e) => setC('topic', e.target.value)} placeholder="Light reactions and the Calvin cycle" maxLength="300" /></div>
+            <div className="field"><label htmlFor="ta-subject">${t('Subject')}</label><input id="ta-subject" className="input" value=${draft.config.subject} onInput=${(e) => setC('subject', e.target.value)} placeholder=${t('Photosynthesis')} maxLength="120" required /></div>
+            <div className="field"><label htmlFor="ta-topic">${t('Topic focus (optional)')}</label><input id="ta-topic" className="input" value=${draft.config.topic} onInput=${(e) => setC('topic', e.target.value)} placeholder=${t('Light reactions and the Calvin cycle')} maxLength="300" /></div>
           </div>
-          <div className="field"><span className="label">Length</span><div className="row" style=${{ gap: 6 }}>${TEACH_VIVA_FORMATS.map((f) => html`<button key=${f} type="button" className="chip" aria-pressed=${draft.config.format === f} onClick=${() => setC('format', f)}>${VIVA_FORMATS[f].label} · ${VIVA_FORMATS[f].n} questions</button>`)}</div></div>
-          <div className="field"><span className="label">Level</span><div className="row" style=${{ gap: 6 }}>${VIVA_LEVELS.map((l) => html`<button key=${l.id} type="button" className="chip" aria-pressed=${draft.config.level === l.id} onClick=${() => setC('level', l.id)}>${l.label}</button>`)}</div></div>
-          <div className="field"><span className="label">Examiner</span><div className="row" style=${{ gap: 6 }}>${Object.values(VIVA_PERSONAS).filter((p) => !p.examiners || p.examiners.length === 1 || draft.config.format === 'qualifying').map((p) => html`<button key=${p.id} type="button" className="chip" aria-pressed=${draft.config.persona === p.id} onClick=${() => setC('persona', p.id)}>${p.label}</button>`)}</div></div>
-          <div className="field"><label htmlFor="ta-material">Course material (optional)</label><textarea id="ta-material" className="textarea" rows="4" value=${draft.config.material} onInput=${(e) => setC('material', e.target.value.slice(0, VIVA_MATERIAL_MAX))} placeholder="Paste notes or the syllabus section. Questions and marking follow it."></textarea></div>
-          <div className="field"><span className="label">How students answer</span><div className="row" style=${{ gap: 6 }}>${Object.values(VIVA_MODES).map((m) => html`<button key=${m.id} type="button" className="chip" aria-pressed=${draft.config.mode === m.id} onClick=${() => setC('mode', m.id)}><${Icon} name=${m.icon} size=${14} /> ${m.label}</button>`)}</div></div>
+          <div className="field"><span className="label">${t('Length')}</span><div className="row" style=${{ gap: 6 }}>${TEACH_VIVA_FORMATS.map((f) => html`<button key=${f} type="button" className="chip" aria-pressed=${draft.config.format === f} onClick=${() => setC('format', f)}>${t`${VIVA_FORMATS[f].label} · ${VIVA_FORMATS[f].n} questions`}</button>`)}</div></div>
+          <div className="field"><span className="label">${t('Level')}</span><div className="row" style=${{ gap: 6 }}>${VIVA_LEVELS.map((l) => html`<button key=${l.id} type="button" className="chip" aria-pressed=${draft.config.level === l.id} onClick=${() => setC('level', l.id)}>${l.label}</button>`)}</div></div>
+          <div className="field"><span className="label">${t('Examiner')}</span><div className="row" style=${{ gap: 6 }}>${Object.values(VIVA_PERSONAS).filter((p) => !p.examiners || p.examiners.length === 1 || draft.config.format === 'qualifying').map((p) => html`<button key=${p.id} type="button" className="chip" aria-pressed=${draft.config.persona === p.id} onClick=${() => setC('persona', p.id)}>${p.label}</button>`)}</div></div>
+          <div className="field"><label htmlFor="ta-material">${t('Course material (optional)')}</label><textarea id="ta-material" className="textarea" rows="4" value=${draft.config.material} onInput=${(e) => setC('material', e.target.value.slice(0, VIVA_MATERIAL_MAX))} placeholder=${t('Paste notes or the syllabus section. Questions and marking follow it.')}></textarea></div>
+          <div className="field"><span className="label">${t('How students answer')}</span><div className="row" style=${{ gap: 6 }}>${Object.values(VIVA_MODES).map((m) => html`<button key=${m.id} type="button" className="chip" aria-pressed=${draft.config.mode === m.id} onClick=${() => setC('mode', m.id)}><${Icon} name=${m.icon} size=${14} /> ${m.label}</button>`)}</div></div>
         <//>` : html`<${Fragment}>
           <div className="grid-2">
-            <div className="field"><span className="label">Occasion</span><div className="row" style=${{ gap: 6 }}>${OCCASIONS.map((o) => html`<button key=${o.id} type="button" className="chip" aria-pressed=${draft.config.occasion === o.id} onClick=${() => setC('occasion', o.id)}>${o.label}</button>`)}</div></div>
-            <div className="field"><label htmlFor="ta-min">Length in minutes</label><input id="ta-min" className="input" type="number" min="1" max="20" value=${draft.config.minutes} onInput=${(e) => setC('minutes', clamp(Number(e.target.value) || 3, 1, 20))} style=${{ maxWidth: 120 }} /></div>
+            <div className="field"><span className="label">${t('Occasion')}</span><div className="row" style=${{ gap: 6 }}>${OCCASIONS.map((o) => html`<button key=${o.id} type="button" className="chip" aria-pressed=${draft.config.occasion === o.id} onClick=${() => setC('occasion', o.id)}>${o.label}</button>`)}</div></div>
+            <div className="field"><label htmlFor="ta-min">${t('Length in minutes')}</label><input id="ta-min" className="input" type="number" min="1" max="20" value=${draft.config.minutes} onInput=${(e) => setC('minutes', clamp(Number(e.target.value) || 3, 1, 20))} style=${{ maxWidth: 120 }} /></div>
           </div>
-          <div className="field"><label htmlFor="ta-brief">The task, in your words</label><textarea id="ta-brief" className="textarea" rows="3" value=${draft.config.brief} onInput=${(e) => setC('brief', e.target.value.slice(0, 2000))} placeholder="Persuade the class to adopt a four-day school week. Use at least one number."></textarea></div>
+          <div className="field"><label htmlFor="ta-brief">${t('The task, in your words')}</label><textarea id="ta-brief" className="textarea" rows="3" value=${draft.config.brief} onInput=${(e) => setC('brief', e.target.value.slice(0, 2000))} placeholder=${t('Persuade the class to adopt a four-day school week. Use at least one number.')}></textarea></div>
         <//>`}
-        <div className="field"><label htmlFor="ta-due">Due (optional)</label><input id="ta-due" className="input" type="date" value=${draft.due || ''} onInput=${(e) => setDraft((d) => ({ ...d, due: e.target.value }))} style=${{ maxWidth: 200 }} /></div>
-        <div className="row" style=${{ gap: 8 }}><button className="btn-cta" type="submit" disabled=${busy === 'save'}>${busy === 'save' ? 'Saving…' : 'Assign to the class'}</button><button className="btn" type="button" onClick=${() => setDraft(null)}>Cancel</button></div>
+        <div className="field"><label htmlFor="ta-due">${t('Due (optional)')}</label><input id="ta-due" className="input" type="date" value=${draft.due || ''} onInput=${(e) => setDraft((d) => ({ ...d, due: e.target.value }))} style=${{ maxWidth: 200 }} /></div>
+        <div className="row" style=${{ gap: 8 }}><button className="btn-cta" type="submit" disabled=${busy === 'save'}>${busy === 'save' ? t('Saving…') : t('Assign to the class')}</button><button className="btn" type="button" onClick=${() => setDraft(null)}>${t('Cancel')}</button></div>
       </form>` : null}
-      ${assignments == null ? html`<p className="muted">Loading…</p>` : !assignments.length ? html`<p className="small muted">Nothing set yet. Students can still practise on their own; you will see that too.</p>` : assignments.map((a) => {
+      ${assignments == null ? html`<p className="muted">${t('Loading…')}</p>` : !assignments.length ? html`<p className="small muted">${t('Nothing set yet. Students can still practise on their own; you will see that too.')}</p>` : assignments.map((a) => {
         const ss = subsOf(a.id);
         const pct = ss.map((s) => s.summary && s.summary.percent).filter((v) => v != null);
         return html`<div key=${a.id} className="card assign-card">
-          <div className="row-between"><div><div className="eyebrow">${a.kind === 'viva' ? 'Oral exam' : 'Speech'}${a.due_at ? ` · due ${fmtDate(a.due_at)}` : ''}</div><h3>${a.title}</h3></div>
-            <div className="row" style=${{ gap: 8 }}><span className="chip chip-sm">${ss.length} of ${(students || []).length} done</span>${pct.length ? html`<span className="chip chip-sm">avg ${Math.round(mean(pct))}%</span>` : null}<button className="btn btn-sm btn-ghost" onClick=${() => remove(a)} disabled=${busy === 'del' + a.id} aria-label="Remove assignment"><${Icon} name="trash" size=${14} /></button></div></div>
-          ${ss.length ? html`<div className="teach-table-wrap"><table className="teach-table"><thead><tr><th>Student</th><th>Result</th><th>When</th><th></th></tr></thead><tbody>
-            ${ss.map((s) => { const st = (students || []).find((x) => x.student_id === s.student_id); const sm = s.summary || {}; return html`<tr key=${s.id}><td>${st ? st.display_name : 'A student'}</td><td><${TeachPct} value=${sm.percent} grade=${sm.grade} /></td><td className="muted">${fmtDate(s.created_at)}</td><td><button className="btn btn-sm" onClick=${() => go('review', { student: s.student_id, doc: s.doc_id, name: st ? st.display_name : '' })}>Open report</button></td></tr>`; })}
+          <div className="row-between"><div><div className="eyebrow">${a.kind === 'viva' ? t('Oral exam') : t('Speech')}${a.due_at ? t` · due ${fmtDate(a.due_at)}` : ''}</div><h3>${a.title}</h3></div>
+            <div className="row" style=${{ gap: 8 }}><span className="chip chip-sm">${t`${ss.length} of ${(students || []).length} done`}</span>${pct.length ? html`<span className="chip chip-sm">${t`avg ${Math.round(mean(pct))}%`}</span>` : null}<button className="btn btn-sm btn-ghost" onClick=${() => remove(a)} disabled=${busy === 'del' + a.id} aria-label=${t('Remove assignment')}><${Icon} name="trash" size=${14} /></button></div></div>
+          ${ss.length ? html`<div className="teach-table-wrap"><table className="teach-table"><thead><tr><th>${t('Student')}</th><th>${t('Result')}</th><th>${t('When')}</th><th></th></tr></thead><tbody>
+            ${ss.map((s) => { const st = (students || []).find((x) => x.student_id === s.student_id); const sm = s.summary || {}; return html`<tr key=${s.id}><td>${st ? st.display_name : t('A student')}</td><td><${TeachPct} value=${sm.percent} grade=${sm.grade} /></td><td className="muted">${fmtDate(s.created_at)}</td><td><button className="btn btn-sm" onClick=${() => go('review', { student: s.student_id, doc: s.doc_id, name: st ? st.display_name : '' })}>${t('Open report')}</button></td></tr>`; })}
           </tbody></table></div>` : null}
         </div>`;
       })}
     </section>
 
     <section className="stack" style=${{ gap: 12 }}>
-      <div className="sec-head"><div><div className="eyebrow">Progress</div><h2>Students</h2></div></div>
-      ${students == null ? html`<p className="muted">Loading…</p>` : !students.length ? html`<div className="card empty"><${Icon} name="users" size=${28} /><h2>Nobody has joined yet</h2><p className="small">Write the code <b>${cls.code}</b> on the board. Students pick “Join as a student” on the sign-in page.</p></div>`
+      <div className="sec-head"><div><div className="eyebrow">${t('Progress')}</div><h2>${t('Students')}</h2></div></div>
+      ${students == null ? html`<p className="muted">${t('Loading…')}</p>` : !students.length ? html`<div className="card empty"><${Icon} name="users" size=${28} /><h2>${t('Nobody has joined yet')}</h2><p className="small">${t('Write the code')} <b>${cls.code}</b> ${t('on the board. Students pick “Join as a student” on the sign-in page.')}</p></div>`
         : html`<div className="card teach-table-wrap"><table className="teach-table">
-          <thead><tr><th>Student</th><th>Latest exam</th><th>Trend</th><th>Exams</th><th>Speeches</th><th>Last active</th><th></th></tr></thead>
+          <thead><tr><th>${t('Student')}</th><th>${t('Latest exam')}</th><th>${t('Trend')}</th><th>${t('Exams')}</th><th>${t('Speeches')}</th><th>${t('Last active')}</th><th></th></tr></thead>
           <tbody>${students.map((s) => {
             const items = progress[s.student_id] || [];
             const exams = items.filter((x) => x.kind === 'viva' && x.percent != null);
@@ -216,12 +216,12 @@ function ClassPage({ id }) {
               <td className="num">${s.exams_done != null ? s.exams_done : exams.length}</td>
               <td className="num">${s.speeches != null ? s.speeches : items.filter((x) => x.kind === 'speech').length}</td>
               <td className="muted">${s.last_active ? fmtDate(s.last_active) : '–'}</td>
-              <td><button className="btn btn-sm btn-ghost" onClick=${() => setReset({ username: s.username, name: s.display_name, pw: '' })}>Reset password</button></td>
+              <td><button className="btn btn-sm btn-ghost" onClick=${() => setReset({ username: s.username, name: s.display_name, pw: '' })}>${t('Reset password')}</button></td>
             </tr>`;
           })}</tbody></table></div>`}
       ${reset ? html`<form className="card row" onSubmit=${doReset} style=${{ gap: 10, alignItems: 'end' }}>
-        <div className="field" style=${{ flex: '1 1 220px' }}><label htmlFor="tr-pw">New password for ${reset.name}</label><input id="tr-pw" className="input" type="text" value=${reset.pw} onInput=${(e) => setReset((r) => ({ ...r, pw: e.target.value }))} minLength=${AUTH_MIN_PASSWORD} placeholder="At least 8 characters" autoComplete="off" /></div>
-        <button className="btn-cta" type="submit" disabled=${busy === 'reset' || reset.pw.length < AUTH_MIN_PASSWORD}>Set password</button><button className="btn" type="button" onClick=${() => setReset(null)}>Cancel</button>
+        <div className="field" style=${{ flex: '1 1 220px' }}><label htmlFor="tr-pw">${t`New password for ${reset.name}`}</label><input id="tr-pw" className="input" type="text" value=${reset.pw} onInput=${(e) => setReset((r) => ({ ...r, pw: e.target.value }))} minLength=${AUTH_MIN_PASSWORD} placeholder=${t('At least 8 characters')} autoComplete="off" /></div>
+        <button className="btn-cta" type="submit" disabled=${busy === 'reset' || reset.pw.length < AUTH_MIN_PASSWORD}>${t('Set password')}</button><button className="btn" type="button" onClick=${() => setReset(null)}>${t('Cancel')}</button>
       </form>` : null}
     </section>
   </div>`;
@@ -240,12 +240,12 @@ function ReviewPage({ param }) {
     })();
     return () => { alive = false; };
   }, [p.student, p.doc]);
-  if (state === 'loading') return html`<p className="muted">Loading the report…</p>`;
-  if (state !== 'ok') return html`<div className="card empty"><h2>That report isn’t available</h2><p className="small">It may have been deleted by the student, or you may not teach their class.</p><button className="btn" onClick=${() => go('teacher')}>Back to classes</button></div>`;
+  if (state === 'loading') return html`<p className="muted">${t('Loading the report…')}</p>`;
+  if (state !== 'ok') return html`<div className="card empty"><h2>${t('That report isn’t available')}</h2><p className="small">${t('It may have been deleted by the student, or you may not teach their class.')}</p><button className="btn" onClick=${() => go('teacher')}>${t('Back to classes')}</button></div>`;
   const s = teachSummaryOf(doc);
   return html`<div className="teach-review stack" style=${{ gap: 14 }}>
-    <div className="notice teach-review-note"><${Icon} name="users" size=${18} /><span>You are reading <b>${p.name || 'a student'}</b>’s ${s && s.kind === 'viva' ? 'exam report' : 'speech report'}. Nothing here changes it.</span></div>
-    ${doc.type === 'viva' && doc.report ? html`<${VivaReport} doc=${doc} />` : doc.type === 'viva' ? html`<div className="card"><h2>${doc.subject}</h2><p className="small muted">This exam is not finished yet.</p></div>` : doc.type === 'speech' ? html`<${TeachSpeechSummary} sp=${doc} />` : html`<div className="card"><p>Unknown document.</p></div>`}
+    <div className="notice teach-review-note"><${Icon} name="users" size=${18} /><span>${t('You are reading')} <b>${p.name || t('a student')}</b>${s && s.kind === 'viva' ? t('’s exam report. Nothing here changes it.') : t('’s speech report. Nothing here changes it.')}</span></div>
+    ${doc.type === 'viva' && doc.report ? html`<${VivaReport} doc=${doc} />` : doc.type === 'viva' ? html`<div className="card"><h2>${doc.subject}</h2><p className="small muted">${t('This exam is not finished yet.')}</p></div>` : doc.type === 'speech' ? html`<${TeachSpeechSummary} sp=${doc} />` : html`<div className="card"><p>${t('Unknown document.')}</p></div>`}
   </div>`;
 }
 function TeachSpeechSummary({ sp }) {
@@ -253,16 +253,16 @@ function TeachSpeechSummary({ sp }) {
   return html`<div className="stack" style=${{ gap: 14 }}>
     <section className="card stack" style=${{ gap: 10 }}>
       <div className="eyebrow">${occasionOf(sp.occasion).label} · ${fmtDate(sp.date || Date.now())}</div>
-      <h2>${sp.title || 'Speech'}</h2>
+      <h2>${sp.title || t('Speech')}</h2>
       <div className="row" style=${{ gap: 12 }}>${POLE_KEYS.map((k) => html`<span key=${k} className="chip" style=${{ color: POLES[k].color }}>${POLES[k].name} ${sp.scores && sp.scores[k] != null ? sp.scores[k] : '–'}</span>`)}<${MiniTriangle} scores=${sp.scores || {}} size=${56} /></div>
       ${ai && ai.summary ? html`<p>${ai.summary}</p>` : null}
       ${ai && ai.coach_note ? html`<p className="small muted">${ai.coach_note}</p>` : null}
     </section>
     ${ai ? html`<section className="grid-2">
-      <div className="card"><div className="eyebrow">Strengths</div><ul className="list-check">${(ai.strengths || []).map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></div>
-      <div className="card"><div className="eyebrow">Next moves</div><ul className="list-check">${(ai.growth || []).map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></div>
+      <div className="card"><div className="eyebrow">${t('Strengths')}</div><ul className="list-check">${(ai.strengths || []).map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></div>
+      <div className="card"><div className="eyebrow">${t('Next moves')}</div><ul className="list-check">${(ai.growth || []).map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></div>
     </section>` : null}
-    ${sp.transcript ? html`<details className="card details"><summary><b>Transcript</b> · ${plural(sp.words || wordsOf(sp.transcript).length, 'word')}</summary><p className="small" style=${{ whiteSpace: 'pre-wrap', marginTop: 10 }}>${sp.transcript}</p></details>` : null}
+    ${sp.transcript ? html`<details className="card details"><summary><b>${t('Transcript')}</b> · ${tn(sp.words || wordsOf(sp.transcript).length, 'word', 'words')}</summary><p className="small" style=${{ whiteSpace: 'pre-wrap', marginTop: 10 }}>${sp.transcript}</p></details>` : null}
   </div>`;
 }
 
@@ -296,11 +296,11 @@ function AssignmentsCard() {
     }
   }
   return html`<section className="card stack assign-list" style=${{ gap: 6 }} aria-labelledby="assign-title">
-    <div className="sec-head"><div><div className="eyebrow">From your teacher <span className="greek" lang="grc">ἔργα</span></div><h2 id="assign-title">${open.length ? plural(open.length, 'assignment') + ' to do' : 'All assignments done'}</h2></div></div>
+    <div className="sec-head"><div><div className="eyebrow">${t('From your teacher')} <span className="greek" lang="grc">ἔργα</span></div><h2 id="assign-title">${open.length ? t`${tn(open.length, 'assignment', 'assignments')} to do` : t('All assignments done')}</h2></div></div>
     ${open.map((a) => html`<div key=${a.id} className="assign-row">
-      <div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>${a.kind === 'viva' ? 'Oral exam' : 'Speech'}${a.classes && a.classes.name ? ' · ' + a.classes.name : ''}${a.due_at ? ' · due ' + fmtDate(a.due_at) : ''}${a.kind === 'speech' && a.config && a.config.brief ? ' · ' + vivaClip(a.config.brief, 90) : ''}</span></div>
-      <button className="btn-cta" onClick=${() => start(a)}><${Icon} name=${a.kind === 'viva' ? 'scroll' : 'mic'} size=${16} />${a.kind === 'viva' ? 'Sit the exam' : 'Start'}</button>
+      <div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>${a.kind === 'viva' ? t('Oral exam') : t('Speech')}${a.classes && a.classes.name ? ' · ' + a.classes.name : ''}${a.due_at ? ' · ' + t`due ${fmtDate(a.due_at)}` : ''}${a.kind === 'speech' && a.config && a.config.brief ? ' · ' + vivaClip(a.config.brief, 90) : ''}</span></div>
+      <button className="btn-cta" onClick=${() => start(a)}><${Icon} name=${a.kind === 'viva' ? 'scroll' : 'mic'} size=${16} />${a.kind === 'viva' ? t('Sit the exam') : t('Start')}</button>
     </div>`)}
-    ${finished.map((a) => { const s = done(a); const sm = (s && s.summary) || {}; return html`<div key=${a.id} className="assign-row"><div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>Done ${fmtDate(s.created_at)}</span></div><${TeachPct} value=${sm.percent} grade=${sm.grade} /></div>`; })}
+    ${finished.map((a) => { const s = done(a); const sm = (s && s.summary) || {}; return html`<div key=${a.id} className="assign-row"><div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>${t`Done ${fmtDate(s.created_at)}`}</span></div><${TeachPct} value=${sm.percent} grade=${sm.grade} /></div>`; })}
   </section>`;
 }

@@ -1,1 +1,6795 @@
-{}
+{
+ " · {0} of {1}": [
+  "pages-core.js"
+ ],
+ " · {0}-day streak": [
+  "pages-core.js"
+ ],
+ " · All done for today": [
+  "pages-core.js"
+ ],
+ " · caption timing found": [
+  "pages-core.js"
+ ],
+ " · due {0}": [
+  "teacher.js"
+ ],
+ " · Next: {0}": [
+  "pages-core.js"
+ ],
+ " (estimated from syllables)": [
+  "engine.js"
+ ],
+ " at this length, +{0} from 150 words": [
+  "pages-core.js"
+ ],
+ " Come back tomorrow to keep the flame alive.": [
+  "pages-core.js"
+ ],
+ " Dashed: your first speech. Dot: your center of gravity.": [
+  "pages-core.js"
+ ],
+ " is a local variable (a turn) and would shadow the translator. */\nconst vivaThanks = () => t('Thank you.');\nconst vivaMicNote = (kind) => (kind === 'error' ? t('The transcription service did not answer.') : t('No words were picked up.'));\nfunction vivaNoMarkEval(reaction = '') {\n  return { scores: null, evidence: [], covered: [], missing: [], misconception: '', notes: '', reaction, next: { action: 'move_on', type: 'probe', question: '', examiner: null }, self: false, unmarked: true };\n}\n/* Aloud: nobody heard the candidate, so communication comes from their own two taps. */\nfunction vivaSelfCheckComm(sc) {\n  const c = sc && typeof sc === 'object' ? sc : {};\n  let v = 60;\n  if (c.first === true) v += 15; else if (c.first === false) v -= 15;\n  if (c.lost === true) v -= 15; else if (c.lost === false) v += 5;\n  if (c.said === 'all') v += 5; else if (c.said === 'some') v -= 10;\n  return clamp(v, 15, 85);\n}\nconst vivaOverClaim = (t) => !!t && wordsOf(t.answer).length > (Number(t.answerSec) || 0) * 2.5;\n\nfunction vivaChime(kind) {\n  if (!Sound.enabled) return;\n  try {\n    if (kind === 'ask') { Sound.tone(587.33, 0, 0.5, 'sine', 0.032); Sound.tone(880, 0.09, 0.6, 'sine', 0.022); }\n    else if (kind === 'think') Sound.tone(659.25, 0, 0.3, 'triangle', 0.028);\n    else if (kind === 'answer') { Sound.tone(783.99, 0, 0.25, 'triangle', 0.032); Sound.tone(1046.5, 0.08, 0.3, 'triangle', 0.026); }\n    else if (kind === 'over') { Sound.tone(392, 0, 0.35, 'sine', 0.04); Sound.tone(329.63, 0.18, 0.45, 'sine', 0.04); }\n    else if (kind === 'stamp') { Sound.tone(70, 0, 0.38, 'sine', 0.16); Sound.tone(140, 0, 0.12, 'triangle', 0.05); }\n    else if (kind === 'enter') [261.63, 392, 523.25].forEach((f, i) => Sound.tone(f, i * 0.2, 1.1, 'sine', 0.026));\n  } catch (e) { /* sound is optional */ }\n}\n\n/* ---------- Documents ---------- */\nfunction vivaNewDoc(over = {}) {\n  const fmt = vivaFormat(over.format);\n  const now = Date.now();\n  return {\n    id: uid('v_'), type: 'viva', subject: '', topic: '', level: 'undergrad', format: fmt.id, persona: fmt.panel ? 'panel' : 'socratic',\n    status: 'setup', created: now, updated: now, material: '', mode: 'speak', think: fmt.think, answer: fmt.answer, voice: true, practice: false, basis: 'course', discipline: 'general',\n    focus: [], source: null, title: '', opening: '', closing: '', plan: [], reserve: [], turns: [], report: null,\n    ...over,\n  };\n}\nfunction vivaMakeTurn({ qi, kind = 'main', fType = null, q, examiner, lead = '' }) {\n  return { id: uid('t'), qi, kind, fType: fType || null, q: vivaStr(q, 400), examiner, lead: vivaStr(lead, 240), answer: '', answered: false, aloud: false, thinkSec: null, answerSec: null, overtime: 0, moment: false, clarify: [], help: [], eval: null };\n}\n/* The turn the candidate still owes: unanswered, or answered and not yet marked. */\nfunction vivaCurrentTurn(doc) {\n  const ts = vivaArr(doc && doc.turns);\n  const last = ts[ts.length - 1];\n  if (!last) return null;\n  return !last.answered || !last.eval ? last : null;\n}\nfunction vivaResumePhase(doc) {\n  if (!doc) return 'setup';\n  if (doc.status === 'done') return 'done';\n  if (doc.status !== 'live') return 'setup';\n  const t = vivaCurrentTurn(doc);\n  if (!t) return 'verdict';\n  if (t.answered && !t.eval) return 'pending';\n  return 'intro';\n}\n\n/* ---------- Grounding: concepts from topic, retake gaps and pasted material ---------- */\nfunction vivaKeyTerms(text, max = 6) {\n  const words = String(text || '').toLowerCase().match(/[a-z][a-z'-]{2,}/g) || [];\n  const uni = {}, bi = {};\n  for (let i = 0; i < words.length; i++) {\n    const w = words[i];\n    if (VIVA_STOP.has(w) || w.length < 4) continue;\n    uni[w] = (uni[w] || 0) + 1;\n    const n = words[i + 1];\n    if (n && !VIVA_STOP.has(n) && n.length >= 4) { const b = w + ' ' + n; bi[b] = (bi[b] || 0) + 1; }\n  }\n  const cands = Object.entries(bi).filter(([, c]) => c >= 2).map(([t, c]) => [t, c * 2.4])\n    .concat(Object.entries(uni).filter(([, c]) => c >= 2).map(([t, c]) => [t, c]))\n    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));\n  const out = [];\n  for (const [t] of cands) {\n    if (out.some((o) => o.includes(t) || t.includes(o))) continue;\n    out.push(t);\n    if (out.length >= max) break;\n  }\n  return out;\n}\n/* A syllabus usually names its topics line by line: prefer those over word counts. */\nfunction vivaSyllabusTopics(text, max = 8) {\n  const out = [];\n  String(text || '').split('\n').forEach((line) => {\n    const m = line.match(/^\\s*(?:week|lecture|unit|chapter|topic|module|section)\\s*\\d*\\s*[:.\\-]\\s*(.+)$/i);\n    if (!m || out.length >= max) return;\n    const t = vivaStr(m[1], 70).replace(/[.;,]+$/, '');\n    if (t.length > 2 && !wordsOf(t).every((w) => VIVA_STOP.has(w.toLowerCase()))) out.push(t);\n  });\n  return out;\n}\nfunction vivaConcepts(doc) {\n  const out = [];\n  const add = (s) => { const t = vivaStr(s, 80); if (t && t.length > 1 && !out.some((o) => o.toLowerCase() === t.toLowerCase())) out.push(t); };\n  vivaArr(doc && doc.focus).forEach(add);\n  String((doc && doc.topic) || '').split(/[,;\n]+/).map((s) => s.trim()).filter((s) => s.length > 2).forEach(add);\n  vivaSyllabusTopics((doc && doc.material) || '').forEach(add);\n  vivaKeyTerms((doc && doc.material) || '').forEach(add);\n  if (!out.length) add((doc && doc.subject) || 'this subject');\n  return out;\n}\nfunction vivaFallbackPlan(doc) {\n  const fmt = vivaFormat(doc.format);\n  const kinds = VIVA_TEMPLATE_ORDER[fmt.id] || VIVA_TEMPLATE_ORDER.standard;\n  const cs = vivaConcepts(doc);\n  const ids = vivaPanelIds(doc);\n  const subj = vivaStr(doc.subject, 80) || 'the subject';\n  const work = doc.basis === 'work';\n  const bank = work ? VIVA_DEFENSE_TEMPLATES : VIVA_TEMPLATES;\n  const order = work ? VIVA_DEFENSE_ORDER[fmt.id] || VIVA_DEFENSE_ORDER.standard : kinds;\n  const make = (k, i) => {\n    const T = bank.find((t) => t.kind === k);\n    const c = work ? t('Your own work') : cs[i % cs.length];\n    const ex = ids.length > 1 ? (ids.includes(VIVA_ROLE_OF_KIND[k]) ? VIVA_ROLE_OF_KIND[k] : ids[i % ids.length]) : ids[0];\n    return { id: 'q' + (i + 1), q: T.q(c, subj), concept: c, difficulty: T.difficulty, keyPoints: T.keyPoints.slice(), examiner: ex, kind: k };\n  };\n  const questions = order.map(make);\n  const reserve = fmt.drill ? [] : bank.filter((t) => !order.includes(t.kind)).map((t, i) => ({ ...make(t.kind, questions.length + i), id: 'r' + (i + 1) }));\n  return { title: subj, opening: vivaEx(ids[0]).opening, questions, reserve };\n}\n\n/* ---------- AI: prompts and normalizers (every field validated) ---------- */\nfunction vivaContext(doc) {\n  const lvl = vivaLevel(doc.level);\n  const ex = vivaPanel(doc);\n  return [\n    ": [
+  "viva.js"
+ ],
+ " Tap a corner for detail.": [
+  "pages-core.js"
+ ],
+ " The content scores below are on-device estimates.": [
+  "pages-core.js"
+ ],
+ " Tomorrow’s first quest: {0}.": [
+  "pages-core.js"
+ ],
+ " Write about 30 seconds on it, as you would say it.": [
+  "pages-core.js"
+ ],
+ "- **Pause first.** Two seconds gives you time to think and shows you are not rattled.\n- **Restate the real question** without the heat: “You’re asking whether the cost is justified.”\n- **Answer in one or two sentences**, with one piece of evidence.\n- **Link back to your main point**, then take the next question.\n\nIf you don’t know the answer, say so and say when you’ll find out.": [
+  "pages-more.js"
+ ],
+ "- **Start with a moment.** Describe one customer on one bad day, in two sentences.\n- **Start with a surprising number.** Say it, pause, then say what it costs the people in the room.\n- **Start with a question they already care about.** Ask it, wait, then promise the answer.\n\nPick the one you can say without notes, and put it before any thanks or introductions.": [
+  "pages-more.js"
+ ],
+ ", more if you beat your last scores": [
+  "pages-core.js"
+ ],
+ ". The same speech again earns 0.": [
+  "pages-core.js"
+ ],
+ "· +15 XP for your first draft of this section": [
+  "pages-more.js"
+ ],
+ "· aim for 15 or fewer": [
+  "pages-more.js"
+ ],
+ "· Angle: {0}": [
+  "pages-more.js"
+ ],
+ "’s exam report. Nothing here changes it.": [
+  "teacher.js"
+ ],
+ "’s speech report. Nothing here changes it.": [
+  "teacher.js"
+ ],
+ "“{0} … {1}” flips to “{2} … {3}”.": [
+  "gym.js"
+ ],
+ "“And” {0} times. The list piles up.": [
+  "gym.js"
+ ],
+ "“Either… or…” can hide the options in between. Make sure there really are only two.": [
+  "engine.js"
+ ],
+ "“I don’t know that result. What I do know is the conservation law behind it, so I would expect…”": [
+  "viva.js"
+ ],
+ "“I need to correct something: I had the sign wrong. With that fixed, the result is…”": [
+  "viva.js"
+ ],
+ "“It depends on what you mean by real.”": [
+  "viva.js"
+ ],
+ "“No. Every real engine has irreversibilities, such as friction and finite-rate heat transfer, so it falls short of Carnot.”": [
+  "viva.js"
+ ],
+ "“So, um, Carnot was a French engineer in the 1820s…”": [
+  "viva.js"
+ ],
+ "“That’s a great question, and there are many factors to consider.”": [
+  "viva.js"
+ ],
+ "“We didn’t cover that in class.”": [
+  "viva.js"
+ ],
+ "(needed offline unless you paste notes)": [
+  "viva.js"
+ ],
+ "(no answer)": [
+  "viva.js"
+ ],
+ "(nothing to add)": [
+  "viva.js"
+ ],
+ "(optional)": [
+  "viva.js"
+ ],
+ "[Your point], because [reason]. For example, [example].": [
+  "pages-more.js"
+ ],
+ "{0}": [
+  "pages-core.js"
+ ],
+ "{0} · {1} min": [
+  "pages-more.js"
+ ],
+ "{0} · {1} questions": [
+  "teacher.js"
+ ],
+ "{0} · {1} seconds · {2}": [
+  "gym.js"
+ ],
+ "{0} · {1} syl/s · ≈{2} wpm": [
+  "gym.js"
+ ],
+ "{0} · last mark {1}": [
+  "viva.js"
+ ],
+ "{0} · round complete": [
+  "pages-more.js"
+ ],
+ "{0} (“I think”, “maybe”, “probably”). Hedge once, where the doubt is real, and say what would settle it.": [
+  "viva.js"
+ ],
+ "{0} ({1} characters written)": [
+  "pages-core.js"
+ ],
+ "{0} ({1} per minute). Auto-transcripts often drop “um”, so check the recording too.": [
+  "engine.js"
+ ],
+ "{0} (0.7–2 s). That gives the audience time to absorb what you said.": [
+  "engine.js"
+ ],
+ "{0} / {1} {2}": [
+  "gym.js"
+ ],
+ "{0} / {1} XP to {2}": [
+  "pages-more.js"
+ ],
+ "{0} a sharp listener would catch": [
+  "pages-core.js"
+ ],
+ "{0} clauses end on “{1}”.": [
+  "gym.js"
+ ],
+ "{0} clauses open with “{1}”.": [
+  "gym.js"
+ ],
+ "{0} clean rounds in a row unlock the next pace.": [
+  "gym.js"
+ ],
+ "{0} cleared. {1} unlocked.": [
+  "gym.js"
+ ],
+ "{0} cleared. You have mastered this one.": [
+  "gym.js"
+ ],
+ "{0} combo": [
+  "pages-more.js"
+ ],
+ "{0} dB between your quiet and loud phrases": [
+  "pages-core.js"
+ ],
+ "{0} frozen silences": [
+  "engine.js"
+ ],
+ "{0} in {1}": [
+  "pages-core.js"
+ ],
+ "{0} in all": [
+  "gym.js"
+ ],
+ "{0} in your answers. When you speak, swap each one for a one-second pause.": [
+  "viva.js"
+ ],
+ "{0} is weighing your answer…": [
+  "viva.js"
+ ],
+ "{0} known · {1} to review": [
+  "viva.js"
+ ],
+ "{0} leads. {1} is your fastest way up.": [
+  "pages-core.js"
+ ],
+ "{0} lesson · {1} min": [
+  "pages-core.js"
+ ],
+ "{0} min": [
+  "pages-more.js",
+  "viva.js"
+ ],
+ "{0} min · {1}": [
+  "viva.js"
+ ],
+ "{0} min · quiz + drill": [
+  "pages-more.js"
+ ],
+ "{0} named": [
+  "pages-more.js"
+ ],
+ "{0} nearby words start with “{1}”.": [
+  "gym.js"
+ ],
+ "{0} next": [
+  "pages-core.js"
+ ],
+ "{0} of {1}": [
+  "pages-more.js"
+ ],
+ "{0} of {1} badges": [
+  "pages-more.js"
+ ],
+ "{0} of {1} correct · best combo {2}": [
+  "pages-more.js"
+ ],
+ "{0} of {1} done": [
+  "teacher.js"
+ ],
+ "{0} of {1} done. Finish all three to open the laurel chest: {2} to 250 XP": [
+  "pages-core.js"
+ ],
+ "{0} of {1} questions answered": [
+  "viva.js"
+ ],
+ "{0} of {1} quests": [
+  "pages-core.js"
+ ],
+ "{0} of {1} stations done today": [
+  "gym.js"
+ ],
+ "{0} of {1} studied": [
+  "pages-more.js"
+ ],
+ "{0} of 5: {1}": [
+  "viva.js"
+ ],
+ "{0} out loud, with cues to keep you on track.": [
+  "gym.js"
+ ],
+ "{0} over 2 s · {1} short breaths": [
+  "pages-core.js"
+ ],
+ "{0} over time": [
+  "kit.js",
+  "viva.js"
+ ],
+ "{0} over two seconds. Say “let me think” and keep going: a named pause reads as composure, an unnamed one as a blank.": [
+  "viva.js"
+ ],
+ "{0} progress": [
+  "pages-more.js",
+  "gym.js"
+ ],
+ "{0} Qs · {1} min": [
+  "viva.js"
+ ],
+ "{0} ran past two seconds (the longest was {1} s at {2}). If those weren’t planned beats, keep a one-line roadmap in your notes.": [
+  "engine.js"
+ ],
+ "{0} remaining": [
+  "kit.js"
+ ],
+ "{0} rounds": [
+  "gym.js"
+ ],
+ "{0} rounds, steady": [
+  "gym.js"
+ ],
+ "{0} s": [
+  "viva.js"
+ ],
+ "{0} sampled across your video.": [
+  "pages-core.js"
+ ],
+ "{0} seconds of slow breathing. Speak while the calm lasts.": [
+  "gym.js"
+ ],
+ "{0} seconds with a ready-made structure.": [
+  "gym.js"
+ ],
+ "{0} since your last attempt": [
+  "viva.js"
+ ],
+ "{0} so far. Record the next one here, or bring a recording.": [
+  "pages-core.js"
+ ],
+ "{0} spoken so far. Keep the voice warm.": [
+  "pages-core.js"
+ ],
+ "{0} spotted": [
+  "pages-more.js"
+ ],
+ "{0} times": [
+  "pages-core.js"
+ ],
+ "{0} to do": [
+  "teacher.js"
+ ],
+ "{0} to reach half your target.": [
+  "pages-more.js"
+ ],
+ "{0} Type what you said, as you said it.": [
+  "viva.js"
+ ],
+ "{0} was the weak spot here ({1}).": [
+  "viva.js"
+ ],
+ "{0} was your strongest dimension ({1}).": [
+  "viva.js"
+ ],
+ "{0} words": [
+  "pages-more.js",
+  "viva.js"
+ ],
+ "{0} words · ⌘/Ctrl + Enter to submit": [
+  "viva.js"
+ ],
+ "{0} words · about {1} min at 140 wpm · target {2} min": [
+  "pages-more.js"
+ ],
+ "{0} words · about {1} min spoken": [
+  "pages-core.js"
+ ],
+ "{0} words (the first {1} characters are used)": [
+  "viva.js"
+ ],
+ "{0} words per minute{1} sits inside the {2}–{3} range for a {4}.": [
+  "engine.js"
+ ],
+ "{0} wpm": [
+  "viva.js"
+ ],
+ "{0} XP to the next title.": [
+  "ui.js"
+ ],
+ "{0} You mark it against the rubric afterward.": [
+  "viva.js"
+ ],
+ "{0}-day streak": [
+  "app.js"
+ ],
+ "{0}, {1} percent": [
+  "viva.js"
+ ],
+ "{0}, {1}%": [
+  "viva.js"
+ ],
+ "{0}, about {1} per minute. Replace each one with a silent breath.": [
+  "engine.js"
+ ],
+ "{0}: {1}": [
+  "gym.js"
+ ],
+ "{0}: {1} of {2}": [
+  "pages-core.js"
+ ],
+ "{0}/{1} cleared": [
+  "gym.js"
+ ],
+ "{0}% of the time you were voicing": [
+  "pages-core.js"
+ ],
+ "{0}s": [
+  "gym.js"
+ ],
+ "/ min": [
+  "pages-core.js"
+ ],
+ "+{0} XP": [
+  "pages-core.js"
+ ],
+ "+{0} XP for finishing every quest today. New quests arrive tomorrow.": [
+  "ui.js"
+ ],
+ "+20 XP": [
+  "pages-more.js"
+ ],
+ "+30 XP": [
+  "pages-more.js"
+ ],
+ "+30 XP per answer · +10 per follow-up · +{0} XP or more to finish, paid when the exam ends": [
+  "viva.js"
+ ],
+ "+30 XP when graded": [
+  "pages-more.js"
+ ],
+ "+40 XP": [
+  "pages-more.js"
+ ],
+ "1 claim · {0} min": [
+  "viva.js"
+ ],
+ "1–2 min": [
+  "gym.js"
+ ],
+ "2 min": [
+  "gym.js"
+ ],
+ "3 min": [
+  "gym.js"
+ ],
+ "5+ deliberate pauses and no frozen silences": [
+  "data.js"
+ ],
+ "a": [
+  "ui.js"
+ ],
+ "A brave round. Pick one thing below and try it on the next spin.": [
+  "gym.js"
+ ],
+ "A check of the result: units, limits or a sanity estimate": [
+  "viva.js"
+ ],
+ "A class": [
+  "auth.js"
+ ],
+ "A clearly named assumption": [
+  "viva.js"
+ ],
+ "A colleague argues the opposite. What evidence would settle it between you?": [
+  "viva.js"
+ ],
+ "A confident answer you can’t support. Follow-up questions expose it fast.": [
+  "viva.js"
+ ],
+ "A counterexample or test that exposes it": [
+  "viva.js"
+ ],
+ "A course or topic": [
+  "viva.js"
+ ],
+ "A forward buzz carries further without extra effort.": [
+  "gym.js"
+ ],
+ "A full read in three layers": [
+  "pages-core.js"
+ ],
+ "A full teleprompter run earns 25 XP, once a day for each draft.": [
+  "pages-more.js"
+ ],
+ "A general mix of question types.": [
+  "viva.js"
+ ],
+ "A good think-aloud has three moves. Name the principle you will use. Take one step at a time, saying why each step follows. Check the result against something you trust, like units, a limiting case or a rough estimate. If you go wrong, the examiner can see where and steer you, and the steps you got right still earn credit.": [
+  "viva.js"
+ ],
+ "A grade, a rubric breakdown, your gaps with model-answer outlines, and flashcards.": [
+  "viva.js"
+ ],
+ "A later idea that depends on it": [
+  "viva.js"
+ ],
+ "A longer exhale than inhale, which can slow your heart rate.": [
+  "gym.js"
+ ],
+ "A loose jaw makes room for a fuller sound.": [
+  "gym.js"
+ ],
+ "A minimal example that fits the definition": [
+  "viva.js"
+ ],
+ "A moment, a customer, a failure, a conversation. One line each.": [
+  "pages-more.js"
+ ],
+ "A new, unrelated point": [
+  "viva.js"
+ ],
+ "A one-sentence definition in plain words": [
+  "viva.js"
+ ],
+ "A panel asks out loud, waits while you think, and follows up when your answer wobbles. You leave with a grade, your gaps and revision cards.": [
+  "viva.js"
+ ],
+ "A panel asks, waits while you think, and follows up when your answer wobbles. You leave with a grade, your gaps and revision cards.": [
+  "viva.js"
+ ],
+ "A plain explanation that avoids the term": [
+  "viva.js"
+ ],
+ "A prerequisite idea and how it is used": [
+  "viva.js"
+ ],
+ "A question asked for effect, where the answer is already clear.": [
+  "gym.js"
+ ],
+ "A question back to the examiner": [
+  "viva.js"
+ ],
+ "A quick, clean correction shows you check your own work, which examiners value highly.": [
+  "viva.js"
+ ],
+ "A real alternative you considered": [
+  "viva.js"
+ ],
+ "A real situation where it does fail": [
+  "viva.js"
+ ],
+ "A real weak point, named honestly": [
+  "viva.js"
+ ],
+ "A real, specific misconception": [
+  "viva.js"
+ ],
+ "A response that concedes what is right in it": [
+  "viva.js"
+ ],
+ "A self-assessed mark, a rubric breakdown and your gaps.": [
+  "viva.js"
+ ],
+ "A sentence that moves from what you don’t know to the nearest thing you do.": [
+  "viva.js"
+ ],
+ "A series of three parallel words, phrases or clauses.": [
+  "gym.js"
+ ],
+ "A serious objection, stated fairly": [
+  "viva.js"
+ ],
+ "A sharper opener": [
+  "gym.js"
+ ],
+ "A simple supporting image": [
+  "pages-more.js"
+ ],
+ "A slow breath with a long exhale switches on your body’s calming system and can lower your heart rate. A calmer body gives you a steadier voice for your first sentence.": [
+  "gym.js"
+ ],
+ "A specific harder case": [
+  "viva.js"
+ ],
+ "A specific, well-chosen example": [
+  "viva.js"
+ ],
+ "a speech": [
+  "pages-more.js"
+ ],
+ "A strong answer": [
+  "viva.js"
+ ],
+ "A strong answer covers · tap what you said": [
+  "viva.js"
+ ],
+ "a student": [
+  "teacher.js"
+ ],
+ "A student": [
+  "teacher.js"
+ ],
+ "A term actually used in the work": [
+  "viva.js"
+ ],
+ "A Theorist, a Practitioner and a Skeptic take turns.": [
+  "viva.js"
+ ],
+ "A tickle on your lips means your breath is doing the work.": [
+  "gym.js"
+ ],
+ "A way in": [
+  "pages-more.js"
+ ],
+ "Absolute words invite the skeptic to find the exception.": [
+  "engine.js"
+ ],
+ "Absurd": [
+  "gym.js"
+ ],
+ "Academy": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Account": [
+  "auth.js",
+  "app.js"
+ ],
+ "Account sync is off in this view, so progress is saved in this browser.": [
+  "engine.js"
+ ],
+ "Accounts are not set up on this server yet.": [
+  "auth.js"
+ ],
+ "Accuracy": [
+  "viva.js"
+ ],
+ "Acknowledge the middle options, then explain why yours is best.": [
+  "engine.js"
+ ],
+ "Add a comparison with “like” or “as”.": [
+  "gym.js"
+ ],
+ "Add a recording or at least 30 words of transcript.": [
+  "pages-core.js"
+ ],
+ "Add one concrete moment: a time, a place and a person.": [
+  "engine.js"
+ ],
+ "Add one specific story moment (a time, a place, a person) to make it memorable.": [
+  "engine.js"
+ ],
+ "After you give it, record it and bring it to Analyze. Your script comes with you.": [
+  "pages-more.js"
+ ],
+ "AI coach unavailable here: you’ll get three classic angles.": [
+  "pages-more.js"
+ ],
+ "Aim the sound at the front of your face.": [
+  "gym.js"
+ ],
+ "All {0} rounds complete": [
+  "gym.js"
+ ],
+ "All assignments done": [
+  "teacher.js"
+ ],
+ "All classes": [
+  "teacher.js"
+ ],
+ "All drafts": [
+  "pages-more.js"
+ ],
+ "All exams": [
+  "viva.js"
+ ],
+ "All five done": [
+  "gym.js"
+ ],
+ "All quests complete": [
+  "ui.js"
+ ],
+ "All three lights, mixed": [
+  "pages-core.js"
+ ],
+ "Alliteration": [
+  "gym.js"
+ ],
+ "an": [
+  "ui.js"
+ ],
+ "An accurate intuition or analogy": [
+  "viva.js"
+ ],
+ "An angle": [
+  "pages-more.js"
+ ],
+ "An apology for running long": [
+  "viva.js"
+ ],
+ "An editorial read of the speech’s emphasis: ethos {0}%, pathos {1}%, logos {2}%.": [
+  "pages-more.js"
+ ],
+ "An examiner asks about a result you have never seen. Which reply is strongest?": [
+  "viva.js"
+ ],
+ "An examiner asks, listens, follows up and grades. You leave with a mark, your gaps and what to revise.": [
+  "pages-core.js"
+ ],
+ "An examiner who listens, follows up and grades. Feedback on every speech. Built for schools.": [
+  "auth.js"
+ ],
+ "Analysis deleted": [
+  "pages-core.js"
+ ],
+ "Analyze": [
+  "app.js"
+ ],
+ "Analyze a recording": [
+  "viva.js"
+ ],
+ "Analyze a speech": [
+  "data.js",
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Analyze a speech first. You’ll get scores for ethos, pathos and logos, and this answer will name your weakest appeal.": [
+  "pages-more.js"
+ ],
+ "Analyze a speech to see where your strengths sit.": [
+  "data.js"
+ ],
+ "Analyze a speech with a transcript and three personal lessons appear here.": [
+  "pages-more.js"
+ ],
+ "Analyze another": [
+  "pages-core.js"
+ ],
+ "Analyze content": [
+  "pages-core.js"
+ ],
+ "Analyze delivery": [
+  "pages-core.js"
+ ],
+ "Analyze my first speech": [
+  "pages-core.js"
+ ],
+ "Analyze my recording": [
+  "pages-more.js"
+ ],
+ "Analyze speech": [
+  "pages-core.js"
+ ],
+ "Analyze this draft": [
+  "pages-more.js"
+ ],
+ "Analyze your first speech": [
+  "data.js"
+ ],
+ "Anaphora": [
+  "data.js",
+  "engine.js",
+  "gym.js"
+ ],
+ "and {0} more, highlighted in your transcript above": [
+  "pages-core.js"
+ ],
+ "And I will ask what would prove you wrong.": [
+  "viva.js"
+ ],
+ "Angles": [
+  "pages-more.js"
+ ],
+ "Annotated transcript": [
+  "pages-core.js"
+ ],
+ "Another twister from this tier": [
+  "gym.js"
+ ],
+ "Answer": [
+  "viva.js"
+ ],
+ "Answer 3 questions in an oral exam": [
+  "data.js"
+ ],
+ "Answer at least one question before you ask for a verdict.": [
+  "viva.js"
+ ],
+ "Answer first, clear structure, calm confidence?": [
+  "viva.js"
+ ],
+ "Answer first, then reason": [
+  "viva.js"
+ ],
+ "Answer first, then reason. Think out loud. If you don’t know, say so, bridge to what you do know, and reason from there.": [
+  "viva.js"
+ ],
+ "Answer first, well structured": [
+  "viva.js"
+ ],
+ "Answer now. Lead with your answer, then reason.": [
+  "viva.js"
+ ],
+ "Answer the quiz to finish.": [
+  "pages-more.js"
+ ],
+ "Answer time": [
+  "viva.js"
+ ],
+ "Answer: {0} Activate to see the question.": [
+  "viva.js"
+ ],
+ "answered": [
+  "viva.js"
+ ],
+ "Answers given": [
+  "viva.js"
+ ],
+ "Answers to common questions.": [
+  "pages-more.js"
+ ],
+ "Answers under 15 words cannot pass. Give the claim, the reason and an example.": [
+  "viva.js"
+ ],
+ "Antithesis": [
+  "data.js",
+  "gym.js"
+ ],
+ "Any device": [
+  "gym.js"
+ ],
+ "Anything you want extra feedback on?": [
+  "pages-core.js"
+ ],
+ "Apologise and move on": [
+  "viva.js"
+ ],
+ "Applause": [
+  "gym.js"
+ ],
+ "Applied": [
+  "viva.js"
+ ],
+ "Arcade": [
+  "pages-more.js"
+ ],
+ "Archive class": [
+  "teacher.js"
+ ],
+ "Archived classes ({0})": [
+  "teacher.js"
+ ],
+ "Are the two halves opposites?": [
+  "gym.js"
+ ],
+ "Are there exactly three items?": [
+  "gym.js"
+ ],
+ "Argue against {0} as well as you can, then answer your own argument.": [
+  "viva.js"
+ ],
+ "Aristotle": [
+  "data.js"
+ ],
+ "Around {0} Hz · lively speakers move 3–5": [
+  "pages-core.js"
+ ],
+ "Arranging ideas in order of rising importance, step by step.": [
+  "gym.js"
+ ],
+ "Ask": [
+  "viva.js"
+ ],
+ "Ask anything about speaking, or paste a paragraph for quick feedback.": [
+  "pages-more.js"
+ ],
+ "Ask for clarification": [
+  "viva.js"
+ ],
+ "Ask for clarification or a moment whenever you need one.": [
+  "viva.js"
+ ],
+ "Ask the coach": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Ask the coach about it": [
+  "pages-core.js"
+ ],
+ "Ask the question first, then answer it.": [
+  "gym.js"
+ ],
+ "Ask the question your audience is thinking, then answer it in one line.": [
+  "gym.js"
+ ],
+ "Ask to skip the question": [
+  "viva.js"
+ ],
+ "Ask your coach…": [
+  "pages-more.js"
+ ],
+ "Asking a question and then answering it yourself.": [
+  "gym.js"
+ ],
+ "Asking for help costs a few points on this question. Admitting a gap and reasoning on is still the strongest move.": [
+  "viva.js"
+ ],
+ "Asks for worked examples, estimates and how the idea behaves in the real world.": [
+  "viva.js"
+ ],
+ "Assemble my speech": [
+  "pages-more.js"
+ ],
+ "Assign to the class": [
+  "teacher.js"
+ ],
+ "Assigned. Students see it on their Home page.": [
+  "teacher.js"
+ ],
+ "Assignments": [
+  "teacher.js"
+ ],
+ "Assumption flag": [
+  "viva.js"
+ ],
+ "Assumptions, limits, connections to current research.": [
+  "viva.js"
+ ],
+ "Asyndeton": [
+  "gym.js"
+ ],
+ "At {0} words per minute{1} you’re below the {2}–{3} range that suits a {4}. Energy can sag; tighten sentences and move briskly through transitions.": [
+  "engine.js"
+ ],
+ "At least {0} characters. Pick one you will remember: there is no email to reset it with.": [
+  "auth.js"
+ ],
+ "At least 30 words": [
+  "pages-core.js"
+ ],
+ "At least 8 characters": [
+  "teacher.js"
+ ],
+ "Audience": [
+  "pages-more.js"
+ ],
+ "Audio": [
+  "pages-core.js"
+ ],
+ "Auto-advance": [
+  "gym.js"
+ ],
+ "avg {0}%": [
+  "teacher.js"
+ ],
+ "Avg. words": [
+  "viva.js"
+ ],
+ "Avg. words in notes": [
+  "viva.js"
+ ],
+ "Back in the room, on your gaps": [
+  "viva.js"
+ ],
+ "Back to Analyze": [
+  "pages-core.js"
+ ],
+ "Back to classes": [
+  "teacher.js"
+ ],
+ "Back to Home": [
+  "app.js"
+ ],
+ "Back to the Academy": [
+  "pages-more.js"
+ ],
+ "Back to the report": [
+  "viva.js"
+ ],
+ "Back to Viva": [
+  "viva.js"
+ ],
+ "Back to your report": [
+  "pages-more.js"
+ ],
+ "Back your main claim with one specific fact and say where it comes from.": [
+  "engine.js"
+ ],
+ "Badge earned · +{0} XP": [
+  "ui.js"
+ ],
+ "Badges": [
+  "pages-more.js"
+ ],
+ "Badges in reach": [
+  "gym.js"
+ ],
+ "Be honest. The coach works from what you tell it.": [
+  "gym.js"
+ ],
+ "Be more precise. What exactly do you mean by {c}?": [
+  "viva.js"
+ ],
+ "Before the real exam": [
+  "viva.js"
+ ],
+ "Before we begin: which part of {0} did you find hardest, and why?": [
+  "viva.js"
+ ],
+ "Before we begin: which part of your work was hardest to get right, and why?": [
+  "viva.js"
+ ],
+ "Before we confer: is there anything you would like to correct or add?": [
+  "viva.js"
+ ],
+ "Begin {0} rounds": [
+  "gym.js"
+ ],
+ "Begin the exam": [
+  "viva.js"
+ ],
+ "Benefit": [
+  "gym.js"
+ ],
+ "best": [
+  "viva.js"
+ ],
+ "best {0}": [
+  "pages-core.js"
+ ],
+ "Best {0} pts": [
+  "pages-more.js"
+ ],
+ "Best combo": [
+  "pages-more.js"
+ ],
+ "Best streak": [
+  "pages-more.js"
+ ],
+ "Best viva": [
+  "pages-more.js"
+ ],
+ "Big idea:": [
+  "pages-more.js"
+ ],
+ "Blazing": [
+  "gym.js"
+ ],
+ "Blow air through loose lips so they flutter, like a motorboat. Slide the sound up and down.": [
+  "gym.js"
+ ],
+ "BLUF": [
+  "viva.js"
+ ],
+ "Bluff": [
+  "viva.js"
+ ],
+ "Bottom line up front: the conclusion in your first sentence, the support after it.": [
+  "viva.js"
+ ],
+ "Breadth across the field plus depth, as a PhD panel would test.": [
+  "viva.js"
+ ],
+ "Breathe again": [
+  "gym.js"
+ ],
+ "Breathe in": [
+  "gym.js"
+ ],
+ "Breathe out": [
+  "gym.js"
+ ],
+ "Breathing": [
+  "gym.js"
+ ],
+ "Breathing pattern": [
+  "gym.js"
+ ],
+ "Breathing rounds": [
+  "pages-more.js"
+ ],
+ "Breathing triangle": [
+  "gym.js"
+ ],
+ "Breathing, tongue twisters and impromptu topics. Five minutes before you speak.": [
+  "pages-core.js"
+ ],
+ "Breathing, vocal warm-ups, tongue twisters and impromptu roulette.": [
+  "pages-more.js"
+ ],
+ "Bridge": [
+  "viva.js"
+ ],
+ "Brief": [
+  "pages-more.js"
+ ],
+ "Brief written": [
+  "pages-more.js"
+ ],
+ "Bring": [
+  "pages-core.js"
+ ],
+ "Bring a speech to the coach": [
+  "pages-core.js"
+ ],
+ "Bring a worked example into every answer. Numbers make reasoning visible.": [
+  "viva.js"
+ ],
+ "Bring the recording for delivery. Bring the words for content. Bring both for the full picture.": [
+  "pages-core.js"
+ ],
+ "Brisk": [
+  "gym.js"
+ ],
+ "Bronze": [
+  "engine.js"
+ ],
+ "Browser storage is full or blocked, so your latest work may not survive a reload.": [
+  "engine.js",
+  "app.js"
+ ],
+ "Build": [
+  "pages-more.js"
+ ],
+ "Build at least three steps, small to large.": [
+  "gym.js"
+ ],
+ "Build my outline": [
+  "pages-more.js"
+ ],
+ "Building a simple outline instead.": [
+  "pages-more.js"
+ ],
+ "Building your outline…": [
+  "pages-more.js"
+ ],
+ "By the numbers": [
+  "pages-more.js"
+ ],
+ "Can the audience see the picture?": [
+  "gym.js"
+ ],
+ "Cancel": [
+  "pages-core.js",
+  "pages-more.js",
+  "gym.js",
+  "teacher.js"
+ ],
+ "Candidate controls": [
+  "viva.js"
+ ],
+ "Card {0} of {1}": [
+  "viva.js"
+ ],
+ "Carnot cycle; entropy; the second law": [
+  "viva.js"
+ ],
+ "Celebration": [
+  "ui.js"
+ ],
+ "Challenge": [
+  "viva.js"
+ ],
+ "Challenges claims, hunts misconceptions and asks what would prove you wrong.": [
+  "viva.js"
+ ],
+ "Change one assumption or input in your work. What changes, and where in your work would you have to redo it?": [
+  "viva.js"
+ ],
+ "Change your answer immediately": [
+  "viva.js"
+ ],
+ "Character": [
+  "data.js"
+ ],
+ "Check it myself": [
+  "gym.js"
+ ],
+ "Check your notes against {0}: {1}. Mark which line did each job. A missing part is your first fix.": [
+  "gym.js"
+ ],
+ "Check yourself": [
+  "pages-more.js"
+ ],
+ "Checking that the numbers add up…": [
+  "pages-core.js"
+ ],
+ "Checking that the units of your answer match the quantity asked for": [
+  "viva.js"
+ ],
+ "Checklist for any answer of this kind": [
+  "viva.js"
+ ],
+ "Checklist for any answer of this kind · tap what you said": [
+  "viva.js"
+ ],
+ "Checks what you know. It does not rehearse speaking.": [
+  "viva.js"
+ ],
+ "Chiasmus": [
+  "gym.js"
+ ],
+ "Chimes": [
+  "gym.js"
+ ],
+ "Choose a device": [
+  "gym.js"
+ ],
+ "Choose a mark for all four.": [
+  "viva.js"
+ ],
+ "Choose a sound and find three strong words that begin with it.": [
+  "gym.js"
+ ],
+ "Choose a technical term you used in your work and explain what it means without using the term.": [
+  "viva.js"
+ ],
+ "Choose from three different approaches, each tuned to your triangle.": [
+  "pages-more.js"
+ ],
+ "Choose one specific step or passage, and explain it without reading it out.": [
+  "viva.js"
+ ],
+ "Choose one thing the usual treatment of {0} takes for granted, and tell me what breaks without it.": [
+  "viva.js"
+ ],
+ "Choose one thing you took for granted. If it were different, which parts of your work would move?": [
+  "viva.js"
+ ],
+ "Choose your angle": [
+  "pages-more.js"
+ ],
+ "Cicero": [
+  "data.js"
+ ],
+ "claim": [
+  "viva.js"
+ ],
+ "Claims with no steps": [
+  "viva.js"
+ ],
+ "Clarity": [
+  "data.js",
+  "gym.js"
+ ],
+ "Class": [
+  "teacher.js"
+ ],
+ "Class “{0}” created. Code: {1}": [
+  "teacher.js"
+ ],
+ "Class code": [
+  "auth.js"
+ ],
+ "Class code from your teacher": [
+  "auth.js"
+ ],
+ "Classes": [
+  "app.js"
+ ],
+ "Classes need an account": [
+  "teacher.js"
+ ],
+ "Classic workouts": [
+  "gym.js"
+ ],
+ "Classroom example, a thermodynamics viva": [
+  "viva.js"
+ ],
+ "Clean": [
+  "gym.js"
+ ],
+ "Clean Air": [
+  "data.js"
+ ],
+ "Clean correction": [
+  "viva.js"
+ ],
+ "clean rounds": [
+  "gym.js"
+ ],
+ "Clean. {0} in a row to {1}.": [
+  "gym.js"
+ ],
+ "Clean. Nicely done.": [
+  "gym.js"
+ ],
+ "Clean. Note that some auto-transcripts remove “um” and “uh”.": [
+  "engine.js"
+ ],
+ "Clear": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Clear enough": [
+  "viva.js"
+ ],
+ "Clear, justified steps": [
+  "viva.js"
+ ],
+ "Cleared up to {0}": [
+  "gym.js"
+ ],
+ "Climax": [
+  "gym.js"
+ ],
+ "Close": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Close coach": [
+  "pages-more.js"
+ ],
+ "Close note": [
+  "pages-core.js"
+ ],
+ "Close your lips loosely and blow air through them so they flutter.": [
+  "gym.js"
+ ],
+ "Closed": [
+  "viva.js"
+ ],
+ "Closest badge: {0}": [
+  "pages-core.js"
+ ],
+ "Closing question": [
+  "viva.js"
+ ],
+ "Coach": [
+  "app.js"
+ ],
+ "Coach feedback": [
+  "gym.js"
+ ],
+ "Coach notes from your self-review": [
+  "gym.js"
+ ],
+ "Coach this section": [
+  "pages-more.js"
+ ],
+ "Coach’s notes": [
+  "pages-core.js"
+ ],
+ "Coached so far": [
+  "pages-more.js"
+ ],
+ "Coaching…": [
+  "pages-more.js"
+ ],
+ "Code {0}": [
+  "teacher.js"
+ ],
+ "Comeback": [
+  "data.js"
+ ],
+ "Communication": [
+  "viva.js"
+ ],
+ "Compare with ours": [
+  "gym.js"
+ ],
+ "Comparing two things using “like” or “as”.": [
+  "gym.js"
+ ],
+ "Complete": [
+  "gym.js"
+ ],
+ "Complete 5 lessons": [
+  "data.js"
+ ],
+ "Complete a drill": [
+  "data.js"
+ ],
+ "Complete lesson · +40 XP": [
+  "pages-more.js"
+ ],
+ "Complete your first oral exam": [
+  "data.js"
+ ],
+ "Completed": [
+  "pages-more.js"
+ ],
+ "Complication": [
+  "gym.js"
+ ],
+ "Composure": [
+  "data.js"
+ ],
+ "Computed from your marks": [
+  "viva.js"
+ ],
+ "Concrete cases: what would you do, and why.": [
+  "viva.js"
+ ],
+ "Concrete number": [
+  "engine.js"
+ ],
+ "Concrete numbers give your claims weight.": [
+  "engine.js"
+ ],
+ "Confidence": [
+  "data.js",
+  "gym.js"
+ ],
+ "Confidence {0}": [
+  "pages-core.js"
+ ],
+ "Confirm delete": [
+  "viva.js"
+ ],
+ "Connection": [
+  "data.js"
+ ],
+ "Constitutional law": [
+  "viva.js"
+ ],
+ "Consul": [
+  "data.js"
+ ],
+ "Content check": [
+  "pages-core.js"
+ ],
+ "Context": [
+  "pages-core.js"
+ ],
+ "Continue": [
+  "ui.js"
+ ],
+ "Continue the exam": [
+  "viva.js"
+ ],
+ "Continue: ": [
+  "pages-core.js"
+ ],
+ "Core curriculum": [
+  "pages-more.js"
+ ],
+ "Core idea": [
+  "viva.js"
+ ],
+ "Core ideas, everyday examples, clear explanations.": [
+  "viva.js"
+ ],
+ "Core lesson": [
+  "pages-more.js"
+ ],
+ "Correct and precise throughout": [
+  "viva.js"
+ ],
+ "Correct answer": [
+  "pages-more.js"
+ ],
+ "Correct in outline, a few slips": [
+  "viva.js"
+ ],
+ "Correct or add anything you like. Saying nothing costs nothing.": [
+  "viva.js"
+ ],
+ "Correct, with minor imprecision": [
+  "viva.js"
+ ],
+ "Correct!": [
+  "pages-more.js"
+ ],
+ "Correct.": [
+  "pages-more.js"
+ ],
+ "Could a stranger follow it?": [
+  "gym.js"
+ ],
+ "Could the examiner follow every step?": [
+  "viva.js"
+ ],
+ "Count from one to ten out loud.": [
+  "gym.js"
+ ],
+ "Count from one to ten, a little louder each time, and send ten to the back wall.": [
+  "gym.js"
+ ],
+ "Count your silences over five seconds.": [
+  "viva.js"
+ ],
+ "Course material (optional)": [
+  "teacher.js"
+ ],
+ "Course orals, thesis defense, qualifying exams": [
+  "data.js"
+ ],
+ "Crafted · {0}": [
+  "gym.js"
+ ],
+ "Create a class, give students its code, set an exam or a speech, and watch the results come in.": [
+  "teacher.js"
+ ],
+ "Create a school and get the invite code its teachers use to join. Only the admin emails set on the server can do this.": [
+  "auth.js"
+ ],
+ "Create class": [
+  "teacher.js"
+ ],
+ "Create my teacher account": [
+  "auth.js"
+ ],
+ "Create one above. You get a six-character code; students join with it from the sign-in page.": [
+  "teacher.js"
+ ],
+ "Create school": [
+  "auth.js"
+ ],
+ "Created {0}": [
+  "teacher.js"
+ ],
+ "Credibility": [
+  "data.js"
+ ],
+ "Credibility and character. The audience believes the speaker before they believe the speech.": [
+  "data.js"
+ ],
+ "Crisp, structured, confident": [
+  "viva.js"
+ ],
+ "Current streak": [
+  "pages-more.js"
+ ],
+ "Curtain up": [
+  "gym.js"
+ ],
+ "Cut every “and”, keep the commas, and speed up.": [
+  "gym.js"
+ ],
+ "Cut hedges like “I think” and “maybe” where you are actually sure.": [
+  "engine.js"
+ ],
+ "Cut the “and” and keep the commas.": [
+  "gym.js"
+ ],
+ "Cut the hedge or replace it with evidence.": [
+  "engine.js"
+ ],
+ "Daily quests": [
+  "pages-core.js"
+ ],
+ "day": [
+  "pages-core.js"
+ ],
+ "days": [
+  "pages-core.js"
+ ],
+ "Debate": [
+  "data.js",
+  "gym.js"
+ ],
+ "Declaimer": [
+  "data.js"
+ ],
+ "Decoding audio": [
+  "pages-core.js"
+ ],
+ "Deep calm": [
+  "gym.js"
+ ],
+ "Defending a correct answer with evidence instead of folding under pressure.": [
+  "viva.js"
+ ],
+ "Defending your own work": [
+  "viva.js"
+ ],
+ "Define the key term in that answer as carefully as you can.": [
+  "viva.js"
+ ],
+ "Delete": [
+  "pages-core.js",
+  "pages-more.js",
+  "viva.js"
+ ],
+ "Delete “{0}”? This can’t be undone.": [
+  "viva.js"
+ ],
+ "Delete {0}": [
+  "viva.js"
+ ],
+ "Delete draft": [
+  "pages-more.js"
+ ],
+ "Delete my account and data": [
+  "auth.js"
+ ],
+ "Delete this analysis for good?": [
+  "pages-core.js"
+ ],
+ "Delete this draft?": [
+  "pages-more.js"
+ ],
+ "Deleting…": [
+  "auth.js"
+ ],
+ "deliberate": [
+  "pages-core.js"
+ ],
+ "Deliberate pause (0.7–2 s)": [
+  "pages-core.js"
+ ],
+ "Delivery": [
+  "pages-core.js"
+ ],
+ "Demands precise definitions, assumptions and derivations.": [
+  "viva.js"
+ ],
+ "Demands precise definitions, stated assumptions, correct units and complete derivations.": [
+  "viva.js"
+ ],
+ "Demosthenes": [
+  "data.js"
+ ],
+ "Demosthenes practiced with pebbles in his mouth and spoke over the roar of the sea.": [
+  "gym.js"
+ ],
+ "Depth": [
+  "viva.js"
+ ],
+ "Depth of understanding": [
+  "viva.js"
+ ],
+ "Derivations, estimates, units and limiting cases.": [
+  "viva.js"
+ ],
+ "Describing one thing as if it were another, to make it vivid.": [
+  "data.js",
+  "gym.js"
+ ],
+ "Designing…": [
+  "pages-more.js"
+ ],
+ "Device": [
+  "pages-core.js"
+ ],
+ "Device lab": [
+  "gym.js"
+ ],
+ "Device Lab": [
+  "gym.js"
+ ],
+ "Device Spotter": [
+  "pages-more.js"
+ ],
+ "Devices named": [
+  "pages-more.js"
+ ],
+ "Dictated": [
+  "viva.js"
+ ],
+ "Did it have a clear shape?": [
+  "gym.js"
+ ],
+ "Did you sound sure of yourself?": [
+  "gym.js"
+ ],
+ "Did your first sentence answer the question?": [
+  "viva.js"
+ ],
+ "Difficulty": [
+  "gym.js"
+ ],
+ "Dismiss": [
+  "pages-more.js"
+ ],
+ "Distinction": [
+  "data.js",
+  "viva.js"
+ ],
+ "Do a warm-up in the Gym": [
+  "data.js"
+ ],
+ "Do all five stations": [
+  "gym.js"
+ ],
+ "Do both halves have the same shape and length?": [
+  "gym.js"
+ ],
+ "Do one worked example per concept, narrating every step as if the examiner were watching.": [
+  "viva.js"
+ ],
+ "Do the drill to finish.": [
+  "pages-more.js"
+ ],
+ "Do the repeated words carry the main idea?": [
+  "gym.js"
+ ],
+ "Do they share the same grammatical shape?": [
+  "gym.js"
+ ],
+ "Do three nearby words start with the same sound?": [
+  "gym.js"
+ ],
+ "Do two key words appear twice?": [
+  "gym.js"
+ ],
+ "Do two or more clauses start with the same words?": [
+  "gym.js"
+ ],
+ "Do you answer it straight away?": [
+  "gym.js"
+ ],
+ "Do you ask a real question?": [
+  "gym.js"
+ ],
+ "Do you deny the opposite (“no small”, “not bad”)?": [
+  "gym.js"
+ ],
+ "Do you know why, and not only what?": [
+  "viva.js"
+ ],
+ "Do you say one thing is another, with no “like” or “as”?": [
+  "gym.js"
+ ],
+ "Do you use “like” or “as”?": [
+  "gym.js"
+ ],
+ "Do your clauses end on the same word?": [
+  "gym.js"
+ ],
+ "Does each step get bigger?": [
+  "gym.js"
+ ],
+ "Does it feel faster?": [
+  "gym.js"
+ ],
+ "Does it still sound natural out loud?": [
+  "gym.js"
+ ],
+ "Does the list feel heavier?": [
+  "gym.js"
+ ],
+ "Does the understatement make it stronger?": [
+  "gym.js"
+ ],
+ "Does their order flip in the second half?": [
+  "gym.js"
+ ],
+ "Done": [
+  "pages-core.js",
+  "pages-more.js",
+  "gym.js"
+ ],
+ "Done {0}": [
+  "teacher.js"
+ ],
+ "Done today": [
+  "gym.js"
+ ],
+ "Download": [
+  "pages-more.js"
+ ],
+ "Download report": [
+  "pages-core.js"
+ ],
+ "Download transcript": [
+  "viva.js"
+ ],
+ "Downloads aren’t available here, so the Markdown was copied to your clipboard.": [
+  "engine.js"
+ ],
+ "Downloads aren’t available in this view.": [
+  "engine.js"
+ ],
+ "Draft": [
+  "pages-core.js"
+ ],
+ "Draft exam": [
+  "viva.js"
+ ],
+ "Draft length": [
+  "pages-more.js"
+ ],
+ "Drafts": [
+  "app.js"
+ ],
+ "Drill": [
+  "pages-more.js"
+ ],
+ "Drill done": [
+  "pages-more.js"
+ ],
+ "Drill graded": [
+  "pages-more.js"
+ ],
+ "Drill it.": [
+  "pages-more.js"
+ ],
+ "Drills done": [
+  "pages-more.js"
+ ],
+ "Drop a recording or browse": [
+  "pages-core.js"
+ ],
+ "Drop a transcript or browse": [
+  "pages-core.js"
+ ],
+ "Due (optional)": [
+  "teacher.js"
+ ],
+ "due {0}": [
+  "teacher.js"
+ ],
+ "Dynamic volume": [
+  "engine.js"
+ ],
+ "e.g. 10B English, Debate club": [
+  "teacher.js"
+ ],
+ "e.g. Approve a two-week pilot of weekly releases": [
+  "pages-more.js"
+ ],
+ "e.g. maria.p": [
+  "auth.js"
+ ],
+ "e.g. Photosynthesis, oral check": [
+  "teacher.js"
+ ],
+ "e.g. Three-minute persuasive speech": [
+  "teacher.js"
+ ],
+ "e.g. Why our team should ship weekly": [
+  "pages-more.js"
+ ],
+ "Each dot is one speech’s center of gravity, oldest to newest.": [
+  "pages-core.js"
+ ],
+ "Each examiner has their own voice. Turn your sound on.": [
+  "viva.js"
+ ],
+ "Each part is a column. Strong parts carry the roof; cracked and missing ones are where it sags.": [
+  "pages-core.js"
+ ],
+ "Each speech you analyze adds a point to your journey.": [
+  "pages-more.js"
+ ],
+ "Each step stated with its justification": [
+  "viva.js"
+ ],
+ "Each technical term inside the definition explained": [
+  "viva.js"
+ ],
+ "Earlier outline": [
+  "pages-more.js"
+ ],
+ "Earlier outlines": [
+  "pages-more.js"
+ ],
+ "Earn any XP today to keep your streak.": [
+  "pages-core.js"
+ ],
+ "Earn any XP today to light your first flame.": [
+  "pages-core.js"
+ ],
+ "Earned": [
+  "gym.js"
+ ],
+ "Earned {0}": [
+  "pages-more.js"
+ ],
+ "Ease off the gas": [
+  "engine.js"
+ ],
+ "Edit and analyze again": [
+  "pages-core.js"
+ ],
+ "Emotion": [
+  "data.js"
+ ],
+ "Emotion and imagination. Stories, images and a voice that moves people from agreeing to acting.": [
+  "data.js"
+ ],
+ "End at least two clauses on the same word.": [
+  "gym.js"
+ ],
+ "End now and get my report": [
+  "viva.js"
+ ],
+ "End two or three clauses on the same word so it rings.": [
+  "gym.js"
+ ],
+ "Ended early · {0} of {1}": [
+  "viva.js"
+ ],
+ "Energy": [
+  "ui.js"
+ ],
+ "Enter": [
+  "gym.js"
+ ],
+ "Enter for next": [
+  "pages-more.js"
+ ],
+ "Enter the exam room": [
+  "viva.js"
+ ],
+ "Epistrophe": [
+  "data.js",
+  "gym.js"
+ ],
+ "Equal sides. Simple and steady, a good first try.": [
+  "gym.js"
+ ],
+ "Erase all speeches, drafts and progress?": [
+  "pages-more.js"
+ ],
+ "Erase everything": [
+  "pages-more.js"
+ ],
+ "Estimated from caption timing. Upload the recording for pitch and volume.": [
+  "pages-core.js"
+ ],
+ "estimated from syllables": [
+  "pages-core.js"
+ ],
+ "Eternal Flame": [
+  "data.js"
+ ],
+ "Ethos": [
+  "data.js",
+  "pages-core.js"
+ ],
+ "Eulogy or tribute": [
+  "data.js"
+ ],
+ "Even": [
+  "gym.js"
+ ],
+ "Every account of {0} rests on assumptions. Pick one. What happens when it fails?": [
+  "viva.js"
+ ],
+ "Every laurel here has a speech behind it.": [
+  "pages-more.js"
+ ],
+ "Every oral exam reaches the edge of what you know. That is by design: examiners push until they find it, and how you behave there is part of the grade. Bluffing is the worst option. A single follow-up exposes it, and then the examiner starts to doubt your earlier answers too.": [
+  "viva.js"
+ ],
+ "Every speech you analyze moves this triangle.": [
+  "pages-core.js"
+ ],
+ "Every station today. Take a bow.": [
+  "gym.js"
+ ],
+ "Every step justified and checked": [
+  "viva.js"
+ ],
+ "Everything was reset": [
+  "pages-more.js"
+ ],
+ "Evidence": [
+  "data.js"
+ ],
+ "exam": [
+  "viva.js"
+ ],
+ "Exam": [
+  "app.js"
+ ],
+ "Exam deleted": [
+  "viva.js"
+ ],
+ "Exam room": [
+  "viva.js"
+ ],
+ "Examine me on this": [
+  "viva.js"
+ ],
+ "Examiner": [
+  "viva.js",
+  "teacher.js"
+ ],
+ "Examiner’s note.": [
+  "viva.js"
+ ],
+ "Examiners can’t hear confident answers": [
+  "viva.js"
+ ],
+ "Examiners challenge answers for two reasons: because you are wrong, or to see whether you can defend what is right. Treat both the same way at first. Pause, restate the challenge in your own words, and re-check your reasoning out loud.": [
+  "viva.js"
+ ],
+ "Examiners read questions aloud": [
+  "viva.js"
+ ],
+ "Example": [
+  "pages-core.js",
+  "pages-more.js",
+  "gym.js"
+ ],
+ "Example, please": [
+  "viva.js"
+ ],
+ "exams": [
+  "viva.js"
+ ],
+ "Exams": [
+  "teacher.js"
+ ],
+ "Exercise {0} of {1}": [
+  "gym.js"
+ ],
+ "Exercises": [
+  "gym.js"
+ ],
+ "Explain": [
+  "gym.js"
+ ],
+ "Explain {0} to a first-year student who has never met it. What is the core idea, and why should they care?": [
+  "viva.js"
+ ],
+ "Explains the mechanism": [
+  "viva.js"
+ ],
+ "Expressive voice": [
+  "engine.js"
+ ],
+ "Expressiveness {0}": [
+  "pages-core.js"
+ ],
+ "Extension": [
+  "viva.js"
+ ],
+ "Facts, numbers, arguments, half-formed ideas. Bullet points are fine.": [
+  "pages-more.js"
+ ],
+ "Fallacies spotted": [
+  "pages-more.js"
+ ],
+ "Fallacy": [
+  "pages-core.js"
+ ],
+ "Fallacy Hunt": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Fallacy Hunter": [
+  "data.js"
+ ],
+ "Few deliberate pauses": [
+  "engine.js"
+ ],
+ "Few fillers": [
+  "engine.js"
+ ],
+ "Few signposts. Words like “first”, “because” and “for example” let the examiner follow your structure.": [
+  "viva.js"
+ ],
+ "Fierce": [
+  "gym.js"
+ ],
+ "Filler": [
+  "pages-core.js"
+ ],
+ "Filler words": [
+  "engine.js",
+  "pages-core.js",
+  "viva.js"
+ ],
+ "Filler: {0}": [
+  "pages-core.js"
+ ],
+ "Fillers read as uncertainty. Replace this with a one-second silent pause.": [
+  "pages-core.js"
+ ],
+ "Find a picture that shares the feeling, and say it is that picture.": [
+  "gym.js"
+ ],
+ "Find a term you relied on, and tell me what it means in everyday words.": [
+  "viva.js"
+ ],
+ "Find my angles": [
+  "pages-more.js"
+ ],
+ "Find the two opposites, then give both halves the same grammar.": [
+  "gym.js"
+ ],
+ "Find three nearby words that start with the same sound.": [
+  "gym.js"
+ ],
+ "Find your angle, then write it with a coach at your side.": [
+  "pages-core.js"
+ ],
+ "Find your three lights.": [
+  "pages-core.js"
+ ],
+ "Finding your angles…": [
+  "pages-more.js"
+ ],
+ "Finding your best line…": [
+  "pages-core.js"
+ ],
+ "Finish": [
+  "pages-more.js",
+  "gym.js"
+ ],
+ "Finish 10 rounds of triangle breathing": [
+  "data.js"
+ ],
+ "Finish a lesson": [
+  "data.js"
+ ],
+ "Finish a speech in Prepare": [
+  "data.js"
+ ],
+ "Finish setting up your exam": [
+  "viva.js"
+ ],
+ "Finish speech · +150 XP": [
+  "pages-more.js"
+ ],
+ "Finish the line “it was like…” with something concrete and surprising.": [
+  "gym.js"
+ ],
+ "Finish the warm-up": [
+  "gym.js"
+ ],
+ "Finished": [
+  "pages-more.js"
+ ],
+ "Finished. Now go deliver it.": [
+  "pages-more.js"
+ ],
+ "Finishing earns 150 XP and the Speechwright badge on your first one.": [
+  "pages-more.js"
+ ],
+ "First Words": [
+  "data.js"
+ ],
+ "Five minutes a day": [
+  "pages-core.js"
+ ],
+ "Five questions with follow-ups. A good length for a course oral.": [
+  "viva.js"
+ ],
+ "Five short stations for breath, voice, diction, quick thinking and craft. Ten minutes here makes the real speech feel lighter.": [
+  "gym.js"
+ ],
+ "Flat pitch": [
+  "engine.js"
+ ],
+ "Flip the card": [
+  "viva.js"
+ ],
+ "Follow a light around three sides of breath to steady your nerves before you speak.": [
+  "gym.js"
+ ],
+ "Follow the light. Breathe in up the blue side, hold across the green, and breathe out down the red.": [
+  "gym.js"
+ ],
+ "Follow-up {0}": [
+  "viva.js"
+ ],
+ "follow-ups each": [
+  "viva.js"
+ ],
+ "Follow-ups exist to test claims. A caught bluff costs you credibility across the whole exam.": [
+  "viva.js"
+ ],
+ "For each concept, answer “why does this hold?” out loud in under a minute.": [
+  "viva.js"
+ ],
+ "For nimble tongues": [
+  "gym.js"
+ ],
+ "For the Rostra team": [
+  "auth.js"
+ ],
+ "Format": [
+  "viva.js"
+ ],
+ "Fortnight Flame": [
+  "data.js"
+ ],
+ "Four habits examiners reward": [
+  "viva.js"
+ ],
+ "Frame {0}": [
+  "pages-core.js"
+ ],
+ "From “{0}”": [
+  "pages-more.js"
+ ],
+ "From {0}": [
+  "pages-core.js"
+ ],
+ "from captions": [
+  "pages-core.js"
+ ],
+ "From delivery only": [
+  "pages-core.js"
+ ],
+ "From the first to the last caption": [
+  "pages-core.js"
+ ],
+ "From the masters": [
+  "pages-more.js"
+ ],
+ "From the panel": [
+  "viva.js"
+ ],
+ "From the sample report": [
+  "pages-more.js"
+ ],
+ "from transcript": [
+  "pages-core.js"
+ ],
+ "From your coach": [
+  "pages-core.js"
+ ],
+ "From your earlier exams": [
+  "viva.js"
+ ],
+ "From your school’s Rostra contact": [
+  "auth.js"
+ ],
+ "From your teacher": [
+  "teacher.js"
+ ],
+ "Frozen silence (over 2 s)": [
+  "pages-core.js"
+ ],
+ "Full · 3 min": [
+  "gym.js"
+ ],
+ "Full rehearsal done. +25 XP.": [
+  "pages-more.js"
+ ],
+ "Full rehearsal done. You already earned today’s XP for this draft.": [
+  "pages-more.js"
+ ],
+ "Future": [
+  "gym.js"
+ ],
+ "Gaps to close": [
+  "viva.js"
+ ],
+ "Generate a slide outline from your draft. Slides are included when you download.": [
+  "pages-more.js"
+ ],
+ "Generate slides": [
+  "pages-more.js"
+ ],
+ "Get a little louder on each number, powered from your belly.": [
+  "gym.js"
+ ],
+ "Get coach feedback": [
+  "pages-more.js",
+  "gym.js"
+ ],
+ "Get feedback on a speech": [
+  "pages-core.js"
+ ],
+ "Get ready for your oral exam.": [
+  "pages-core.js"
+ ],
+ "Get ready…": [
+  "gym.js"
+ ],
+ "Get the full coach read": [
+  "pages-core.js"
+ ],
+ "Give me a concrete example, with numbers if you can.": [
+  "viva.js"
+ ],
+ "Give me three ways to open a pitch.": [
+  "pages-more.js"
+ ],
+ "Give me your answer again in one sentence, then the single best reason.": [
+  "viva.js"
+ ],
+ "Give people a reason to trust you. Name the experience behind your view, and admit one limit.": [
+  "pages-more.js"
+ ],
+ "Give the main reason.": [
+  "gym.js"
+ ],
+ "Giving a human face to something that has none. The Greek word means making a face.": [
+  "data.js"
+ ],
+ "Glide slowly up to your highest note, then back down.": [
+  "gym.js"
+ ],
+ "Go again": [
+  "gym.js"
+ ],
+ "Go again with {0}": [
+  "viva.js"
+ ],
+ "Go again with the ones you missed while they are fresh. Say each answer out loud before you flip.": [
+  "viva.js"
+ ],
+ "Go ahead, think.": [
+  "viva.js"
+ ],
+ "Go to my account": [
+  "auth.js"
+ ],
+ "Go top to bottom before a big talk. The sheet resets at midnight.": [
+  "gym.js"
+ ],
+ "Gold": [
+  "engine.js"
+ ],
+ "Golden Triangle": [
+  "data.js"
+ ],
+ "Good": [
+  "gym.js"
+ ],
+ "Good afternoon": [
+  "pages-core.js"
+ ],
+ "Good afternoon. Be precise. Define your terms before you use them, and state your assumptions.": [
+  "viva.js"
+ ],
+ "Good call. Change one thing and check again.": [
+  "gym.js"
+ ],
+ "Good evening": [
+  "pages-core.js"
+ ],
+ "Good morning": [
+  "pages-core.js"
+ ],
+ "Goodwill": [
+  "data.js"
+ ],
+ "Graded": [
+  "pages-core.js"
+ ],
+ "Grading…": [
+  "pages-more.js"
+ ],
+ "Graduate": [
+  "viva.js"
+ ],
+ "Granted. Thirty seconds.": [
+  "viva.js"
+ ],
+ "Great": [
+  "gym.js"
+ ],
+ "Great speeches annotated move by move.": [
+  "pages-more.js"
+ ],
+ "Great speeches studied": [
+  "pages-more.js"
+ ],
+ "Great speeches, annotated move by move. Tap any highlight to see the technique and steal it for your own.": [
+  "pages-more.js"
+ ],
+ "Growth": [
+  "pages-core.js"
+ ],
+ "Guess a formula confidently and move on": [
+  "viva.js"
+ ],
+ "Gym": [
+  "pages-more.js",
+  "gym.js",
+  "app.js"
+ ],
+ "Gym honours": [
+  "gym.js"
+ ],
+ "Halfway. Move to your next part.": [
+  "gym.js"
+ ],
+ "Handling objections": [
+  "data.js"
+ ],
+ "Hard to follow": [
+  "viva.js"
+ ],
+ "Harder questions count for more in the overall mark. An accuracy below 50 can’t pass, and an accuracy below 70 or a depth below 60 can’t reach Distinction.": [
+  "viva.js"
+ ],
+ "Hardest question reached: level {0} of 3": [
+  "viva.js"
+ ],
+ "Have you removed the “and”s?": [
+  "gym.js"
+ ],
+ "Hear it": [
+  "gym.js"
+ ],
+ "Hear the verdict": [
+  "viva.js"
+ ],
+ "Hear yourself": [
+  "viva.js"
+ ],
+ "Heart and argument together. Build your credibility so the case lands with authority.": [
+  "data.js"
+ ],
+ "Hedge": [
+  "engine.js"
+ ],
+ "Hedge only where the doubt is real, and say how you would check.": [
+  "viva.js"
+ ],
+ "Hedges": [
+  "viva.js"
+ ],
+ "Hedges soften your authority. Use them only where you are genuinely unsure.": [
+  "engine.js"
+ ],
+ "Help asked": [
+  "viva.js"
+ ],
+ "Help people feel what is at stake. Add one specific story or image about one real person.": [
+  "pages-more.js"
+ ],
+ "HIGH": [
+  "gym.js"
+ ],
+ "High school": [
+  "viva.js"
+ ],
+ "Highlights from your coach. Fillers are detected on-device.": [
+  "pages-core.js"
+ ],
+ "Historian": [
+  "data.js"
+ ],
+ "Hit a 10-answer combo in the Arcade": [
+  "data.js"
+ ],
+ "Hm.": [
+  "viva.js"
+ ],
+ "Hold": [
+  "gym.js"
+ ],
+ "Holding ground": [
+  "viva.js"
+ ],
+ "Home": [
+  "app.js"
+ ],
+ "Honoring someone": [
+  "data.js"
+ ],
+ "Hope the examiner didn’t notice": [
+  "viva.js"
+ ],
+ "How did that go?": [
+  "gym.js"
+ ],
+ "How did that round feel?": [
+  "gym.js"
+ ],
+ "How do I calm my nerves before I speak?": [
+  "pages-more.js"
+ ],
+ "How does {0} connect to the wider field of {1}? Name one idea it depends on and one idea that builds on it.": [
+  "viva.js"
+ ],
+ "How energy, pitch and pace moved through the speech": [
+  "ui.js"
+ ],
+ "How it ended, and the lesson.": [
+  "gym.js"
+ ],
+ "How it works": [
+  "gym.js"
+ ],
+ "How Rostra handles your data": [
+  "auth.js"
+ ],
+ "How should I handle a hostile question?": [
+  "pages-more.js"
+ ],
+ "How students answer": [
+  "teacher.js"
+ ],
+ "How the marks break down": [
+  "viva.js"
+ ],
+ "How the work would differ": [
+  "viva.js"
+ ],
+ "How to think out loud, answer first, and stay composed when the examiner pushes back.": [
+  "pages-more.js"
+ ],
+ "How would your answer change if the main assumption were removed?": [
+  "viva.js"
+ ],
+ "How you answer": [
+  "viva.js"
+ ],
+ "How you sounded": [
+  "pages-core.js",
+  "viva.js"
+ ],
+ "How you sounded, from dictation": [
+  "viva.js"
+ ],
+ "How you would test it": [
+  "viva.js"
+ ],
+ "How your answers read": [
+  "viva.js"
+ ],
+ "How your data is handled": [
+  "auth.js"
+ ],
+ "Hum from your lowest note, glide slowly up to your highest, and back down, like a siren.": [
+  "gym.js"
+ ],
+ "Hum on “mmm” at your lowest comfortable note.": [
+  "gym.js"
+ ],
+ "Humming siren": [
+  "gym.js"
+ ],
+ "Hunting for fallacies…": [
+  "pages-core.js"
+ ],
+ "Hypophora": [
+  "gym.js"
+ ],
+ "I am asking about {0}. Answer in one sentence first, then give me your reasoning.": [
+  "viva.js"
+ ],
+ "I don’t know, help me reason": [
+  "viva.js"
+ ],
+ "I don’t remember the formula, so let me rebuild it. Energy is conserved, so the heat in has to equal the work done plus the change in internal energy. If no heat gets in and the gas does work, its internal energy must drop, so it cools. That matches how air rushing out of a tyre valve feels cold, so I trust it.": [
+  "viva.js"
+ ],
+ "I knew it": [
+  "viva.js"
+ ],
+ "I need a moment": [
+  "viva.js"
+ ],
+ "I see.": [
+  "viva.js"
+ ],
+ "I want a definition of {0} you could defend: what it is, and when it applies.": [
+  "viva.js"
+ ],
+ "I will stop you there. Your claim, in one sentence.": [
+  "viva.js"
+ ],
+ "I will want examples. Numbers, if you have them.": [
+  "viva.js"
+ ],
+ "I’m done": [
+  "gym.js"
+ ],
+ "I’m ready, start speaking": [
+  "gym.js"
+ ],
+ "I’m stuck": [
+  "pages-more.js"
+ ],
+ "I’ve finished speaking": [
+  "viva.js"
+ ],
+ "Ideal {0}–{1} for this occasion · {2}": [
+  "pages-core.js"
+ ],
+ "If they remember one sentence tomorrow, what should it be?": [
+  "pages-more.js"
+ ],
+ "If you don’t know, say so, and reason from what you do know.": [
+  "viva.js"
+ ],
+ "If you find a mistake, correct it cleanly: “You’re right, I had the sign wrong. With that fixed, the result is…”. A quick, clear correction counts in your favour. If your reasoning holds, defend it calmly with evidence: “I still think it’s true, because…”. Changing a correct answer under pressure is one of the commonest ways to lose marks.": [
+  "viva.js"
+ ],
+ "If you had ten seconds, what would your answer be?": [
+  "viva.js"
+ ],
+ "If you had to extend your work to a harder case, what would break first, and how would you find out?": [
+  "viva.js"
+ ],
+ "If your lips stick, press a fingertip into each cheek.": [
+  "gym.js"
+ ],
+ "Imagine a bright student who has never heard of {0}. Teach them the one idea that matters most.": [
+  "viva.js"
+ ],
+ "Imagine a thread lifting the crown of your head.": [
+  "gym.js"
+ ],
+ "Imagine a tougher version of your problem or question. Tell me which part of your work gives way first.": [
+  "viva.js"
+ ],
+ "Imitation": [
+  "data.js"
+ ],
+ "Impromptu": [
+  "gym.js"
+ ],
+ "Impromptu roulette": [
+  "gym.js"
+ ],
+ "Impromptu Roulette": [
+  "gym.js"
+ ],
+ "impromptus": [
+  "gym.js"
+ ],
+ "impromptus spoken": [
+  "gym.js"
+ ],
+ "Impromptus spoken": [
+  "pages-more.js"
+ ],
+ "Improve:": [
+  "pages-more.js"
+ ],
+ "Improviser": [
+  "data.js"
+ ],
+ "In a database in Frankfurt, Germany (European Union), run by Supabase for Rostra. The AI examiner and coach run on Anthropic’s Claude; only the text of your answers and speeches is sent, under Rostra’s account, never your name or email. Transcription, when a server service is used, receives only the audio of one answer at a time.": [
+  "auth.js"
+ ],
+ "In an oral exam the examiner hears your first sentence most clearly. If it is “So, um, there are a lot of factors…”, they start to doubt you before you have said anything wrong. Put your answer in the first sentence, then spend the rest of your time earning it.": [
+  "viva.js"
+ ],
+ "In PREP, what comes after the Example?": [
+  "viva.js"
+ ],
+ "In progress": [
+  "pages-core.js"
+ ],
+ "In progress, {0} of {1} answered": [
+  "viva.js"
+ ],
+ "In this browser only. Clearing the browser removes it.": [
+  "auth.js"
+ ],
+ "In your own words, what does {0} mean? Give me a definition precise enough that a classmate could use it.": [
+  "viva.js"
+ ],
+ "In your school’s Rostra account, stored in the EU (Frankfurt). Your teachers can see your exams and speeches for the classes you are in.": [
+  "auth.js"
+ ],
+ "Incomplete": [
+  "viva.js"
+ ],
+ "Inconsistency": [
+  "pages-core.js"
+ ],
+ "Interpretive": [
+  "viva.js"
+ ],
+ "Investors, clients, demo day": [
+  "data.js"
+ ],
+ "Iron Logic": [
+  "data.js"
+ ],
+ "Is every item joined by “and” or “or”?": [
+  "gym.js"
+ ],
+ "Is it a question?": [
+  "gym.js"
+ ],
+ "Is it correct and precise?": [
+  "viva.js"
+ ],
+ "is ready. Teacher invite code:": [
+  "auth.js"
+ ],
+ "Is that word the one you want them to remember?": [
+  "gym.js"
+ ],
+ "Is that your full answer?": [
+  "viva.js"
+ ],
+ "Is the comparison concrete and fresh?": [
+  "gym.js"
+ ],
+ "Is the last step the strongest?": [
+  "gym.js"
+ ],
+ "Is there only one sensible answer?": [
+  "gym.js"
+ ],
+ "It admits the edge, bridges to known ground, and starts reasoning. That is exactly what an oral exam is testing.": [
+  "viva.js"
+ ],
+ "It gives the answer in one word, then the reason. The examiner knows your position at once and can probe the reasoning.": [
+  "viva.js"
+ ],
+ "It is fine as long as you speak quickly": [
+  "viva.js"
+ ],
+ "It may have been deleted by the student, or you may not teach their class.": [
+  "teacher.js"
+ ],
+ "It may have been deleted, or it lives in another browser.": [
+  "viva.js"
+ ],
+ "It may have been deleted.": [
+  "pages-core.js"
+ ],
+ "It’s a question. Make sure the answer is obvious.": [
+  "gym.js"
+ ],
+ "Jaw release": [
+  "gym.js"
+ ],
+ "Join a class": [
+  "auth.js"
+ ],
+ "Join as a student": [
+  "auth.js"
+ ],
+ "Join as a teacher": [
+  "auth.js"
+ ],
+ "Join each item with “and”, at least three times.": [
+  "gym.js"
+ ],
+ "Join every item with “and” so the list feels endless.": [
+  "gym.js"
+ ],
+ "Join my class": [
+  "auth.js"
+ ],
+ "Jot at least a sentence or two about what you said to get feedback on your content. Here are notes from your ratings.": [
+  "gym.js"
+ ],
+ "Journey": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Judge it against the recipe.": [
+  "gym.js"
+ ],
+ "Judging…": [
+  "gym.js"
+ ],
+ "Keep a 14-day streak": [
+  "data.js"
+ ],
+ "Keep a 3-day streak": [
+  "data.js"
+ ],
+ "Keep a 30-day streak": [
+  "data.js"
+ ],
+ "Keep a 7-day streak": [
+  "data.js"
+ ],
+ "Keep a blank sheet handy. Say every step aloud.": [
+  "viva.js"
+ ],
+ "Keep doing this": [
+  "pages-core.js",
+  "viva.js"
+ ],
+ "Keep editing": [
+  "pages-more.js"
+ ],
+ "Keep it": [
+  "viva.js"
+ ],
+ "Keep my sections": [
+  "pages-more.js"
+ ],
+ "Keep my work": [
+  "auth.js"
+ ],
+ "Keep speaking": [
+  "viva.js"
+ ],
+ "Keep the glide smooth, with no jumps or breaks.": [
+  "gym.js"
+ ],
+ "Keep:": [
+  "pages-more.js"
+ ],
+ "Keeps asking why, one level deeper each time.": [
+  "viva.js"
+ ],
+ "Keeps asking why. Accepts nothing on authority and follows each answer one level deeper.": [
+  "viva.js"
+ ],
+ "Keynote, ceremony, rally": [
+  "data.js"
+ ],
+ "Kind of subject": [
+  "viva.js"
+ ],
+ "Kindling": [
+  "data.js"
+ ],
+ "Knows your triangle. Won’t write your speech for you.": [
+  "pages-more.js"
+ ],
+ "Language": [
+  "auth.js"
+ ],
+ "Last active": [
+  "teacher.js"
+ ],
+ "Last result: {0}% in {1}. Retake it, or pick a new subject.": [
+  "pages-core.js"
+ ],
+ "Last results:": [
+  "teacher.js"
+ ],
+ "Latest exam": [
+  "teacher.js"
+ ],
+ "Laureate": [
+  "data.js"
+ ],
+ "laurel": [
+  "pages-more.js"
+ ],
+ "Laurel": [
+  "engine.js"
+ ],
+ "Laurel chest opened": [
+  "pages-core.js"
+ ],
+ "Laurel chest opened: +{0} XP": [
+  "pages-core.js"
+ ],
+ "Laurels": [
+  "pages-more.js"
+ ],
+ "Lead with your answer in one sentence. Then the reason, then an example.": [
+  "viva.js"
+ ],
+ "Lead with your answer, then reason out loud.": [
+  "viva.js"
+ ],
+ "Learn": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Learn from the masters": [
+  "pages-more.js"
+ ],
+ "Learn it.": [
+  "pages-more.js"
+ ],
+ "Learn it. Drill it. Own it.": [
+  "pages-more.js"
+ ],
+ "Leave": [
+  "viva.js"
+ ],
+ "Leave and resume later": [
+  "viva.js"
+ ],
+ "Leave the exam": [
+  "viva.js"
+ ],
+ "Leaving out the conjunctions between items to make them fast and urgent.": [
+  "gym.js"
+ ],
+ "Led with the answer": [
+  "viva.js"
+ ],
+ "Led with the answer (estimated)": [
+  "viva.js"
+ ],
+ "Length": [
+  "pages-core.js",
+  "gym.js",
+  "teacher.js"
+ ],
+ "Length in minutes": [
+  "teacher.js"
+ ],
+ "Length: {0} min · about {1} words": [
+  "pages-more.js"
+ ],
+ "Lesson complete": [
+  "pages-more.js"
+ ],
+ "Lesson not found": [
+  "pages-more.js"
+ ],
+ "Lessons completed": [
+  "pages-more.js"
+ ],
+ "Lessons from this speech": [
+  "pages-core.js"
+ ],
+ "Lessons from your speeches": [
+  "pages-more.js"
+ ],
+ "Let me pause you there. Give me your answer in one sentence.": [
+  "viva.js"
+ ],
+ "Let me stop you there. The bottom line, in one sentence.": [
+  "viva.js"
+ ],
+ "Let me stop you there. The principle, in one sentence.": [
+  "viva.js"
+ ],
+ "Let me stop you there. Your answer in one sentence, please.": [
+  "viva.js"
+ ],
+ "Let the examiners speak": [
+  "viva.js"
+ ],
+ "Let us continue.": [
+  "viva.js"
+ ],
+ "Let us go on.": [
+  "viva.js"
+ ],
+ "Let your jaw hang open, heavy and relaxed.": [
+  "gym.js"
+ ],
+ "Let your shoulders drop away from your ears.": [
+  "gym.js"
+ ],
+ "Letters, digits, dots. You sign in with this, so no email is needed.": [
+  "auth.js"
+ ],
+ "Level": [
+  "viva.js",
+  "teacher.js"
+ ],
+ "Level {0}": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Level {0}: {1}. Badges": [
+  "app.js"
+ ],
+ "Level up": [
+  "ui.js"
+ ],
+ "Library": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Light reactions and the Calvin cycle": [
+  "teacher.js"
+ ],
+ "Lincoln ties changing his mind to evidence. Correct an error the moment it is shown, and hold firm until it is.": [
+  "viva.js"
+ ],
+ "Linear algebra": [
+  "viva.js"
+ ],
+ "lines crafted": [
+  "gym.js"
+ ],
+ "Lines from Lincoln, Shakespeare, Kennedy and Douglass. Name the rhetorical device.": [
+  "pages-more.js"
+ ],
+ "Lip trills": [
+  "gym.js"
+ ],
+ "List at least three items with commas only.": [
+  "gym.js"
+ ],
+ "List your steps from small to big, and let the last one land hardest.": [
+  "gym.js"
+ ],
+ "Listen to the question.": [
+  "viva.js"
+ ],
+ "Listener": [
+  "data.js"
+ ],
+ "Listening": [
+  "viva.js"
+ ],
+ "Listing every formula you know": [
+  "viva.js"
+ ],
+ "Litotes": [
+  "gym.js"
+ ],
+ "Live coaching needs Claude allowed for this artifact. These answers work without it.": [
+  "pages-more.js"
+ ],
+ "Loading the report…": [
+  "teacher.js"
+ ],
+ "Loading your classes…": [
+  "teacher.js"
+ ],
+ "Loading…": [
+  "auth.js",
+  "teacher.js"
+ ],
+ "Logged. Try another device while you’re warm.": [
+  "gym.js"
+ ],
+ "Logic": [
+  "data.js"
+ ],
+ "Logos": [
+  "data.js",
+  "pages-core.js"
+ ],
+ "Logos drill": [
+  "pages-more.js"
+ ],
+ "Look for three items or clauses in a row.": [
+  "gym.js"
+ ],
+ "Looking back, tell me one choice you would make differently.": [
+  "viva.js"
+ ],
+ "Loose terms cost you. Write a one-line definition for every key term and say it exactly.": [
+  "viva.js"
+ ],
+ "Loud and relaxed is the goal. Ease off if your throat tightens.": [
+  "gym.js"
+ ],
+ "LOW": [
+  "gym.js"
+ ],
+ "Machine learning": [
+  "viva.js"
+ ],
+ "Made for you": [
+  "pages-more.js"
+ ],
+ "Main": [
+  "app.js"
+ ],
+ "Make my poster": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Make the case easy to follow. Back each main claim with one piece of evidence, and say why it matters.": [
+  "pages-more.js"
+ ],
+ "Make up a plausible answer and say it confidently": [
+  "viva.js"
+ ],
+ "Mapping your structure…": [
+  "pages-core.js"
+ ],
+ "Mark": [
+  "viva.js"
+ ],
+ "Mark as studied · +30 XP": [
+  "pages-more.js"
+ ],
+ "Mark drill done": [
+  "pages-more.js"
+ ],
+ "Mark it myself": [
+  "viva.js"
+ ],
+ "Mark your answer as a strict examiner would.": [
+  "viva.js"
+ ],
+ "Mark your round first": [
+  "gym.js"
+ ],
+ "Marked from the transcript of what you said. Pace, pauses and filler words were measured from the recording. Your tone of voice was not judged, and the audio was not kept.": [
+  "viva.js"
+ ],
+ "Marked from typed answers. This checks what you know. It does not rehearse speaking.": [
+  "viva.js"
+ ],
+ "Marked from your dictated words. Nobody heard your voice, so pace, pauses and tone are outside this mark.": [
+  "viva.js"
+ ],
+ "Marked from your notes. Nobody heard you speak, so this is a guide to your knowledge. It says nothing about your delivery.": [
+  "viva.js"
+ ],
+ "Marking on accuracy, depth, reasoning and communication.": [
+  "viva.js"
+ ],
+ "Master of the Pause": [
+  "data.js"
+ ],
+ "master this twister": [
+  "gym.js"
+ ],
+ "Mastered at every pace. Try a fiercer twister.": [
+  "gym.js"
+ ],
+ "Measured from your recording, on your device.": [
+  "pages-core.js"
+ ],
+ "Measuring on your device. Nothing leaves your browser at this step.": [
+  "pages-core.js"
+ ],
+ "Measuring pace and pauses": [
+  "pages-core.js"
+ ],
+ "Mechanism plus its limits": [
+  "viva.js"
+ ],
+ "Mechanism, limits and connections": [
+  "viva.js"
+ ],
+ "Mechanisms, derivations sketched aloud, worked examples.": [
+  "viva.js"
+ ],
+ "Merit": [
+  "viva.js"
+ ],
+ "Message": [
+  "pages-more.js"
+ ],
+ "Metaphor": [
+  "data.js",
+  "gym.js"
+ ],
+ "Metonymy": [
+  "data.js"
+ ],
+ "Microeconomics": [
+  "viva.js"
+ ],
+ "Microphone level": [
+  "viva.js",
+  "speech.js"
+ ],
+ "minutes": [
+  "viva.js"
+ ],
+ "Minutes analyzed": [
+  "pages-more.js"
+ ],
+ "Misconception.": [
+  "viva.js"
+ ],
+ "Missing": [
+  "pages-core.js"
+ ],
+ "Mixed": [
+  "viva.js"
+ ],
+ "Mm-hm.": [
+  "viva.js"
+ ],
+ "Model answer outline": [
+  "viva.js"
+ ],
+ "Modern masters": [
+  "pages-more.js"
+ ],
+ "Moment taken": [
+  "viva.js"
+ ],
+ "More": [
+  "app.js"
+ ],
+ "More options": [
+  "viva.js"
+ ],
+ "More pages": [
+  "app.js"
+ ],
+ "More rooms": [
+  "pages-more.js"
+ ],
+ "Mostly followable": [
+  "viva.js"
+ ],
+ "Mostly wrong or off the question": [
+  "viva.js"
+ ],
+ "Move the audience one step closer to your big idea.": [
+  "pages-more.js"
+ ],
+ "Moves to steal": [
+  "pages-more.js"
+ ],
+ "MP3, M4A, WAV, MP4, MOV · a phone voice memo works great": [
+  "pages-core.js"
+ ],
+ "Mute sounds": [
+  "app.js"
+ ],
+ "Mute the examiners": [
+  "viva.js"
+ ],
+ "My own work": [
+  "viva.js"
+ ],
+ "My point was… My example was… I closed with…": [
+  "gym.js"
+ ],
+ "Name 25 rhetorical devices": [
+  "data.js"
+ ],
+ "Name 5 devices in Device Spotter": [
+  "data.js"
+ ],
+ "Name a topic first.": [
+  "viva.js"
+ ],
+ "Name the error, fix it, and carry on, all in two sentences.": [
+  "viva.js"
+ ],
+ "Name the pain.": [
+  "gym.js"
+ ],
+ "Name the subject first, for example “Thermodynamics”.": [
+  "viva.js"
+ ],
+ "Name the subject first.": [
+  "viva.js"
+ ],
+ "Name the subject of the exam.": [
+  "teacher.js"
+ ],
+ "Name your coach uses": [
+  "pages-more.js"
+ ],
+ "Naming a thing by something closely tied to it, as a heart stands for feeling and a laurel for honour.": [
+  "data.js"
+ ],
+ "Narrated reasoning": [
+  "viva.js"
+ ],
+ "Needs a transcript": [
+  "pages-core.js"
+ ],
+ "Needs the AI coach": [
+  "pages-more.js"
+ ],
+ "New class": [
+  "teacher.js"
+ ],
+ "New exam": [
+  "pages-core.js"
+ ],
+ "New feedback": [
+  "pages-core.js"
+ ],
+ "New lessons for you": [
+  "app.js"
+ ],
+ "New password for {0}": [
+  "teacher.js"
+ ],
+ "New password set for {0}.": [
+  "teacher.js"
+ ],
+ "New sentence": [
+  "gym.js"
+ ],
+ "New speech": [
+  "pages-more.js"
+ ],
+ "New topic": [
+  "gym.js"
+ ],
+ "Next": [
+  "pages-more.js"
+ ],
+ "Next exercise": [
+  "gym.js"
+ ],
+ "Next lesson: {0}": [
+  "pages-more.js"
+ ],
+ "Next moves": [
+  "teacher.js"
+ ],
+ "Next spin, pause for a full breath after your opening line and before your last one.": [
+  "gym.js"
+ ],
+ "Next spin, pick one example and stay with it. One vivid example beats three quick ones.": [
+  "gym.js"
+ ],
+ "Next spin, plant your feet, look at one spot, and finish your first sentence before you think about the second.": [
+  "gym.js"
+ ],
+ "Next spin, say your {0} in the very first sentence, then announce each part as you reach it.": [
+  "gym.js"
+ ],
+ "Next step": [
+  "pages-core.js"
+ ],
+ "Next steps": [
+  "viva.js"
+ ],
+ "Next, then.": [
+  "viva.js"
+ ],
+ "Next:": [
+  "pages-more.js"
+ ],
+ "Next: {0}": [
+  "gym.js"
+ ],
+ "Next.": [
+  "viva.js"
+ ],
+ "No “like” or “as”, good. Now ask: can they see the picture?": [
+  "gym.js"
+ ],
+ "No active streak": [
+  "app.js"
+ ],
+ "No answers were marked, so there is nothing to grade yet.": [
+  "viva.js"
+ ],
+ "No change since your last attempt": [
+  "viva.js"
+ ],
+ "No classes yet": [
+  "teacher.js"
+ ],
+ "No conjunctions, just commas. Fast and urgent.": [
+  "gym.js"
+ ],
+ "No drafts yet": [
+  "pages-more.js"
+ ],
+ "No exams yet": [
+  "viva.js"
+ ],
+ "No fillers detected": [
+  "engine.js"
+ ],
+ "No flashcards for this exam": [
+  "viva.js"
+ ],
+ "no follow-ups": [
+  "viva.js"
+ ],
+ "No marks yet": [
+  "viva.js"
+ ],
+ "No microphone here, so this exam is typed.": [
+  "viva.js"
+ ],
+ "No oral exams yet": [
+  "pages-core.js"
+ ],
+ "No results yet": [
+  "teacher.js"
+ ],
+ "No rush. Take your time.": [
+  "viva.js"
+ ],
+ "No score yet": [
+  "pages-more.js"
+ ],
+ "No speech handy?": [
+  "pages-core.js"
+ ],
+ "No words were picked up.": [
+  "viva.js"
+ ],
+ "No.": [
+  "viva.js"
+ ],
+ "Nobody has joined yet": [
+  "teacher.js"
+ ],
+ "Not cleared yet": [
+  "gym.js"
+ ],
+ "Not covered: {0}.": [
+  "viva.js"
+ ],
+ "Not marked": [
+  "viva.js"
+ ],
+ "not measured": [
+  "ui.js",
+  "pages-core.js"
+ ],
+ "Not quite {0} yet": [
+  "gym.js"
+ ],
+ "Not quite.": [
+  "pages-more.js"
+ ],
+ "Not reached": [
+  "viva.js"
+ ],
+ "Not retested": [
+  "viva.js"
+ ],
+ "Not saving": [
+  "app.js"
+ ],
+ "Not started": [
+  "viva.js"
+ ],
+ "Not this time.": [
+  "pages-more.js"
+ ],
+ "Not yet": [
+  "viva.js"
+ ],
+ "Not yet, let me revise": [
+  "gym.js"
+ ],
+ "Not yet:": [
+  "gym.js"
+ ],
+ "Not yet. Every gap below is now a revision card. Retake when you are ready.": [
+  "viva.js"
+ ],
+ "Note": [
+  "engine.js"
+ ],
+ "Note where you restated the question.": [
+  "viva.js"
+ ],
+ "Noted.": [
+  "viva.js"
+ ],
+ "Nothing answered yet": [
+  "viva.js"
+ ],
+ "Nothing set yet. Students can still practise on their own; you will see that too.": [
+  "teacher.js"
+ ],
+ "Nothing to add": [
+  "viva.js"
+ ],
+ "Nothing to add.": [
+  "viva.js"
+ ],
+ "Nothing written yet.": [
+  "pages-more.js"
+ ],
+ "Nothing yet": [
+  "pages-core.js"
+ ],
+ "Now": [
+  "ui.js",
+  "pages-core.js",
+  "viva.js"
+ ],
+ "Now answer your own question in the next line.": [
+  "gym.js"
+ ],
+ "Now what": [
+  "gym.js"
+ ],
+ "Occasion": [
+  "pages-core.js",
+  "pages-more.js",
+  "teacher.js"
+ ],
+ "of {0}": [
+  "viva.js"
+ ],
+ "Of course, take a moment.": [
+  "viva.js"
+ ],
+ "Of course.": [
+  "viva.js"
+ ],
+ "Of course. Take a moment.": [
+  "viva.js"
+ ],
+ "Off": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Offer the fix.": [
+  "gym.js"
+ ],
+ "Offline · self-marked": [
+  "viva.js"
+ ],
+ "Offline exam: you are the examiner now. Strict marks make the report useful.": [
+  "viva.js"
+ ],
+ "Offline exam.": [
+  "viva.js"
+ ],
+ "Offline, the questions are general ones about your work, and pasting it isn’t needed.": [
+  "viva.js"
+ ],
+ "Offline, the questions need a topic to work from. Name one, or paste your notes.": [
+  "viva.js"
+ ],
+ "Okay": [
+  "gym.js"
+ ],
+ "On": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "On point": [
+  "pages-core.js"
+ ],
+ "on the {0} you reached": [
+  "viva.js"
+ ],
+ "on the board. Students pick “Join as a student” on the sign-in page.": [
+  "teacher.js"
+ ],
+ "On-device highlights. The AI coach adds fallacies, contradictions and rhetorical devices.": [
+  "pages-core.js"
+ ],
+ "On-device read: strongest appeal {0}, weakest {1}. This is a word-pattern estimate. Allow Claude for this artifact to get fallacy checks, a structure map and personal lessons.": [
+  "engine.js"
+ ],
+ "One assumption or input named": [
+  "viva.js"
+ ],
+ "One claim. Follow-ups until your understanding gives way.": [
+  "viva.js"
+ ],
+ "One concrete example or story.": [
+  "gym.js"
+ ],
+ "One follow-up can expose it, and then the examiner doubts your other answers too": [
+  "viva.js"
+ ],
+ "One frozen silence": [
+  "engine.js"
+ ],
+ "One idea per slide. Slides support you; they don’t repeat the script.": [
+  "pages-more.js"
+ ],
+ "One moment…": [
+  "auth.js"
+ ],
+ "One point, one example.": [
+  "pages-more.js"
+ ],
+ "One sharper version": [
+  "gym.js"
+ ],
+ "One specific decision": [
+  "viva.js"
+ ],
+ "One specific step, located in the work": [
+  "viva.js"
+ ],
+ "One striking photo related to your opening": [
+  "pages-more.js"
+ ],
+ "One way to say it:": [
+  "pages-more.js"
+ ],
+ "Open report": [
+  "teacher.js"
+ ],
+ "Open with one specific detail that shows why you are worth listening to.": [
+  "engine.js"
+ ],
+ "Open with your {0}. {1}": [
+  "gym.js"
+ ],
+ "Opening & close": [
+  "data.js"
+ ],
+ "Opinion": [
+  "gym.js"
+ ],
+ "Optional": [
+  "pages-core.js"
+ ],
+ "Optional, a few lines is plenty": [
+  "gym.js"
+ ],
+ "Optional. The coach will suggest one.": [
+  "pages-core.js"
+ ],
+ "Optional. Your answers shape the outline. The best material is already in your head.": [
+  "pages-more.js"
+ ],
+ "oral exam": [
+  "pages-core.js"
+ ],
+ "Oral exam": [
+  "data.js",
+  "pages-core.js",
+  "viva.js",
+  "teacher.js",
+  "app.js"
+ ],
+ "Oral exam complete": [
+  "viva.js"
+ ],
+ "Oral exam: {0}": [
+  "teacher.js"
+ ],
+ "Oral exams": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Oral exams grade how you reason as well as what you remember. Thirty seconds of silence followed by a final answer hides the part the examiner most wants to see. Narrate your thinking instead: what you know, what you are assuming, what you are checking.": [
+  "viva.js"
+ ],
+ "Organic chemistry": [
+  "viva.js"
+ ],
+ "Other structure": [
+  "gym.js"
+ ],
+ "Over time": [
+  "viva.js"
+ ],
+ "Over time. Finish your sentence.": [
+  "viva.js"
+ ],
+ "Over time. Land your point and submit.": [
+  "viva.js"
+ ],
+ "overall": [
+  "pages-core.js"
+ ],
+ "Overall": [
+  "viva.js"
+ ],
+ "Own it.": [
+  "pages-more.js"
+ ],
+ "Pace": [
+  "ui.js",
+  "pages-core.js",
+  "viva.js",
+  "gym.js"
+ ],
+ "Pace {0} wpm": [
+  "pages-more.js"
+ ],
+ "Pace in the sweet spot": [
+  "engine.js"
+ ],
+ "Pace, silences and filler words come from the recording of each answer, on your device. Filler words and silences over two seconds lower the communication mark by up to 12 points on that answer. Nothing about your voice was judged.": [
+  "viva.js"
+ ],
+ "Palms on your cheeks. Massage downwards and let your jaw hang open. Say yah, yah, yah.": [
+  "gym.js"
+ ],
+ "Partly.": [
+  "viva.js"
+ ],
+ "Pass": [
+  "viva.js"
+ ],
+ "Password": [
+  "auth.js"
+ ],
+ "Past": [
+  "gym.js"
+ ],
+ "Past · Present · Future": [
+  "gym.js"
+ ],
+ "Paste lecture notes, a syllabus or a reading list. Questions will be grounded in it.": [
+  "viva.js"
+ ],
+ "Paste notes or the syllabus section. Questions and marking follow it.": [
+  "teacher.js"
+ ],
+ "Paste text": [
+  "pages-core.js"
+ ],
+ "Paste what you said, or the script you plan to say…": [
+  "pages-core.js"
+ ],
+ "Paste your essay, problem set, code or project write-up": [
+  "viva.js"
+ ],
+ "Pathos": [
+  "data.js",
+  "pages-core.js"
+ ],
+ "Pattern": [
+  "gym.js"
+ ],
+ "Pause": [
+  "pages-more.js",
+  "gym.js"
+ ],
+ "Pause, restate the challenge, and re-check your reasoning out loud": [
+  "viva.js"
+ ],
+ "Pause. Let the image land before you speak.": [
+  "pages-more.js"
+ ],
+ "Paused": [
+  "gym.js"
+ ],
+ "Pauses": [
+  "pages-core.js"
+ ],
+ "People trust you before you’ve made your case. Spend that credibility on a story and a sharper argument.": [
+  "data.js"
+ ],
+ "Perennial Flame": [
+  "data.js"
+ ],
+ "Personal lessons need the AI coach. Start with the core lessons below.": [
+  "pages-more.js"
+ ],
+ "Personal stories you could use": [
+  "pages-more.js"
+ ],
+ "Personification": [
+  "data.js"
+ ],
+ "Persuade": [
+  "gym.js"
+ ],
+ "Persuade the class to adopt a four-day school week. Use at least one number.": [
+  "teacher.js"
+ ],
+ "Persuasion": [
+  "data.js"
+ ],
+ "Persuasive, competitive": [
+  "data.js"
+ ],
+ "Photosynthesis": [
+  "teacher.js"
+ ],
+ "Pick a concept from your course. Write a four-sentence PREP answer to “Why does it work?”: Point, Reason, Example, Point. Then read it aloud in under 40 seconds.": [
+  "viva.js"
+ ],
+ "Pick a question.": [
+  "pages-more.js"
+ ],
+ "Pick a strong phrase and start three short sentences with it.": [
+  "gym.js"
+ ],
+ "Pick a subject. An examiner asks, you answer, and every thin answer gets a follow-up. You get a grade at the end.": [
+  "pages-core.js"
+ ],
+ "Pick an angle first.": [
+  "pages-more.js"
+ ],
+ "Pick an answer you are confident about. Write the strongest challenge an examiner could make to it. Then write two replies: a clean correction, as if the challenge were right, and a calm defense with evidence, as if it were wrong.": [
+  "viva.js"
+ ],
+ "Pick any specific case of {0} you know well, and show me each step of working it through.": [
+  "viva.js"
+ ],
+ "Pick the step in your work you are proudest of and explain it in your own words, as if I had not read it.": [
+  "viva.js"
+ ],
+ "Pick up the pace": [
+  "engine.js"
+ ],
+ "Pick up where you left off": [
+  "pages-core.js"
+ ],
+ "Pick your point first. Then find one example. That’s enough.": [
+  "gym.js"
+ ],
+ "Pillar of Trust": [
+  "data.js"
+ ],
+ "Pitch": [
+  "data.js",
+  "ui.js",
+  "gym.js"
+ ],
+ "Pitch variety": [
+  "pages-core.js"
+ ],
+ "Place {0} on a map of the subject: what comes before it, and what comes after it.": [
+  "viva.js"
+ ],
+ "Plain": [
+  "gym.js"
+ ],
+ "Play again": [
+  "pages-more.js"
+ ],
+ "Pleader": [
+  "data.js"
+ ],
+ "Point": [
+  "gym.js"
+ ],
+ "Point to the place in your work you would least like me to question, and defend it.": [
+  "viva.js"
+ ],
+ "Point, Reason, Example, Point. Four moves that make any answer easy to follow.": [
+  "viva.js"
+ ],
+ "Polysyndeton": [
+  "gym.js"
+ ],
+ "Possible false dilemma": [
+  "engine.js"
+ ],
+ "Posture check": [
+  "gym.js"
+ ],
+ "Practice beyond the page": [
+  "pages-more.js"
+ ],
+ "Practice it in the Device Lab": [
+  "kit.js"
+ ],
+ "Practice out loud in the Gym": [
+  "pages-core.js"
+ ],
+ "Practice this with the coach": [
+  "viva.js"
+ ],
+ "PREP": [
+  "viva.js",
+  "gym.js"
+ ],
+ "Prepare": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Prepare · {0}": [
+  "pages-more.js"
+ ],
+ "Prepare a speech": [
+  "pages-core.js",
+  "app.js"
+ ],
+ "Presence": [
+  "pages-core.js"
+ ],
+ "Present": [
+  "gym.js"
+ ],
+ "Presentation": [
+  "data.js"
+ ],
+ "Press 1–4 to answer. Faster answers score more.": [
+  "pages-more.js"
+ ],
+ "Press start, then speak with the light. Three repetitions without a pause.": [
+  "gym.js"
+ ],
+ "Previous exercise": [
+  "gym.js"
+ ],
+ "Privacy": [
+  "auth.js"
+ ],
+ "Probe": [
+  "viva.js"
+ ],
+ "Probes first principles, definitions and why the theory holds.": [
+  "viva.js"
+ ],
+ "Problem": [
+  "gym.js"
+ ],
+ "Problem · Solution · Benefit": [
+  "gym.js"
+ ],
+ "Progress": [
+  "kit.js",
+  "teacher.js",
+  "app.js"
+ ],
+ "Progress is saved in this browser.": [
+  "pages-more.js"
+ ],
+ "Progress syncs privately to your Claude account. Only you can see it.": [
+  "pages-more.js"
+ ],
+ "Progress to the next level": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Projection count": [
+  "gym.js"
+ ],
+ "prosōpon: person": [
+  "app.js"
+ ],
+ "Public speech": [
+  "data.js"
+ ],
+ "Push that to an extreme case. What happens?": [
+  "viva.js"
+ ],
+ "Put another way: {0}": [
+  "viva.js"
+ ],
+ "Put it into practice": [
+  "pages-more.js"
+ ],
+ "Put two opposite ideas side by side.": [
+  "gym.js"
+ ],
+ "Qualifying": [
+  "viva.js"
+ ],
+ "Qualifying exam": [
+  "viva.js"
+ ],
+ "Quantitative": [
+  "viva.js"
+ ],
+ "Quest +{0}": [
+  "gym.js"
+ ],
+ "Quest complete: {0} · +{1} XP": [
+  "ui.js"
+ ],
+ "Question": [
+  "viva.js"
+ ],
+ "question {0}": [
+  "viva.js"
+ ],
+ "Question {0}": [
+  "viva.js"
+ ],
+ "Question by question": [
+  "viva.js"
+ ],
+ "Question to the audience": [
+  "engine.js"
+ ],
+ "Question: {0} Activate to see the answer.": [
+  "viva.js"
+ ],
+ "questions": [
+  "viva.js"
+ ],
+ "Questions appear as text.": [
+  "viva.js"
+ ],
+ "Questions come from a template bank built on your subject and material, and you mark yourself on the same rubric the examiners use. A self-marked exam counts as practice, so it earns no seal.": [
+  "viva.js"
+ ],
+ "Questions pull listeners into active thinking.": [
+  "engine.js"
+ ],
+ "Quick": [
+  "viva.js",
+  "gym.js"
+ ],
+ "Quick check:": [
+  "gym.js"
+ ],
+ "Quick quiz": [
+  "pages-more.js"
+ ],
+ "Raise an appeal 15+ points over your previous speech": [
+  "data.js"
+ ],
+ "Rambling, answer buried": [
+  "viva.js"
+ ],
+ "Re-checking shows composure. It either surfaces a real error or lets you defend the answer with evidence.": [
+  "viva.js"
+ ],
+ "Reach 80 Ethos in a speech": [
+  "data.js"
+ ],
+ "Reach 80 Logos with no fallacies flagged": [
+  "data.js"
+ ],
+ "Reach 80 Pathos in a speech": [
+  "data.js"
+ ],
+ "Read aloud": [
+  "gym.js"
+ ],
+ "Read the speech and open a few highlights first. This button unlocks after {0} seconds.": [
+  "pages-more.js"
+ ],
+ "Read the technique lessons": [
+  "viva.js"
+ ],
+ "Read the verdict.": [
+  "viva.js"
+ ],
+ "Read your line out loud, then answer honestly.": [
+  "gym.js"
+ ],
+ "Reading body language": [
+  "pages-core.js"
+ ],
+ "Reading caption timing": [
+  "pages-core.js"
+ ],
+ "Reading your argument": [
+  "pages-core.js"
+ ],
+ "Reading your content (on-device)": [
+  "pages-core.js"
+ ],
+ "Reading your notes…": [
+  "gym.js"
+ ],
+ "Ready to call it done?": [
+  "pages-more.js"
+ ],
+ "Ready to start": [
+  "pages-core.js"
+ ],
+ "Ready when you are": [
+  "gym.js"
+ ],
+ "Real examiners stay unreadable, so this is off by default. Learning to keep going without a signal is part of the rehearsal.": [
+  "viva.js"
+ ],
+ "Reason": [
+  "gym.js"
+ ],
+ "Reason and evidence. A clear structure, real proof, and arguments that survive a skeptic.": [
+  "data.js"
+ ],
+ "Reasoning": [
+  "data.js",
+  "viva.js"
+ ],
+ "Rebuilding from first principles shows understanding, and the examiner can credit each correct step.": [
+  "viva.js"
+ ],
+ "Recall only": [
+  "viva.js"
+ ],
+ "Recent oral exams": [
+  "pages-core.js"
+ ],
+ "Recent speeches": [
+  "pages-core.js"
+ ],
+ "Recipe": [
+  "gym.js"
+ ],
+ "Record a speech or paste the words. In about a minute you see how it scores on trust, emotion and logic.": [
+  "pages-core.js"
+ ],
+ "Record here, or bring a file. Pace, pauses, pitch range and volume range are measured on your device.": [
+  "pages-core.js"
+ ],
+ "Record it here or bring a recording. You get scores on trust, emotion and logic, and three things to fix.": [
+  "pages-core.js"
+ ],
+ "Record my marks": [
+  "viva.js"
+ ],
+ "Record now": [
+  "speech.js"
+ ],
+ "Record your next exam on your phone, then bring the recording to Analyze for pace, pauses and pitch. That measures your delivery. Your content marks still come from the exam.": [
+  "viva.js"
+ ],
+ "Recorded. No transcript came back, so paste the words below for content feedback.": [
+  "speech.js"
+ ],
+ "Recording": [
+  "pages-core.js"
+ ],
+ "Recording · {0}": [
+  "viva.js"
+ ],
+ "Recover, and hold your ground": [
+  "viva.js"
+ ],
+ "Regenerate slides": [
+  "pages-more.js"
+ ],
+ "Rehearsal teleprompter": [
+  "pages-more.js"
+ ],
+ "Rehearse": [
+  "pages-more.js"
+ ],
+ "Rehearse 30-second versions of your answers until they fit, then expand.": [
+  "viva.js"
+ ],
+ "Rehearse an oral exam": [
+  "pages-core.js"
+ ],
+ "Rehearse an oral exam with an examiner panel that asks follow-ups.": [
+  "pages-more.js"
+ ],
+ "Rehearse it in the Gym": [
+  "pages-core.js"
+ ],
+ "Rehearse the exam. Hear the verdict.": [
+  "auth.js"
+ ],
+ "Rehearse the oral exam before it counts.": [
+  "viva.js"
+ ],
+ "Rehearsed {0}": [
+  "pages-more.js"
+ ],
+ "Rehearsed your speech": [
+  "pages-more.js"
+ ],
+ "Relative to your own range": [
+  "ui.js"
+ ],
+ "Remove assignment": [
+  "teacher.js"
+ ],
+ "Remove recording": [
+  "pages-core.js"
+ ],
+ "Repeat the question": [
+  "viva.js"
+ ],
+ "Repeat your answer more loudly": [
+  "viva.js"
+ ],
+ "Repeat your view, sharper.": [
+  "gym.js"
+ ],
+ "Repeating “and” or “or” between items to build weight.": [
+  "gym.js"
+ ],
+ "Repeating ideas in reverse order: A then B, then B then A.": [
+  "gym.js"
+ ],
+ "Repeating the opening words of consecutive sentences builds rhythm and emphasis.": [
+  "engine.js"
+ ],
+ "Repeating the question back": [
+  "viva.js"
+ ],
+ "Repeating the same opening words at the start of each clause or sentence.": [
+  "gym.js"
+ ],
+ "Repeating the same opening words at the start of each clause.": [
+  "data.js"
+ ],
+ "Repeating the same word or words at the end of each clause.": [
+  "gym.js"
+ ],
+ "Repeating the same words at the end of each clause, so they ring.": [
+  "data.js"
+ ],
+ "Repetition {0} of {1}": [
+  "gym.js"
+ ],
+ "Replace and build": [
+  "pages-more.js"
+ ],
+ "Replace sweeping words like “always”, “never” and “everyone” with specific claims.": [
+  "engine.js"
+ ],
+ "Replace your {0} with a new outline? Rostra keeps the old text, and you can restore it from the Build step.": [
+  "pages-more.js"
+ ],
+ "Replay the reveal": [
+  "gym.js"
+ ],
+ "Report": [
+  "pages-core.js",
+  "viva.js"
+ ],
+ "Reset password": [
+  "teacher.js"
+ ],
+ "Reset progress": [
+  "pages-more.js"
+ ],
+ "Resets at midnight": [
+  "pages-core.js"
+ ],
+ "Reshaping a famous line so listeners hear the original behind yours. This one follows Socrates in Plato’s Apology: “The unexamined life is not worth living.”": [
+  "data.js"
+ ],
+ "Resolution": [
+  "gym.js"
+ ],
+ "Resonance": [
+  "gym.js"
+ ],
+ "Rest your palms on your cheeks and massage slowly downwards.": [
+  "gym.js"
+ ],
+ "Restart": [
+  "pages-more.js"
+ ],
+ "Restate the examiner’s challenge in its strongest form before you answer it.": [
+  "viva.js"
+ ],
+ "Restore": [
+  "teacher.js"
+ ],
+ "Restore these sections": [
+  "pages-more.js"
+ ],
+ "Result": [
+  "teacher.js"
+ ],
+ "Resume": [
+  "pages-core.js",
+  "viva.js",
+  "gym.js"
+ ],
+ "Resume when you’re ready.": [
+  "gym.js"
+ ],
+ "Resume your exam: ": [
+  "pages-core.js"
+ ],
+ "Retake": [
+  "viva.js"
+ ],
+ "Retake on my gaps": [
+  "viva.js"
+ ],
+ "Retake the exam on your gaps when you are ready, or go through the deck once more tomorrow.": [
+  "viva.js"
+ ],
+ "Retake this exam on your gaps in two or three days.": [
+  "viva.js"
+ ],
+ "Returning to the point closes the loop and shows that the example proved what you claimed.": [
+  "viva.js"
+ ],
+ "Reveal our version": [
+  "gym.js"
+ ],
+ "Revise · {0}": [
+  "viva.js"
+ ],
+ "Revise {0}": [
+  "viva.js"
+ ],
+ "Revise your exam flashcards": [
+  "data.js"
+ ],
+ "Revise your flashcards tonight, then retake this exam on your gaps in two or three days.": [
+  "viva.js"
+ ],
+ "Revision progress": [
+  "viva.js"
+ ],
+ "Rewrite a plain sentence using one rhetorical device, then compare it with ours.": [
+  "gym.js"
+ ],
+ "Rewrite the definition of each gap concept from memory, then check it against your notes.": [
+  "viva.js"
+ ],
+ "Rewrite the plain sentence using {0}…": [
+  "gym.js"
+ ],
+ "Rhetor": [
+  "data.js"
+ ],
+ "Rhetorical question": [
+  "gym.js"
+ ],
+ "Rhetorical triangle: {0}": [
+  "ui.js"
+ ],
+ "Room rules": [
+  "viva.js"
+ ],
+ "Rostra records each answer, writes down what you said, and the examiner replies to your actual words. Pace, pauses and filler words are measured from the recording. The audio is not kept.": [
+  "viva.js"
+ ],
+ "Rostra stores your name, username and your work, in the EU, for your school. Nothing else.": [
+  "auth.js"
+ ],
+ "Rough": [
+  "gym.js"
+ ],
+ "Roulette": [
+  "gym.js"
+ ],
+ "Round {0} / {1}": [
+  "pages-more.js"
+ ],
+ "Round {0} of {1}": [
+  "gym.js"
+ ],
+ "Round complete": [
+  "viva.js"
+ ],
+ "rounds": [
+  "gym.js"
+ ],
+ "Rounds": [
+  "gym.js"
+ ],
+ "rounds breathed": [
+  "gym.js"
+ ],
+ "Rubric": [
+  "viva.js"
+ ],
+ "Rubric: {0}": [
+  "viva.js"
+ ],
+ "Running mark {0} percent": [
+  "viva.js"
+ ],
+ "Sample report": [
+  "pages-core.js"
+ ],
+ "Sanity check": [
+  "viva.js"
+ ],
+ "Save": [
+  "pages-more.js"
+ ],
+ "Saved": [
+  "pages-more.js"
+ ],
+ "Saved {0}": [
+  "engine.js"
+ ],
+ "Saved in this browser": [
+  "app.js"
+ ],
+ "Saved in this browser only. Sign in to keep your work across devices.": [
+  "auth.js"
+ ],
+ "Saving…": [
+  "teacher.js"
+ ],
+ "Say “I don’t know” with integrity": [
+  "viva.js"
+ ],
+ "Say “mum, mum, mum” and feel the buzz on your lips.": [
+  "gym.js"
+ ],
+ "Say “yah, yah, yah” with a loose, floppy jaw.": [
+  "gym.js"
+ ],
+ "Say each word as it lights up. Stay clean to unlock faster tempos.": [
+  "gym.js"
+ ],
+ "Say each word out loud as it lights up. Three times through, then tell us honestly how it went.": [
+  "gym.js"
+ ],
+ "Say it in three beats with the same shape, and put the strongest last.": [
+  "gym.js"
+ ],
+ "Say it is “no small thing” or “not bad at all” instead of praising it outright.": [
+  "gym.js"
+ ],
+ "Say mum, mum, mum. Then mee, may, mah, moh, moo, on one note. Feel the buzz at the front of your face.": [
+  "gym.js"
+ ],
+ "Say the error doesn’t matter": [
+  "viva.js"
+ ],
+ "Say what you are weighing. An unfinished thought is fine.": [
+  "viva.js"
+ ],
+ "Say you don’t remember it, and rebuild it out loud from a principle you trust": [
+  "viva.js"
+ ],
+ "Say your answer aloud, then flip": [
+  "viva.js"
+ ],
+ "Say your view in one line.": [
+  "gym.js"
+ ],
+ "Say: {0}": [
+  "pages-more.js"
+ ],
+ "Saying each step and its justification as you go, so the examiner can follow and credit it.": [
+  "viva.js"
+ ],
+ "Saying out loud what you are taking for granted, such as “assuming no friction”.": [
+  "viva.js"
+ ],
+ "Saying you do not know yet is fine. Tell me what you do know that sits nearby, and reason from there.": [
+  "viva.js"
+ ],
+ "Scholar": [
+  "data.js"
+ ],
+ "School admin": [
+  "auth.js"
+ ],
+ "School email": [
+  "auth.js"
+ ],
+ "School invite code": [
+  "auth.js"
+ ],
+ "School name": [
+  "auth.js"
+ ],
+ "Score 70+ on all three appeals in one speech": [
+  "data.js"
+ ],
+ "Score 85+ in an examiner-marked oral exam": [
+  "data.js"
+ ],
+ "Section": [
+  "pages-more.js"
+ ],
+ "Section coached": [
+  "pages-more.js"
+ ],
+ "Section coaching needs the AI coach. “I’m stuck” still gives you prompts.": [
+  "pages-more.js"
+ ],
+ "Section drafted": [
+  "pages-more.js"
+ ],
+ "See coach notes": [
+  "gym.js"
+ ],
+ "See results": [
+  "pages-more.js"
+ ],
+ "self-assessed": [
+  "viva.js"
+ ],
+ "Self-assessed": [
+  "viva.js"
+ ],
+ "Self-assessed:": [
+  "viva.js"
+ ],
+ "Self-assessed: covered {0} of {1} key points.": [
+  "viva.js"
+ ],
+ "Self-assessed.": [
+  "viva.js"
+ ],
+ "Self-check": [
+  "gym.js"
+ ],
+ "self-marked": [
+  "viva.js"
+ ],
+ "Self-marked: practice only": [
+  "viva.js"
+ ],
+ "Self-reported, because nobody heard you.": [
+  "viva.js"
+ ],
+ "Self-review": [
+  "gym.js"
+ ],
+ "semitones": [
+  "pages-core.js"
+ ],
+ "Send": [
+  "pages-more.js"
+ ],
+ "Send “ten” to the back wall of the room.": [
+  "gym.js"
+ ],
+ "Send it again, or mark it yourself.": [
+  "viva.js"
+ ],
+ "Send it to the examiner": [
+  "viva.js"
+ ],
+ "Send to the examiner": [
+  "viva.js"
+ ],
+ "Sentence frame": [
+  "pages-more.js"
+ ],
+ "Separate several topics with semicolons.": [
+  "viva.js"
+ ],
+ "Set a speech": [
+  "teacher.js"
+ ],
+ "Set an oral exam": [
+  "teacher.js"
+ ],
+ "Set out the occasion, the audience and what you want them to do.": [
+  "pages-more.js"
+ ],
+ "Set password": [
+  "teacher.js"
+ ],
+ "Set the exam": [
+  "viva.js"
+ ],
+ "Set the exam.": [
+  "viva.js"
+ ],
+ "Set the scene.": [
+  "gym.js"
+ ],
+ "Set up": [
+  "viva.js"
+ ],
+ "Set up an exam": [
+  "viva.js"
+ ],
+ "Set up your first exam": [
+  "pages-core.js"
+ ],
+ "Set work": [
+  "teacher.js"
+ ],
+ "Setting opposite ideas side by side in balanced phrases.": [
+  "data.js",
+  "gym.js"
+ ],
+ "Settings": [
+  "pages-more.js"
+ ],
+ "Settle": [
+  "gym.js"
+ ],
+ "Settle in": [
+  "gym.js"
+ ],
+ "Seven questions in front of a panel of three.": [
+  "viva.js"
+ ],
+ "Several claims did not survive a push. For each one, find the case that breaks it before the exam.": [
+  "viva.js"
+ ],
+ "Shaky": [
+  "gym.js"
+ ],
+ "Sharp device": [
+  "gym.js"
+ ],
+ "Sharpen your thinking": [
+  "pages-more.js"
+ ],
+ "Short · 1½ min": [
+  "gym.js"
+ ],
+ "Short and friendly": [
+  "gym.js"
+ ],
+ "Short lessons on the craft, drills you mark yourself, and an arcade for sharpening your ear.": [
+  "pages-more.js"
+ ],
+ "Short lessons on the craft, drills your coach grades, and an arcade for sharpening your ear.": [
+  "pages-more.js"
+ ],
+ "Short lessons with a quiz and a drill. Take them before your first exam.": [
+  "viva.js"
+ ],
+ "Short markers like “first”, “the reason is” and “for example” that let the listener track your structure.": [
+  "viva.js"
+ ],
+ "Short, in plain words. Ask your teacher or the Rostra team if anything is unclear.": [
+  "auth.js"
+ ],
+ "Show 3 new angles": [
+  "pages-more.js"
+ ],
+ "Show all three appeals": [
+  "pages-core.js"
+ ],
+ "Show all three tracks": [
+  "pages-more.js"
+ ],
+ "Show me an example first": [
+  "gym.js"
+ ],
+ "Show my marks as I go (practice mode, unlike a real exam)": [
+  "viva.js"
+ ],
+ "Show or hide highlight types": [
+  "pages-core.js"
+ ],
+ "Show section labels": [
+  "pages-more.js"
+ ],
+ "Show the payoff.": [
+  "gym.js"
+ ],
+ "Shuffle all and restart": [
+  "viva.js"
+ ],
+ "Sign in": [
+  "auth.js",
+  "app.js"
+ ],
+ "Sign in as a teacher": [
+  "teacher.js"
+ ],
+ "Sign in as a teacher to create classes and set work.": [
+  "teacher.js"
+ ],
+ "Sign in or join": [
+  "auth.js"
+ ],
+ "Sign in to use the coach.": [
+  "engine.js"
+ ],
+ "Sign out": [
+  "auth.js"
+ ],
+ "Signposting": [
+  "viva.js"
+ ],
+ "Signposts help listeners follow your structure.": [
+  "engine.js"
+ ],
+ "Silences over 2 s": [
+  "viva.js"
+ ],
+ "Silver": [
+  "engine.js"
+ ],
+ "Silver Tongue": [
+  "data.js"
+ ],
+ "Simile": [
+  "gym.js"
+ ],
+ "Since your last attempt": [
+  "viva.js"
+ ],
+ "Sit tall. Soften your shoulders.": [
+  "gym.js"
+ ],
+ "Sit the exam": [
+  "teacher.js"
+ ],
+ "Situation": [
+  "gym.js"
+ ],
+ "Situation · Complication · Resolution": [
+  "gym.js"
+ ],
+ "Six exercises, about thirty seconds each. Do them out loud, standing if you can.": [
+  "gym.js"
+ ],
+ "Six guided exercises in the mirror: posture, lips, pitch, jaw, resonance and projection.": [
+  "gym.js"
+ ],
+ "Size": [
+  "pages-more.js"
+ ],
+ "Skip the warm-up": [
+  "viva.js"
+ ],
+ "Skip to think time": [
+  "viva.js"
+ ],
+ "Slide outline": [
+  "pages-more.js"
+ ],
+ "Slide the sound up and down, like a motorboat changing gear.": [
+  "gym.js"
+ ],
+ "Slides need at least 40 words. You have {0}.": [
+  "pages-more.js"
+ ],
+ "Slow": [
+  "gym.js"
+ ],
+ "slowly, through your mouth": [
+  "gym.js"
+ ],
+ "So what": [
+  "gym.js"
+ ],
+ "Socrates counts knowing the limits of his knowledge as a kind of wisdom. In a viva, naming your edge honestly earns more trust than a bluff.": [
+  "viva.js"
+ ],
+ "soft shoulders, still throat": [
+  "gym.js"
+ ],
+ "Solid": [
+  "pages-core.js"
+ ],
+ "Solid command, with a few soft spots the examiners found.": [
+  "viva.js"
+ ],
+ "Solution": [
+  "gym.js"
+ ],
+ "Some correct pieces, key errors": [
+  "viva.js"
+ ],
+ "Some why, mostly what": [
+  "viva.js"
+ ],
+ "Something broke on this page": [
+  "app.js"
+ ],
+ "Something went wrong with the recording. Try again.": [
+  "speech.js"
+ ],
+ "Something went wrong. Try again.": [
+  "auth.js"
+ ],
+ "Sound": [
+  "gym.js",
+  "app.js"
+ ],
+ "Sound effects": [
+  "pages-more.js"
+ ],
+ "Sounds are muted.": [
+  "gym.js"
+ ],
+ "Space to start or pause · Esc to close · ‖ marks a pause": [
+  "pages-more.js"
+ ],
+ "Speak": [
+  "gym.js"
+ ],
+ "Speak 5 impromptu topics": [
+  "data.js"
+ ],
+ "Speak a minute or more with under one filler word per minute": [
+  "data.js"
+ ],
+ "Speak better": [
+  "auth.js"
+ ],
+ "Speak each answer aloud. Rostra records it, writes it down and hands the words to the examiner. The audio is not kept.": [
+  "viva.js"
+ ],
+ "Speak for at least 20 seconds to count this round.": [
+  "gym.js"
+ ],
+ "Speak for up to a few minutes. The words are written down for you; the audio is not kept.": [
+  "speech.js"
+ ],
+ "Speak my answers": [
+  "viva.js"
+ ],
+ "Speak now, as if the examiner sat across the table. Lead with your answer, then the reason.": [
+  "viva.js"
+ ],
+ "Speak your answers. The examiner follows up on what you actually said, then grades you.": [
+  "pages-core.js"
+ ],
+ "Speak.": [
+  "gym.js"
+ ],
+ "Speaker": [
+  "data.js"
+ ],
+ "Speaking faster to fit more in": [
+  "viva.js"
+ ],
+ "Speaking time": [
+  "gym.js"
+ ],
+ "Specific figures make claims credible and memorable.": [
+  "engine.js"
+ ],
+ "Specimen · {0}": [
+  "gym.js"
+ ],
+ "Speech": [
+  "teacher.js",
+  "app.js"
+ ],
+ "Speech feedback": [
+  "pages-core.js",
+  "app.js"
+ ],
+ "Speech finished": [
+  "pages-more.js"
+ ],
+ "Speech isn’t available in this browser, so questions appear as text.": [
+  "viva.js"
+ ],
+ "Speech not found": [
+  "pages-more.js"
+ ],
+ "Speech preparation stages": [
+  "pages-more.js"
+ ],
+ "Speech: {0}": [
+  "teacher.js"
+ ],
+ "Speeches": [
+  "pages-core.js",
+  "teacher.js"
+ ],
+ "Speeches analyzed": [
+  "pages-more.js"
+ ],
+ "Speeches prepared": [
+  "pages-more.js"
+ ],
+ "Speechwright": [
+  "data.js"
+ ],
+ "Spin": [
+  "gym.js"
+ ],
+ "Spin again": [
+  "gym.js"
+ ],
+ "Spin and speak an impromptu topic": [
+  "data.js"
+ ],
+ "Spin for a topic, think for thirty seconds, then take the floor.": [
+  "gym.js"
+ ],
+ "Spin the wheel": [
+  "gym.js"
+ ],
+ "Spin the wheel. You get a topic and a structure, a short think, and then the floor is yours. Speak out loud.": [
+  "gym.js"
+ ],
+ "Spin.": [
+  "gym.js"
+ ],
+ "Spinning…": [
+  "gym.js"
+ ],
+ "spoke once": [
+  "pages-more.js"
+ ],
+ "Spoken and transcribed": [
+  "viva.js"
+ ],
+ "Spoken cues": [
+  "gym.js"
+ ],
+ "Spoken, marked from notes": [
+  "viva.js"
+ ],
+ "Spot 25 fallacies": [
+  "data.js"
+ ],
+ "Spot 5 fallacies in Fallacy Hunt": [
+  "data.js"
+ ],
+ "Stage: {0}": [
+  "pages-more.js"
+ ],
+ "Stand tall. Feet apart, knees soft. Let your shoulders drop, and imagine a thread lifting the top of your head.": [
+  "gym.js"
+ ],
+ "Stand with your feet hip-width apart and your knees soft.": [
+  "gym.js"
+ ],
+ "Stand-up, all-hands": [
+  "data.js"
+ ],
+ "Standard": [
+  "viva.js"
+ ],
+ "Standing": [
+  "viva.js"
+ ],
+ "Start": [
+  "ui.js",
+  "pages-core.js",
+  "pages-more.js",
+  "gym.js",
+  "teacher.js"
+ ],
+ "Start · +20 XP": [
+  "pages-core.js"
+ ],
+ "Start {0}-second think": [
+  "gym.js"
+ ],
+ "Start a new speech and your drafts will live here.": [
+  "pages-more.js"
+ ],
+ "Start a speech": [
+  "pages-more.js"
+ ],
+ "Start at least two clauses with the same words.": [
+  "gym.js"
+ ],
+ "Start every answer with a one-sentence answer. Then the reason, then an example.": [
+  "viva.js"
+ ],
+ "Start lesson": [
+  "pages-core.js"
+ ],
+ "Start lesson: {0} · +40 XP": [
+  "pages-core.js"
+ ],
+ "Start my answer now": [
+  "viva.js"
+ ],
+ "Start smaller. What kind of thing is {c}: a quantity, a process, a rule? Begin with that.": [
+  "viva.js"
+ ],
+ "Start the warm-up": [
+  "gym.js"
+ ],
+ "Start the whole answer again from scratch": [
+  "viva.js"
+ ],
+ "Start with **{0}**, your lowest score at {1}.\n\n{2}\n\nThe Academy has a short lesson track for it, and the next speech you analyze will show whether it moved.": [
+  "pages-more.js"
+ ],
+ "Start your close. Bring it back to your point.": [
+  "gym.js"
+ ],
+ "Starting nearby words with the same sound.": [
+  "gym.js"
+ ],
+ "State a point of view: “remote teams need fewer meetings”.": [
+  "pages-more.js"
+ ],
+ "State where you have got to, even if it is incomplete.": [
+  "viva.js"
+ ],
+ "Station {0} · {1}": [
+  "gym.js"
+ ],
+ "Stats": [
+  "pages-more.js"
+ ],
+ "Stay": [
+  "viva.js"
+ ],
+ "Stay quiet and wait for the next question": [
+  "viva.js"
+ ],
+ "Stay silent until it comes back": [
+  "viva.js"
+ ],
+ "Steady": [
+  "gym.js"
+ ],
+ "Steady Breath": [
+  "data.js"
+ ],
+ "Steady volume": [
+  "engine.js"
+ ],
+ "Steady, with real pauses?": [
+  "gym.js"
+ ],
+ "Steady.": [
+  "gym.js"
+ ],
+ "Steelman": [
+  "viva.js"
+ ],
+ "Step up to the speaker’s platform.": [
+  "pages-core.js"
+ ],
+ "Steps with gaps": [
+  "viva.js"
+ ],
+ "still listening": [
+  "pages-more.js"
+ ],
+ "Still open": [
+  "viva.js"
+ ],
+ "Stop": [
+  "pages-core.js",
+  "pages-more.js",
+  "viva.js",
+  "speech.js",
+  "gym.js"
+ ],
+ "Stopped.": [
+  "engine.js"
+ ],
+ "Story": [
+  "gym.js"
+ ],
+ "Storytelling": [
+  "data.js"
+ ],
+ "Streak": [
+  "pages-core.js"
+ ],
+ "Streak:": [
+  "gym.js"
+ ],
+ "Strength": [
+  "pages-core.js"
+ ],
+ "Strengths": [
+  "pages-core.js",
+  "viva.js",
+  "teacher.js"
+ ],
+ "Strong": [
+  "pages-core.js"
+ ],
+ "Structure": [
+  "data.js",
+  "pages-core.js",
+  "gym.js"
+ ],
+ "Structure · {0}": [
+  "gym.js"
+ ],
+ "Structure: ": [
+  "pages-core.js"
+ ],
+ "Structure: {0}": [
+  "gym.js"
+ ],
+ "Student": [
+  "auth.js",
+  "teacher.js"
+ ],
+ "Students": [
+  "teacher.js"
+ ],
+ "Students join with the code {0} from the sign-in page.": [
+  "teacher.js"
+ ],
+ "Studied": [
+  "pages-more.js"
+ ],
+ "Studied a great speech": [
+  "pages-more.js"
+ ],
+ "Study 5 great speeches": [
+  "data.js"
+ ],
+ "Study a great speech": [
+  "data.js"
+ ],
+ "Study material or syllabus": [
+  "viva.js"
+ ],
+ "Stumbled": [
+  "gym.js"
+ ],
+ "Stumbles are the workout. Exaggerate every consonant and try again.": [
+  "gym.js"
+ ],
+ "Stumbles are the workout. Exaggerate the consonants, or drop one pace and build back up.": [
+  "gym.js"
+ ],
+ "Style drill": [
+  "pages-more.js"
+ ],
+ "Subject": [
+  "viva.js",
+  "teacher.js"
+ ],
+ "Subject, level and examiner. Paste your syllabus to ground the questions.": [
+  "viva.js"
+ ],
+ "Submit answer": [
+  "viva.js"
+ ],
+ "Summons to examination": [
+  "viva.js"
+ ],
+ "Support your main claim with at least one specific number or example.": [
+  "engine.js"
+ ],
+ "Suppose I told you that is wrong. How would you defend it?": [
+  "viva.js"
+ ],
+ "Sure, take a moment.": [
+  "viva.js"
+ ],
+ "Surf": [
+  "gym.js"
+ ],
+ "Survive the follow-ups.": [
+  "viva.js"
+ ],
+ "Swap it for a specific, checkable claim.": [
+  "engine.js"
+ ],
+ "Sweeping claim": [
+  "engine.js"
+ ],
+ "symboulos: adviser": [
+  "app.js"
+ ],
+ "Synced to your account": [
+  "app.js"
+ ],
+ "Take a moment.": [
+  "viva.js"
+ ],
+ "Take a moment. I will wait.": [
+  "viva.js"
+ ],
+ "Take an oral exam": [
+  "pages-core.js"
+ ],
+ "Take one problem from your course and solve it out loud: the principle, each step, and one sanity check. Then write down the three sentences you said that carried the most reasoning.": [
+  "viva.js"
+ ],
+ "Take thirty seconds.": [
+  "viva.js"
+ ],
+ "Take your time. Thinking is the point.": [
+  "viva.js"
+ ],
+ "Talk me through where you are, even roughly.": [
+  "viva.js"
+ ],
+ "Talks worth studying, with what to listen for. They open on the publisher’s site.": [
+  "pages-more.js"
+ ],
+ "Tap a corner of the triangle or a row to see what drives it.": [
+  "pages-core.js"
+ ],
+ "Tap a highlight to see the move and why it works.": [
+  "pages-more.js"
+ ],
+ "Tap any highlight to read the note behind it.": [
+  "pages-core.js"
+ ],
+ "Teacher": [
+  "auth.js",
+  "teacher.js"
+ ],
+ "Team update": [
+  "data.js"
+ ],
+ "Technique:": [
+  "pages-more.js"
+ ],
+ "Tell me the main choice you made in this work, and what else you could have done instead.": [
+  "viva.js"
+ ],
+ "Tell me what you are thinking, even if it is not finished.": [
+  "viva.js"
+ ],
+ "Tell me where your thinking is, even if it is not finished.": [
+  "viva.js"
+ ],
+ "Ten categories, ninety topics.": [
+  "gym.js"
+ ],
+ "Ten flawed arguments. Name the fallacy before the clock runs out. Streaks multiply your score.": [
+  "pages-more.js"
+ ],
+ "Ten rounds, fifteen seconds each. Build a combo.": [
+  "pages-core.js"
+ ],
+ "Testing a result against units, extreme cases or an estimate before you commit to it.": [
+  "viva.js"
+ ],
+ "Thank you.": [
+  "viva.js"
+ ],
+ "That analysis isn’t here": [
+  "pages-core.js"
+ ],
+ "That class code is not right.": [
+  "auth.js"
+ ],
+ "That class isn’t yours": [
+  "teacher.js"
+ ],
+ "That code is not right.": [
+  "auth.js"
+ ],
+ "That concludes our questions. We will confer.": [
+  "viva.js"
+ ],
+ "That concludes the examination.": [
+  "viva.js"
+ ],
+ "That concludes the questions.": [
+  "viva.js"
+ ],
+ "That did not work.": [
+  "auth.js"
+ ],
+ "That draft isn’t here": [
+  "pages-more.js"
+ ],
+ "That exam isn’t here": [
+  "viva.js"
+ ],
+ "That file is over 400 MB. Trim it or export the audio only.": [
+  "pages-core.js"
+ ],
+ "That file isn’t audio or video. Try MP3, M4A, WAV, MP4 or MOV.": [
+  "pages-core.js"
+ ],
+ "That matches the original. Change the shape of the sentence.": [
+  "gym.js"
+ ],
+ "That name or password is not right. Check both and try again.": [
+  "auth.js"
+ ],
+ "That reads like a simile. Drop “like” and say it is the thing.": [
+  "gym.js"
+ ],
+ "That recording is under 8 seconds. Upload at least 20 seconds of speech.": [
+  "engine.js"
+ ],
+ "That report isn’t available": [
+  "teacher.js"
+ ],
+ "That round lasted {0}, so it earned no XP. Speak for at least 20 seconds.": [
+  "gym.js"
+ ],
+ "That text is too long for one pass. Trim it to the part you most want coached.": [
+  "engine.js"
+ ],
+ "That transcript file is too large. Keep it under 2 MB.": [
+  "pages-core.js"
+ ],
+ "That username is taken. Try another.": [
+  "auth.js"
+ ],
+ "That was too short to use. Try again, and speak for at least a few seconds.": [
+  "speech.js"
+ ],
+ "The Academy": [
+  "pages-more.js"
+ ],
+ "The Advocate": [
+  "data.js"
+ ],
+ "The AI coach isn’t available in this view, so content gets an on-device estimate instead of a full read.": [
+  "pages-core.js"
+ ],
+ "The AI coach isn’t available on this server right now.": [
+  "engine.js"
+ ],
+ "The AI coach isn’t enabled for this page.": [
+  "engine.js"
+ ],
+ "The AI key on the server isn’t valid. Tell your teacher or the Rostra team.": [
+  "engine.js"
+ ],
+ "The analysis stopped unexpectedly. Try a different file format.": [
+  "pages-core.js"
+ ],
+ "The analysis stopped unexpectedly. Your text is still here, so try again.": [
+  "pages-core.js"
+ ],
+ "The Analyst": [
+  "data.js"
+ ],
+ "The answer: {0}.": [
+  "pages-more.js"
+ ],
+ "The Apprentice": [
+  "data.js"
+ ],
+ "The approach named in one sentence": [
+  "viva.js"
+ ],
+ "The audio of your spoken answers. It is turned into text, measured for pace and pauses on your device, and discarded. Rostra does not read emotions from your voice or face, and does not use cameras.": [
+  "auth.js"
+ ],
+ "The best available defense or repair": [
+  "viva.js"
+ ],
+ "The brief": [
+  "pages-more.js"
+ ],
+ "The buzz should travel from your chest up into your face.": [
+  "gym.js"
+ ],
+ "The candidate names the principle, reasons one step at a time, then checks against real life. With the formula forgotten, every step still earns credit.": [
+  "viva.js"
+ ],
+ "The classic 4-7-8. Slow, deep and very calming.": [
+  "gym.js"
+ ],
+ "the closing question": [
+  "viva.js"
+ ],
+ "The coach calibrates pace and expectations to the occasion.": [
+  "pages-core.js"
+ ],
+ "The coach couldn’t be reached. Check your connection and try again.": [
+  "engine.js"
+ ],
+ "The coach couldn’t work with this text. Try different content.": [
+  "engine.js"
+ ],
+ "The coach took too long to answer. Try again.": [
+  "engine.js"
+ ],
+ "The coach’s reply came back incomplete. Try again.": [
+  "engine.js"
+ ],
+ "The conditions or scope where it applies": [
+  "viva.js"
+ ],
+ "The content scores below are on-device estimates. The AI coach can read the full speech now.": [
+  "pages-core.js"
+ ],
+ "The core idea in one sentence": [
+  "viva.js"
+ ],
+ "The correct picture stated clearly": [
+  "viva.js"
+ ],
+ "The database did not answer": [
+  "teacher.js"
+ ],
+ "The direction of the dependency explained": [
+  "viva.js"
+ ],
+ "The edge": [
+  "viva.js"
+ ],
+ "The Encouraging": [
+  "viva.js"
+ ],
+ "The evidence or reasoning behind it": [
+  "viva.js"
+ ],
+ "The exact places in the work affected": [
+  "viva.js"
+ ],
+ "The exam ended before this question.": [
+  "viva.js"
+ ],
+ "The examiner asks: “Is the Carnot efficiency achievable in a real engine?” Which opening is answer-first?": [
+  "viva.js"
+ ],
+ "The examiner couldn’t be reached, so mark this one yourself. Be as strict as they would be.": [
+  "viva.js"
+ ],
+ "The examiner probes, challenges or asks for an example, up to {0} times per question. Pushback doesn’t mean you were wrong.": [
+  "viva.js"
+ ],
+ "The examiner probes, challenges or asks for an example, up to once per question. Pushback doesn’t mean you were wrong.": [
+  "viva.js"
+ ],
+ "The examiner probes, challenges or asks for an example, up to twice per question. Pushback doesn’t mean you were wrong.": [
+  "viva.js"
+ ],
+ "The examiner says, “Are you sure? I think that’s wrong.” What should you do first?": [
+  "viva.js"
+ ],
+ "The examiners are taking their seats…": [
+  "viva.js"
+ ],
+ "The examiners ask what only the real author could answer. Paste your work so they can point to specific places in it.": [
+  "viva.js"
+ ],
+ "The examiners will speak. Turn your sound on.": [
+  "viva.js"
+ ],
+ "The examiners’ questions came back incomplete, so this exam uses the offline question bank.": [
+  "viva.js"
+ ],
+ "The Expert": [
+  "data.js"
+ ],
+ "The first thing they would go back to": [
+  "viva.js"
+ ],
+ "The interface, the examiner and the coach answer in this language.": [
+  "auth.js"
+ ],
+ "The klepsydra times your thinking and your answer. Follow-ups get a shorter clock, and the examiner stops you if you run on.": [
+  "viva.js"
+ ],
+ "The laurel chest is open": [
+  "ui.js"
+ ],
+ "The Leader": [
+  "data.js"
+ ],
+ "The microphone could not start, so you can type this answer instead.": [
+  "viva.js"
+ ],
+ "The microphone could not start. Bring a recording instead.": [
+  "speech.js"
+ ],
+ "The microphone is not available, so you type your answers this time.": [
+  "viva.js"
+ ],
+ "The microphone was blocked, so this exam is typed. Allow it in the browser’s address bar to speak next time.": [
+  "viva.js"
+ ],
+ "The microphone was blocked. Allow it in the browser’s address bar, or bring a recording instead.": [
+  "speech.js"
+ ],
+ "The more you give, the more the angles sound like you. Rough notes are perfect.": [
+  "pages-more.js"
+ ],
+ "The one thing they should remember tomorrow": [
+  "pages-more.js"
+ ],
+ "The Orator": [
+  "data.js"
+ ],
+ "The panel": [
+  "viva.js"
+ ],
+ "The Panel": [
+  "viva.js"
+ ],
+ "The panel is conferring…": [
+  "viva.js"
+ ],
+ "The panel is seated. Take a breath.": [
+  "viva.js"
+ ],
+ "The panel writes your report: grade, gaps and flashcards.": [
+  "viva.js"
+ ],
+ "The pebbles are in Plutarch, Life of Demosthenes 11. The sea is in Cicero, On Ends 5.5.": [
+  "gym.js"
+ ],
+ "The Point again, restated in light of the example": [
+  "viva.js"
+ ],
+ "The point where your knowledge runs out. Examiners look for it on purpose.": [
+  "viva.js"
+ ],
+ "The Practitioner": [
+  "viva.js"
+ ],
+ "The presentation": [
+  "pages-more.js"
+ ],
+ "The principles underneath were thin. Rebuild each result from first principles, out loud.": [
+  "viva.js"
+ ],
+ "The reason you chose between them": [
+  "viva.js"
+ ],
+ "The Rigorous": [
+  "viva.js"
+ ],
+ "The Rostra was the speakers’ platform in the Roman Forum, named for the bronze ship prows ({0}": [
+  "pages-core.js"
+ ],
+ "The server could not be reached. Check your connection and try again.": [
+  "auth.js"
+ ],
+ "The shape of your speech": [
+  "pages-core.js"
+ ],
+ "The Skeptic": [
+  "viva.js"
+ ],
+ "The Socratic": [
+  "viva.js"
+ ],
+ "The Statesman": [
+  "data.js"
+ ],
+ "The Storyteller": [
+  "data.js"
+ ],
+ "The task, in your words": [
+  "teacher.js"
+ ],
+ "The Theorist": [
+  "viva.js"
+ ],
+ "The transcription service did not answer.": [
+  "viva.js"
+ ],
+ "The Triangle Path": [
+  "pages-more.js"
+ ],
+ "The unexamined answer is not worth giving.": [
+  "viva.js"
+ ],
+ "the warm-up": [
+  "viva.js"
+ ],
+ "Their triangle": [
+  "pages-more.js"
+ ],
+ "Then": [
+  "viva.js"
+ ],
+ "Then chant “mee, may, mah, moh, moo” on one note.": [
+  "gym.js"
+ ],
+ "There’s your “like” or “as”.": [
+  "gym.js"
+ ],
+ "Thermodynamics": [
+  "viva.js"
+ ],
+ "These marks cover the question and its follow-up together.": [
+  "viva.js"
+ ],
+ "These notes come from the key points you jotted, so they describe your structure more than your spoken words.": [
+  "viva.js"
+ ],
+ "Theses, close reading and rival positions.": [
+  "viva.js"
+ ],
+ "They could not reach a verdict": [
+  "viva.js"
+ ],
+ "They spoke once. We are still listening.": [
+  "pages-more.js"
+ ],
+ "They trust you. They feel you. Now make them think.": [
+  "data.js"
+ ],
+ "Think": [
+  "viva.js",
+  "gym.js"
+ ],
+ "Think about the extremes. What happens when the key quantity is zero, or very large?": [
+  "viva.js"
+ ],
+ "Think about:": [
+  "pages-more.js"
+ ],
+ "Think of a mistake people often make about {0}. Name it, then tell me how you would correct it.": [
+  "viva.js"
+ ],
+ "Think out loud": [
+  "viva.js"
+ ],
+ "Think time": [
+  "viva.js"
+ ],
+ "Think time. Plan your first sentence: the answer.": [
+  "viva.js"
+ ],
+ "Think, then answer.": [
+  "viva.js"
+ ],
+ "Think.": [
+  "gym.js"
+ ],
+ "Thinking time": [
+  "gym.js"
+ ],
+ "Thinking…": [
+  "pages-more.js"
+ ],
+ "This analysis covers delivery only. Add a transcript next time to unlock Logos and the content estimate.": [
+  "pages-core.js"
+ ],
+ "This analysis covers delivery only. Add a transcript next time to unlock Logos, fallacy detection and personal lessons.": [
+  "pages-core.js"
+ ],
+ "This exam is not finished yet.": [
+  "teacher.js"
+ ],
+ "This exam is seeded with the concepts that tripped you up last time. Adjust anything, then walk back in.": [
+  "viva.js"
+ ],
+ "This exam uses the offline question bank.": [
+  "viva.js"
+ ],
+ "This file’s audio couldn’t be decoded here. Try exporting it as MP3, M4A or WAV.": [
+  "engine.js"
+ ],
+ "This item is too large to sync to your account, so it stays in this browser.": [
+  "engine.js"
+ ],
+ "Three beats. Check that they share a shape.": [
+  "gym.js"
+ ],
+ "Three different ways in. Each one leans on a different mix of ethos, pathos and logos.": [
+  "pages-more.js"
+ ],
+ "Three lights, one breath. Your voice is ready.": [
+  "gym.js"
+ ],
+ "Three or more steps. Check that each one is bigger.": [
+  "gym.js"
+ ],
+ "Three parallel beats, with the strongest last.": [
+  "data.js"
+ ],
+ "Three questions. A warm-up before the real thing.": [
+  "viva.js"
+ ],
+ "through your nose": [
+  "gym.js"
+ ],
+ "Time. Finish your sentence and land it.": [
+  "gym.js"
+ ],
+ "Time. State your conclusion in one sentence.": [
+  "viva.js"
+ ],
+ "Time’s up.": [
+  "pages-more.js"
+ ],
+ "Title": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Title students see": [
+  "teacher.js"
+ ],
+ "Titles follow the path of classical oratory, from Listener to Aristotle.": [
+  "pages-more.js"
+ ],
+ "Toast": [
+  "data.js",
+  "gym.js"
+ ],
+ "Today counts.": [
+  "pages-core.js"
+ ],
+ "Today’s call sheet": [
+  "gym.js"
+ ],
+ "Today’s laurels": [
+  "pages-core.js"
+ ],
+ "Tongue twister": [
+  "gym.js"
+ ],
+ "Tongue twisters": [
+  "gym.js"
+ ],
+ "Tongue Twisters": [
+  "gym.js"
+ ],
+ "Too many answers stopped at what. Before the real exam, ask yourself why after every sentence you plan to say.": [
+  "viva.js"
+ ],
+ "Too short to count.": [
+  "gym.js"
+ ],
+ "Topic": [
+  "gym.js"
+ ],
+ "Topic focus": [
+  "viva.js"
+ ],
+ "Topic focus (optional)": [
+  "teacher.js"
+ ],
+ "Total XP": [
+  "pages-more.js",
+  "app.js"
+ ],
+ "Tracing pitch and volume": [
+  "pages-core.js"
+ ],
+ "Train": [
+  "app.js"
+ ],
+ "Train {0}": [
+  "pages-core.js"
+ ],
+ "Train {0}: {1}": [
+  "pages-core.js"
+ ],
+ "Train between the big moments": [
+  "pages-core.js"
+ ],
+ "Train your ear": [
+  "pages-more.js"
+ ],
+ "Transcript": [
+  "pages-core.js",
+  "viva.js",
+  "teacher.js"
+ ],
+ "Transcript input": [
+  "pages-core.js"
+ ],
+ "Transcript so far": [
+  "viva.js"
+ ],
+ "Traps for this speech:": [
+  "pages-more.js"
+ ],
+ "Trend": [
+  "teacher.js"
+ ],
+ "Trend across {0} speeches": [
+  "pages-core.js"
+ ],
+ "Trend from {0} to {1}": [
+  "ui.js"
+ ],
+ "Triangle breathing": [
+  "gym.js"
+ ],
+ "Triangle Breathing": [
+  "gym.js"
+ ],
+ "Triangle view": [
+  "pages-core.js"
+ ],
+ "Tribune": [
+  "data.js"
+ ],
+ "Tribute": [
+  "gym.js"
+ ],
+ "Tricolon": [
+  "data.js",
+  "gym.js"
+ ],
+ "Trust, feeling, reason: you hold all three. Now raise all three.": [
+  "data.js"
+ ],
+ "Try “no small…” or “not bad…”.": [
+  "gym.js"
+ ],
+ "Try {0}": [
+  "pages-more.js"
+ ],
+ "Try next": [
+  "gym.js"
+ ],
+ "Try the simplest possible case first. What is the smallest example you could do by hand?": [
+  "viva.js"
+ ],
+ "Try these in the ten minutes before you speak.\n\n- **Breathe out longer than you breathe in.** In for 4, out for 6, five times. The Gym has a guided version.\n- **Learn your first two sentences by heart.** A sure start settles the rest of the talk.\n- **Warm up out loud.** A few minutes of hums and tongue twisters wakes your voice.\n- **Pick one friendly face** and say your opening line to that person.": [
+  "pages-more.js"
+ ],
+ "Turn a plain sentence into one that lands, with a classic rhetorical device.": [
+  "gym.js"
+ ],
+ "Turn sounds on": [
+  "gym.js",
+  "app.js"
+ ],
+ "Turn the claim into a question.": [
+  "gym.js"
+ ],
+ "Turn your claim into a question the audience can only answer one way.": [
+  "gym.js"
+ ],
+ "Turning your {0} of speech into text.": [
+  "viva.js"
+ ],
+ "Twisters": [
+  "gym.js"
+ ],
+ "Two halves in tension. Check they mirror each other.": [
+  "gym.js"
+ ],
+ "Two short sentences carry the whole thesis. The rest of the speech is the proof, so listeners always know where he is heading.": [
+  "viva.js"
+ ],
+ "Two structures make this automatic. BLUF (bottom line up front): state the conclusion, then the support. PREP: Point, Reason, Example, Point again. A PREP answer to “Why does ice float?” sounds like this: “Ice floats because it is less dense than liquid water. Hydrogen bonds lock the molecules into an open lattice that takes up more space. That is why lakes freeze from the top down. So floating comes down to density, and the density comes from the lattice.”": [
+  "viva.js"
+ ],
+ "TXT, or VTT and SRT caption files (their timing is used for pacing)": [
+  "pages-core.js"
+ ],
+ "Type my answers (content drill)": [
+  "viva.js"
+ ],
+ "Type what you said, as you said it.": [
+  "viva.js"
+ ],
+ "Typed, not spoken": [
+  "viva.js"
+ ],
+ "Unbroken": [
+  "data.js"
+ ],
+ "unclear": [
+  "engine.js"
+ ],
+ "Undergraduate": [
+  "viva.js"
+ ],
+ "Understating something by denying its opposite.": [
+  "gym.js"
+ ],
+ "Understood.": [
+  "viva.js"
+ ],
+ "Units, limiting cases and rough estimates catch errors before the examiner does.": [
+  "viva.js"
+ ],
+ "Unknown document.": [
+  "teacher.js"
+ ],
+ "unlock {0}": [
+  "gym.js"
+ ],
+ "Unlocks a content estimate from word patterns: evidence, hedges and sweeping claims.": [
+  "pages-core.js"
+ ],
+ "Unlocks content analysis: structure, evidence, fallacies, inconsistencies and personal lessons.": [
+  "pages-core.js"
+ ],
+ "Unranked": [
+  "engine.js"
+ ],
+ "unrated": [
+  "pages-core.js"
+ ],
+ "Unsupported": [
+  "pages-core.js"
+ ],
+ "Untitled exam": [
+  "viva.js"
+ ],
+ "Untitled speech": [
+  "engine.js",
+  "pages-more.js"
+ ],
+ "Up late": [
+  "pages-core.js"
+ ],
+ "Upload a speech and get coached on all three of Aristotle’s appeals. Prepare new ones with a coach that asks before it tells. Rehearse oral exams with an examiner who follows up. Earn your laurels.": [
+  "pages-core.js"
+ ],
+ "Upload file": [
+  "pages-core.js"
+ ],
+ "Use “you” and “we” more to make the talk about the audience.": [
+  "engine.js"
+ ],
+ "Use a password of at least {0} characters.": [
+  "auth.js"
+ ],
+ "Use a three-part recovery. Admit the edge plainly: “I don’t know that result.” Bridge to what you do know: “What I do know is…”. Then reason toward the gap: “So I would expect…, and I would check it by…”. Examiners hear honesty plus reasoning, and they often help you the rest of the way.": [
+  "viva.js"
+ ],
+ "Use this opening": [
+  "pages-more.js"
+ ],
+ "Use two key words twice, and flip their order the second time.": [
+  "gym.js"
+ ],
+ "Username": [
+  "auth.js"
+ ],
+ "Username or email": [
+  "auth.js"
+ ],
+ "Uses {0}": [
+  "gym.js"
+ ],
+ "Using a classic scaffold instead.": [
+  "pages-more.js"
+ ],
+ "Using classic angles instead.": [
+  "pages-more.js"
+ ],
+ "Verdict": [
+  "viva.js"
+ ],
+ "Very sing-song": [
+  "engine.js"
+ ],
+ "Very well.": [
+  "viva.js"
+ ],
+ "Video": [
+  "pages-core.js"
+ ],
+ "Video frames couldn’t be sent, so presence wasn’t scored.": [
+  "engine.js"
+ ],
+ "Visual: {0}": [
+  "pages-more.js"
+ ],
+ "Viva": [
+  "pages-more.js"
+ ],
+ "Viva Survivor": [
+  "data.js"
+ ],
+ "Viva technique": [
+  "pages-more.js",
+  "viva.js"
+ ],
+ "Viva voce": [
+  "viva.js"
+ ],
+ "Vivid language": [
+  "data.js"
+ ],
+ "Vocal warm-up": [
+  "gym.js"
+ ],
+ "Vocal Warm-up": [
+  "gym.js"
+ ],
+ "Volume dynamics": [
+  "pages-core.js"
+ ],
+ "Walk me through a concrete worked example of {0}, step by step. Think out loud.": [
+  "viva.js"
+ ],
+ "Walk me through that again, one step at a time.": [
+  "viva.js"
+ ],
+ "Warm": [
+  "gym.js"
+ ],
+ "Warm and patient. Offers a stepping stone when you stall, and still expects you to do the thinking.": [
+  "viva.js"
+ ],
+ "Warm and patient. Offers a stepping stone when you stall.": [
+  "viva.js"
+ ],
+ "Warm up again": [
+  "gym.js"
+ ],
+ "Warm up in the Gym": [
+  "pages-core.js"
+ ],
+ "Warm up the voice before it has to work": [
+  "gym.js"
+ ],
+ "Warm-up": [
+  "viva.js",
+  "gym.js"
+ ],
+ "Warm-up ended early": [
+  "gym.js"
+ ],
+ "warm-ups done": [
+  "gym.js"
+ ],
+ "Warm, loose and ready": [
+  "gym.js"
+ ],
+ "Watch list": [
+  "pages-more.js"
+ ],
+ "Watch out:": [
+  "pages-more.js"
+ ],
+ "Waveform of the recording with pauses marked": [
+  "ui.js"
+ ],
+ "We couldn’t hear enough speech in this recording. Check that the voice is audible.": [
+  "engine.js"
+ ],
+ "We look forward to hearing your answers.": [
+  "viva.js"
+ ],
+ "We will stop here. Let us confer.": [
+  "viva.js"
+ ],
+ "Weak": [
+  "pages-core.js"
+ ],
+ "Weak spot": [
+  "pages-core.js"
+ ],
+ "Wedding, birthday, farewell": [
+  "data.js"
+ ],
+ "Weighing ethos, pathos and logos…": [
+  "pages-core.js"
+ ],
+ "Weighing every answer. This takes a few seconds.": [
+  "viva.js"
+ ],
+ "Weighing it": [
+  "pages-core.js"
+ ],
+ "Weight {0}%.": [
+  "viva.js"
+ ],
+ "Welcome back. The panel is ready when you are.": [
+  "viva.js"
+ ],
+ "Welcome back. We were on question {0} of {1}.": [
+  "viva.js"
+ ],
+ "Welcome to the Rostra.": [
+  "pages-core.js"
+ ],
+ "Welcome, and breathe. I want to see how you think, so think out loud. If you get stuck, say so and we will work through it.": [
+  "viva.js"
+ ],
+ "Welcome. I will ask you simple questions, and then I will ask why. Take your time, and think out loud.": [
+  "viva.js"
+ ],
+ "Welcome. There are three of us today. I will ask about the theory, my colleagues about practice and about doubt.": [
+  "viva.js"
+ ],
+ "What": [
+  "gym.js"
+ ],
+ "What · So what · Now what": [
+  "gym.js"
+ ],
+ "What a real examiner would conclude": [
+  "viva.js"
+ ],
+ "What are you being examined on?": [
+  "viva.js"
+ ],
+ "What changes in the result": [
+  "viva.js"
+ ],
+ "What changes when it fails, qualitatively or quantitatively": [
+  "viva.js"
+ ],
+ "What did you say?": [
+  "gym.js"
+ ],
+ "What do you mostly speak for?": [
+  "pages-core.js"
+ ],
+ "What does your audience believe right now that you want to change?": [
+  "pages-more.js"
+ ],
+ "What each examiner said": [
+  "viva.js"
+ ],
+ "What example proves it?": [
+  "pages-more.js"
+ ],
+ "What is the most common misconception about {0}, and how would you show a student it is wrong?": [
+  "viva.js"
+ ],
+ "What is the next question a researcher would ask here?": [
+  "viva.js"
+ ],
+ "What is the single point of this part?": [
+  "pages-more.js"
+ ],
+ "What is the strongest objection to, or limitation of, {0}? How would you answer it?": [
+  "viva.js"
+ ],
+ "What is the weakest claim or step in your work, and how would you defend it if I pressed you?": [
+  "viva.js"
+ ],
+ "What is this?": [
+  "kit.js"
+ ],
+ "What it does, in plain words": [
+  "viva.js"
+ ],
+ "What it is or what happened.": [
+  "gym.js"
+ ],
+ "What moment made you care about this topic?": [
+  "pages-more.js"
+ ],
+ "What should I work on first, based on my triangle?": [
+  "pages-more.js"
+ ],
+ "What should they clarify? Leave blank to ask for a rephrase.": [
+  "viva.js"
+ ],
+ "What should they think, feel or do afterwards?": [
+  "pages-more.js"
+ ],
+ "What should your coach call you?": [
+  "pages-core.js"
+ ],
+ "What the camera saw": [
+  "pages-core.js"
+ ],
+ "What the example shows about the general idea": [
+  "viva.js"
+ ],
+ "What the room noted": [
+  "viva.js"
+ ],
+ "What was measured": [
+  "viva.js"
+ ],
+ "What we do not keep": [
+  "auth.js"
+ ],
+ "What we should do.": [
+  "gym.js"
+ ],
+ "What we store": [
+  "auth.js"
+ ],
+ "What went wrong.": [
+  "gym.js"
+ ],
+ "What worked": [
+  "gym.js"
+ ],
+ "What works": [
+  "gym.js"
+ ],
+ "What would fail first and why": [
+  "viva.js"
+ ],
+ "What would have to be true for your answer to fail?": [
+  "viva.js"
+ ],
+ "What you get": [
+  "pages-core.js"
+ ],
+ "What you know now that you did not know then": [
+  "viva.js"
+ ],
+ "What you reported": [
+  "viva.js"
+ ],
+ "What you said": [
+  "viva.js"
+ ],
+ "What you said, as closely as you can.": [
+  "viva.js"
+ ],
+ "What your examiner said": [
+  "viva.js"
+ ],
+ "When": [
+  "teacher.js"
+ ],
+ "Where it goes next.": [
+  "gym.js"
+ ],
+ "Where it lives": [
+  "auth.js"
+ ],
+ "Where it stands now.": [
+  "gym.js"
+ ],
+ "Where it started.": [
+  "gym.js"
+ ],
+ "Where the analogy breaks down": [
+  "viva.js"
+ ],
+ "Where the follow-ups found you out": [
+  "viva.js"
+ ],
+ "Where the question is still open": [
+  "viva.js"
+ ],
+ "Where to get a transcript": [
+  "pages-core.js"
+ ],
+ "Where would I see {c} outside a textbook?": [
+  "viva.js"
+ ],
+ "Where your work lives": [
+  "auth.js"
+ ],
+ "Which decision in your work would you change now, and why?": [
+  "viva.js"
+ ],
+ "Which device is this?": [
+  "pages-more.js"
+ ],
+ "Which fallacy is this?": [
+  "pages-more.js"
+ ],
+ "Which of these is a sanity check?": [
+  "viva.js"
+ ],
+ "Which step in that answer are you least sure of, and why?": [
+  "viva.js"
+ ],
+ "Who can see it": [
+  "auth.js"
+ ],
+ "Who will be in the room? What do they care about?": [
+  "pages-more.js"
+ ],
+ "Why did you take the approach you took in your work, and what alternative did you reject?": [
+  "viva.js"
+ ],
+ "Why does that happen? Take it one level deeper.": [
+  "viva.js"
+ ],
+ "Why is bluffing especially risky in an oral exam?": [
+  "viva.js"
+ ],
+ "Why it fits you:": [
+  "pages-more.js"
+ ],
+ "Why it had to come at that point": [
+  "viva.js"
+ ],
+ "Why it is tempting to believe": [
+  "viva.js"
+ ],
+ "Why it is weak": [
+  "viva.js"
+ ],
+ "Why it matters to your argument or result": [
+  "viva.js"
+ ],
+ "Why it matters: what it lets you predict or do": [
+  "viva.js"
+ ],
+ "Why it matters.": [
+  "gym.js"
+ ],
+ "Why it works": [
+  "gym.js"
+ ],
+ "Why ladder": [
+  "viva.js"
+ ],
+ "Why ladder result": [
+  "viva.js"
+ ],
+ "Why should they believe it?": [
+  "data.js"
+ ],
+ "Why should they care?": [
+  "data.js"
+ ],
+ "Why should they trust you?": [
+  "data.js"
+ ],
+ "Why the connection matters in practice": [
+  "viva.js"
+ ],
+ "Why the standard account needs it": [
+  "viva.js"
+ ],
+ "Why this lesson:": [
+  "pages-more.js"
+ ],
+ "Without material, questions come from the subject and topic.": [
+  "viva.js"
+ ],
+ "Without your work, the questions can’t point to anything specific in it.": [
+  "viva.js"
+ ],
+ "Wordsmith": [
+  "data.js"
+ ],
+ "Work on it": [
+  "pages-core.js"
+ ],
+ "Work, school, conference": [
+  "data.js"
+ ],
+ "Working title": [
+  "pages-more.js"
+ ],
+ "Works:": [
+  "pages-more.js"
+ ],
+ "Would an examiner believe this is your work?": [
+  "viva.js"
+ ],
+ "wpm": [
+  "pages-core.js"
+ ],
+ "Write 30 seconds on a prompt": [
+  "pages-core.js"
+ ],
+ "Write a full line first, then check it.": [
+  "gym.js"
+ ],
+ "Write a section in Prepare": [
+  "data.js"
+ ],
+ "Write at least 20 words to assemble.": [
+  "pages-more.js"
+ ],
+ "Write each section yourself, with prompts and sentence frames.": [
+  "pages-more.js"
+ ],
+ "Write each section yourself, with prompts, frames and live coaching.": [
+  "pages-more.js"
+ ],
+ "Write it in your own voice": [
+  "pages-more.js"
+ ],
+ "Write it in your own words. Rough is fine.": [
+  "pages-more.js"
+ ],
+ "Write the code": [
+  "teacher.js"
+ ],
+ "Write the first half, then swap its two key words in the second half.": [
+  "gym.js"
+ ],
+ "Write three questions from your course you could not fully answer today. For each, write a recovery: one sentence admitting the edge, one bridge to what you know, and one sentence of reasoning toward the answer.": [
+  "viva.js"
+ ],
+ "Write your answer here…": [
+  "pages-more.js"
+ ],
+ "Write your version first. The quick check reads it as you type.": [
+  "gym.js"
+ ],
+ "Writing down what you said…": [
+  "viva.js",
+  "speech.js"
+ ],
+ "Writing lessons for your weak spots…": [
+  "pages-core.js"
+ ],
+ "Written exams punish it more": [
+  "viva.js"
+ ],
+ "Written for you": [
+  "pages-core.js",
+  "pages-more.js"
+ ],
+ "Written for you after “{0}”.": [
+  "pages-core.js"
+ ],
+ "Yes": [
+  "viva.js"
+ ],
+ "Yes, delete everything": [
+  "auth.js"
+ ],
+ "Yes, it lands": [
+  "gym.js"
+ ],
+ "Yes.": [
+  "viva.js"
+ ],
+ "You": [
+  "pages-more.js"
+ ],
+ "You already analyzed this exact speech, so it earns no XP. Change it and try again.": [
+  "engine.js"
+ ],
+ "You answered": [
+  "viva.js"
+ ],
+ "You answered {0} of {1} main questions and {2}. Your strongest dimension was {3}, and your weakest was {4}.": [
+  "viva.js"
+ ],
+ "You answered {0} of {1} main questions. Your strongest dimension was {2}, and your weakest was {3}.": [
+  "viva.js"
+ ],
+ "You answered aloud.": [
+  "viva.js"
+ ],
+ "You answered like someone who owns the subject.": [
+  "viva.js"
+ ],
+ "You are borderline": [
+  "viva.js"
+ ],
+ "You are not in a class yet.": [
+  "auth.js"
+ ],
+ "You are now {0} {1}": [
+  "ui.js"
+ ],
+ "You are reading": [
+  "teacher.js"
+ ],
+ "You ask, then you answer.": [
+  "gym.js"
+ ],
+ "You asked for clarification.": [
+  "viva.js"
+ ],
+ "You asked for help {0} times. That is a good move when you are stuck, and it costs a little. Say what you do know first.": [
+  "viva.js"
+ ],
+ "You asked for help once. That is a good move when you are stuck, and it costs a little. Say what you do know first.": [
+  "viva.js"
+ ],
+ "You asked for help reasoning.": [
+  "viva.js"
+ ],
+ "You averaged {0} words per minute{1}. For a {2}, {3}–{4} lets ideas land. Slow down on your key lines and let the pauses do the work.": [
+  "engine.js"
+ ],
+ "You blank on a formula halfway through an answer. What is the strongest move?": [
+  "viva.js"
+ ],
+ "You can come back and keep editing.": [
+  "pages-more.js"
+ ],
+ "You can delete everything from the Account page at any time. Your school is the data controller; Rostra processes data on its behalf. For questions, write to your school’s Rostra contact.": [
+  "auth.js"
+ ],
+ "You can delete everything Rostra holds about you: your profile, speeches, drafts and exams, and your login. This cannot be undone.": [
+  "auth.js"
+ ],
+ "You can delete everything Rostra holds about you: your profile, speeches, drafts and exams. This cannot be undone.": [
+  "auth.js"
+ ],
+ "You could say why, and then why again. That is rarer than you think. Keep asking it of yourself.": [
+  "viva.js"
+ ],
+ "You deny the opposite. Understated and strong.": [
+  "gym.js"
+ ],
+ "You finished a full draft, which gives you something real to improve.": [
+  "engine.js"
+ ],
+ "You finished the round. The next one gets easier.": [
+  "gym.js"
+ ],
+ "You finished this lesson": [
+  "pages-more.js"
+ ],
+ "You got through. The follow-ups found real gaps worth closing.": [
+  "viva.js"
+ ],
+ "You held {0}.": [
+  "viva.js"
+ ],
+ "You held the floor for {0}": [
+  "gym.js"
+ ],
+ "You held up best on {0}.": [
+  "viva.js"
+ ],
+ "You joined the class.": [
+  "auth.js"
+ ],
+ "You kept it clear enough for a stranger to follow.": [
+  "gym.js"
+ ],
+ "You knew {0} of {1}.": [
+  "viva.js"
+ ],
+ "You knew every card.": [
+  "viva.js"
+ ],
+ "You know it. They believe it. Now make them feel it.": [
+  "data.js"
+ ],
+ "You know more than your answers showed. Lead with the answer, then think out loud, and you will be fine.": [
+  "viva.js"
+ ],
+ "You led with the answer in {0} of {1} replies.": [
+  "viva.js"
+ ],
+ "You led with the answer in {0} of {1} replies. Keep doing that: it lets the examiner follow everything after it.": [
+  "viva.js"
+ ],
+ "You led with the answer in {0} of {1} replies. Put the answer in your first sentence, then reason. Examiners grade what they hear first.": [
+  "viva.js"
+ ],
+ "You left the room {0} times during {1}.": [
+  "viva.js"
+ ],
+ "You left the room once during {0}.": [
+  "viva.js"
+ ],
+ "You marked this yourself, so it counts as practice.": [
+  "viva.js"
+ ],
+ "You marked this yourself. Treat it as practice, and let a real examiner have the last word.": [
+  "viva.js"
+ ],
+ "You move people. Anchor the feeling with evidence so it outlasts the applause.": [
+  "data.js"
+ ],
+ "You pasted {0} during {1}.": [
+  "viva.js"
+ ],
+ "You ran over time on {0}. Practice a 30-second version of each answer first, then expand.": [
+  "viva.js"
+ ],
+ "You rarely stopped for more than a breath. Add a one-to-two second pause before each key point and after each question.": [
+  "engine.js"
+ ],
+ "You rated this a solid round, with one clear thing to sharpen.": [
+  "gym.js"
+ ],
+ "You rated this a strong round. Bank it and spin again.": [
+  "gym.js"
+ ],
+ "You realise you made a sign error two minutes ago. The best response is:": [
+  "viva.js"
+ ],
+ "You sat the whole exam and kept answering under pressure. That is the rep that matters most.": [
+  "viva.js"
+ ],
+ "You should feel tall and loose, with nothing locked.": [
+  "gym.js"
+ ],
+ "You skipped most of it, so this one earned no XP. Run at least half the time to earn it.": [
+  "gym.js"
+ ],
+ "You sounded like you meant it.": [
+  "gym.js"
+ ],
+ "You speak to the audience directly with “you” and “we”.": [
+  "engine.js"
+ ],
+ "You spoke at about {0} words per minute, a pace examiners can follow.": [
+  "viva.js"
+ ],
+ "You spoke at about {0} words per minute, which leaves gaps the examiner may fill with a follow-up. Aim for 120 to 160.": [
+  "viva.js"
+ ],
+ "You spoke at about {0} words per minute. Examiners follow best between 120 and 160. Slow the first sentence of each answer.": [
+  "viva.js"
+ ],
+ "You spoke for {0}, then jotted": [
+  "viva.js"
+ ],
+ "You stayed calm and let me follow your thinking. Trust that in the real room.": [
+  "viva.js"
+ ],
+ "You stopped after {0} of {1} questions, before the harder ones. This mark covers only what you reached.": [
+  "viva.js"
+ ],
+ "You stopped after {0} of {1} questions, so an examiner could not judge the rest.": [
+  "viva.js"
+ ],
+ "You stopped before the examiners could reach a verdict.": [
+  "viva.js"
+ ],
+ "You switched away for {0} during {1}.": [
+  "viva.js"
+ ],
+ "You told me what. Now tell me why.": [
+  "viva.js"
+ ],
+ "You use personal story moments, which make the talk memorable.": [
+  "engine.js"
+ ],
+ "You use the pause": [
+  "engine.js"
+ ],
+ "You usually speak for": [
+  "pages-more.js"
+ ],
+ "You worked through every question without asking for help.": [
+  "viva.js"
+ ],
+ "You would fail": [
+  "viva.js"
+ ],
+ "You would pass": [
+  "viva.js"
+ ],
+ "You would pass comfortably": [
+  "viva.js"
+ ],
+ "You. The teachers of the classes you are in, who see your exams, speeches and progress as part of their teaching. Nobody else, and nothing is sold or used for advertising.": [
+  "auth.js"
+ ],
+ "You’re typing, so this checks what you know. It does not rehearse speaking.": [
+  "viva.js"
+ ],
+ "You’ve already finished this lesson": [
+  "pages-more.js"
+ ],
+ "You’ve earned this drill’s XP. Practice is still free.": [
+  "pages-more.js"
+ ],
+ "You’ve reached the 40,000-character limit, so anything past it was cut.": [
+  "pages-more.js"
+ ],
+ "You’ve reached the 8,000-character limit, so anything past it was cut.": [
+  "pages-more.js"
+ ],
+ "You’ve reached today’s limit for the coach. It resets tomorrow.": [
+  "engine.js"
+ ],
+ "Your": [
+  "pages-more.js"
+ ],
+ "Your {0}-day streak ended. Earn any XP today to start a new one.": [
+  "pages-core.js"
+ ],
+ "Your account": [
+  "auth.js"
+ ],
+ "Your account and all your work were deleted.": [
+  "auth.js"
+ ],
+ "Your accuracy capped this mark at Merit.": [
+  "viva.js"
+ ],
+ "Your accuracy kept this mark below a Pass.": [
+  "viva.js"
+ ],
+ "Your analyses": [
+  "pages-core.js"
+ ],
+ "Your analysis of “{0}” is ready in Analyze.": [
+  "pages-core.js"
+ ],
+ "Your angle. Your words. Your voice. Rostra coaches every section and writes none of them.": [
+  "pages-more.js"
+ ],
+ "Your answer": [
+  "viva.js"
+ ],
+ "Your answer never gave way in this round. Try a harder claim next.": [
+  "viva.js"
+ ],
+ "Your answer on {0}.": [
+  "viva.js"
+ ],
+ "Your answer stopped holding at: {0}": [
+  "viva.js"
+ ],
+ "Your answers averaged {0}. Say more: the claim, the reason behind it, and an example.": [
+  "viva.js"
+ ],
+ "Your answers averaged {0}. Spoken answers land better at 80 to 150 words: one claim, one reason, one example.": [
+  "viva.js"
+ ],
+ "Your answers will collect here as you go.": [
+  "viva.js"
+ ],
+ "Your arc, start to finish": [
+  "pages-core.js"
+ ],
+ "Your arguments hold up. Give them a human face and a reason to trust the messenger.": [
+  "data.js"
+ ],
+ "Your best answer was on {0} ({1}).": [
+  "viva.js"
+ ],
+ "Your best: {0} points.": [
+  "pages-core.js"
+ ],
+ "Your big idea, in one sentence": [
+  "pages-more.js"
+ ],
+ "Your browser will ask to use the microphone.": [
+  "viva.js"
+ ],
+ "Your call:": [
+  "gym.js"
+ ],
+ "Your ceiling": [
+  "viva.js"
+ ],
+ "Your claims survived my pushing. Next time, name the limits before I do.": [
+  "viva.js"
+ ],
+ "Your clarification request": [
+  "viva.js"
+ ],
+ "Your classes": [
+  "auth.js",
+  "teacher.js"
+ ],
+ "Your closing correction earned {0} extra points.": [
+  "viva.js"
+ ],
+ "Your closing correction earned 1 extra point.": [
+  "viva.js"
+ ],
+ "Your coach": [
+  "pages-more.js"
+ ],
+ "Your coach is reading your speech": [
+  "pages-core.js"
+ ],
+ "Your coach is waiting on the next section.": [
+  "pages-core.js"
+ ],
+ "Your coach reads your profile and proposes three different approaches.": [
+  "pages-more.js"
+ ],
+ "Your coach writes lessons for your weak spots": [
+  "pages-more.js"
+ ],
+ "Your data": [
+  "auth.js"
+ ],
+ "Your definitions held up. Keep stating assumptions before I have to ask for them.": [
+  "viva.js"
+ ],
+ "Your depth capped this mark at Merit.": [
+  "viva.js"
+ ],
+ "Your dictated words appear here. Lead with your answer.": [
+  "viva.js"
+ ],
+ "Your display name, your username and your work: speeches you analyze, drafts you write, oral exams you sit and the reports they produce. Teachers also give an email address. Students do not.": [
+  "auth.js"
+ ],
+ "your draft": [
+  "pages-core.js"
+ ],
+ "Your drafts": [
+  "pages-more.js"
+ ],
+ "Your drill answer": [
+  "pages-more.js"
+ ],
+ "Your earlier sections are back.": [
+  "pages-more.js"
+ ],
+ "Your exam is saved, with your draft and your clock as they are. You can resume it from the Oral exam page. Leaving is noted on your report.": [
+  "viva.js"
+ ],
+ "Your exam is set up. Start when you’re ready.": [
+  "pages-core.js"
+ ],
+ "Your examiner is waiting for your next answer.": [
+  "pages-core.js"
+ ],
+ "Your exams": [
+  "viva.js"
+ ],
+ "Your first exam will appear here with its grade, so you can watch your marks climb.": [
+  "viva.js"
+ ],
+ "Your first name": [
+  "pages-core.js"
+ ],
+ "Your first step": [
+  "pages-core.js"
+ ],
+ "Your grasp of the principles is sound. Tie every result back to them when you answer.": [
+  "viva.js"
+ ],
+ "Your last answer is waiting to be marked.": [
+  "viva.js"
+ ],
+ "your last exam": [
+  "pages-core.js"
+ ],
+ "Your last spins": [
+  "gym.js"
+ ],
+ "Your marks come to {0}%, with {1} the weakest dimension.": [
+  "viva.js"
+ ],
+ "Your marks come to about {0}.": [
+  "viva.js"
+ ],
+ "Your name": [
+  "auth.js"
+ ],
+ "Your name, as your teacher knows it": [
+  "auth.js"
+ ],
+ "Your next {0} moves": [
+  "pages-core.js"
+ ],
+ "Your next analysis with a transcript fills in the sub-skills behind this score.": [
+  "pages-core.js"
+ ],
+ "Your next move": [
+  "pages-core.js"
+ ],
+ "your notes hold more words than fit in that time": [
+  "viva.js"
+ ],
+ "your oral exam": [
+  "pages-core.js"
+ ],
+ "Your own work": [
+  "viva.js"
+ ],
+ "Your pace gave the ideas room to land.": [
+  "gym.js"
+ ],
+ "Your path across the triangle": [
+  "pages-more.js"
+ ],
+ "Your pitch moved about {0} semitones, in the lively range that keeps listeners engaged.": [
+  "engine.js"
+ ],
+ "Your pitch swung about {0} semitones. Expressive is good; settle it on key lines so they sound certain.": [
+  "engine.js"
+ ],
+ "Your pitch varied about {0} semitones, which reads as monotone. Let your voice rise on questions and fall at the end of statements.": [
+  "engine.js"
+ ],
+ "Your raw material": [
+  "pages-more.js"
+ ],
+ "Your report is computed from your marks.": [
+  "viva.js"
+ ],
+ "Your report was computed from your marks instead.": [
+  "viva.js"
+ ],
+ "Your rewrite · {0}": [
+  "gym.js"
+ ],
+ "Your rights": [
+  "auth.js"
+ ],
+ "Your Rostra storage is full. Delete a few old speeches to keep saving.": [
+  "engine.js"
+ ],
+ "Your round had a shape the audience could follow.": [
+  "gym.js"
+ ],
+ "Your scaffold was {0}: {1}. Next time, jot one line per part straight after you finish.": [
+  "gym.js"
+ ],
+ "Your session expired. Sign in to Claude again, then retry.": [
+  "engine.js"
+ ],
+ "your speech": [
+  "pages-core.js"
+ ],
+ "Your speech": [
+  "pages-more.js"
+ ],
+ "Your submitted work goes here.": [
+  "viva.js"
+ ],
+ "Your teacher’s task: {0}.": [
+  "pages-core.js"
+ ],
+ "Your teacher’s task.": [
+  "pages-core.js"
+ ],
+ "Your text for {0}": [
+  "pages-more.js"
+ ],
+ "Your text from other angles. Restoring one puts it back here and keeps what you have now in this list.": [
+  "pages-more.js"
+ ],
+ "Your three lights are still low. Pick the weakest and raise it first.": [
+  "data.js"
+ ],
+ "Your triangle": [
+  "data.js"
+ ],
+ "Your triangle lights up after your first speech feedback: trust, emotion and logic, each as bright as your score.": [
+  "pages-core.js"
+ ],
+ "Your two main tools": [
+  "pages-core.js"
+ ],
+ "Your voice is warmed up. Go speak.": [
+  "gym.js"
+ ],
+ "Your voice is warmed up. Go speak. You already earned today’s warm-up XP, so this one is practice.": [
+  "gym.js"
+ ],
+ "Your volume barely changed. Drop it to pull people in on a personal moment; lift it on your call to action.": [
+  "engine.js"
+ ],
+ "Your volume moved across a {0} dB range. You’re using power as an instrument.": [
+  "engine.js"
+ ],
+ "Your weak concepts": [
+  "viva.js"
+ ],
+ "Your words": [
+  "pages-core.js"
+ ],
+ "Your work is saved. Go back Home and try again.": [
+  "app.js"
+ ],
+ "Your worked reasoning was easy to follow. More numbers would make it convincing.": [
+  "viva.js"
+ ]
+}

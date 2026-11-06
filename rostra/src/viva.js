@@ -14,30 +14,30 @@ Object.assign(ICONS, {
 
 /* ---------- The cast and the rules of the room ---------- */
 const VIVA_LEVELS = [
-  { id: 'school', label: 'High school', note: 'Core ideas, everyday examples, clear explanations.' },
-  { id: 'undergrad', label: 'Undergraduate', note: 'Mechanisms, derivations sketched aloud, worked examples.' },
-  { id: 'grad', label: 'Graduate', note: 'Assumptions, limits, connections to current research.' },
-  { id: 'qual', label: 'Qualifying exam', note: 'Breadth across the field plus depth, as a PhD panel would test.' },
+  { id: 'school', label: t('High school'), note: t('Core ideas, everyday examples, clear explanations.') },
+  { id: 'undergrad', label: t('Undergraduate'), note: t('Mechanisms, derivations sketched aloud, worked examples.') },
+  { id: 'grad', label: t('Graduate'), note: t('Assumptions, limits, connections to current research.') },
+  { id: 'qual', label: t('Qualifying exam'), note: t('Breadth across the field plus depth, as a PhD panel would test.') },
 ];
 const VIVA_FORMATS = {
-  quick: { id: 'quick', label: 'Quick', n: 3, minutes: 8, range: '6 to 14', think: 15, answer: 90, finishXp: 60, desc: 'Three questions. A warm-up before the real thing.' },
-  standard: { id: 'standard', label: 'Standard', n: 5, minutes: 15, range: '10 to 25', think: 20, answer: 120, finishXp: 120, desc: 'Five questions with follow-ups. A good length for a course oral.' },
-  qualifying: { id: 'qualifying', label: 'Qualifying', n: 7, minutes: 25, range: '20 to 42', think: 30, answer: 180, panel: true, finishXp: 200, desc: 'Seven questions in front of a panel of three.' },
-  ladder: { id: 'ladder', label: 'Why ladder', n: 1, minutes: 5, range: '3 to 6', think: 5, answer: 45, maxFollows: 6, finishXp: 40, drill: true, desc: 'One claim. Follow-ups until your understanding gives way.' },
+  quick: { id: 'quick', label: t('Quick'), n: 3, minutes: 8, range: '6 to 14', think: 15, answer: 90, finishXp: 60, desc: t('Three questions. A warm-up before the real thing.') },
+  standard: { id: 'standard', label: t('Standard'), n: 5, minutes: 15, range: '10 to 25', think: 20, answer: 120, finishXp: 120, desc: t('Five questions with follow-ups. A good length for a course oral.') },
+  qualifying: { id: 'qualifying', label: t('Qualifying'), n: 7, minutes: 25, range: '20 to 42', think: 30, answer: 180, panel: true, finishXp: 200, desc: t('Seven questions in front of a panel of three.') },
+  ladder: { id: 'ladder', label: t('Why ladder'), n: 1, minutes: 5, range: '3 to 6', think: 5, answer: 45, maxFollows: 6, finishXp: 40, drill: true, desc: t('One claim. Follow-ups until your understanding gives way.') },
 };
 const VIVA_MODES = {
-  speak: { id: 'speak', label: 'Speak my answers', icon: 'mic', desc: 'Rostra records each answer, writes down what you said, and the examiner replies to your actual words. Pace, pauses and filler words are measured from the recording. The audio is not kept.' },
-  write: { id: 'write', label: 'Type my answers (content drill)', icon: 'type', desc: 'Checks what you know. It does not rehearse speaking.' },
+  speak: { id: 'speak', label: t('Speak my answers'), icon: 'mic', desc: t('Rostra records each answer, writes down what you said, and the examiner replies to your actual words. Pace, pauses and filler words are measured from the recording. The audio is not kept.') },
+  write: { id: 'write', label: t('Type my answers (content drill)'), icon: 'type', desc: t('Checks what you know. It does not rehearse speaking.') },
 };
 /* Earlier exams used 'aloud' (notes) and 'dictate' (OS dictation): both open as spoken exams now. */
 const vivaModeId = (m) => (VIVA_MODES[m] ? m : 'speak');
 /* True when this exam is spoken: the mode says so and the microphone did not fall through to typing. */
 const vivaIsSpoken = (doc) => !!doc && doc.mode === 'speak' && !doc.micFallback;
 const VIVA_DISCIPLINES = {
-  general: { id: 'general', label: 'Mixed', note: 'A general mix of question types.', room: '', prompt: '' },
-  quantitative: { id: 'quantitative', label: 'Quantitative', note: 'Derivations, estimates, units and limiting cases.', room: 'Keep a blank sheet handy. Say every step aloud.', prompt: 'Field: quantitative. Use these types: derive a named result aloud step by step; estimate a quantity with round numbers, saying each assumption; check a result with units or a limiting case; predict what changes if one input doubles or one assumption fails; find the error in a short wrong argument you state aloud. The candidate has paper you cannot see, so every step must be said. Key points name the derivation steps and final form. Credit correct steps even if the end result is wrong.' },
-  interpretive: { id: 'interpretive', label: 'Interpretive', note: 'Theses, close reading and rival positions.', room: '', prompt: 'Field: interpretive. Use these types: state and defend a thesis about a named text or thinker; quote at most 40 words from the material and ask for an interpretation; give the strongest reading against your own; distinguish two positions that are easy to confuse; apply a framework to a case the material does not discuss. Accuracy means facts, attributions and terms are right. Depth means the argument survives an objection. Mark the argument, never agreement with you.' },
-  applied: { id: 'applied', label: 'Applied', note: 'Concrete cases: what would you do, and why.', room: '', prompt: 'Field: applied. State a concrete case in at most 40 words, ask what they would do and why, then change one fact in a follow-up. Accuracy means the rule is stated correctly. Depth means knowing when it does not apply. Reasoning means applying it to these facts step by step.' },
+  general: { id: 'general', label: t('Mixed'), note: t('A general mix of question types.'), room: '', prompt: '' },
+  quantitative: { id: 'quantitative', label: t('Quantitative'), note: t('Derivations, estimates, units and limiting cases.'), room: t('Keep a blank sheet handy. Say every step aloud.'), prompt: 'Field: quantitative. Use these types: derive a named result aloud step by step; estimate a quantity with round numbers, saying each assumption; check a result with units or a limiting case; predict what changes if one input doubles or one assumption fails; find the error in a short wrong argument you state aloud. The candidate has paper you cannot see, so every step must be said. Key points name the derivation steps and final form. Credit correct steps even if the end result is wrong.' },
+  interpretive: { id: 'interpretive', label: t('Interpretive'), note: t('Theses, close reading and rival positions.'), room: '', prompt: 'Field: interpretive. Use these types: state and defend a thesis about a named text or thinker; quote at most 40 words from the material and ask for an interpretation; give the strongest reading against your own; distinguish two positions that are easy to confuse; apply a framework to a case the material does not discuss. Accuracy means facts, attributions and terms are right. Depth means the argument survives an objection. Mark the argument, never agreement with you.' },
+  applied: { id: 'applied', label: t('Applied'), note: t('Concrete cases: what would you do, and why.'), room: '', prompt: 'Field: applied. State a concrete case in at most 40 words, ask what they would do and why, then change one fact in a follow-up. Accuracy means the rule is stated correctly. Depth means knowing when it does not apply. Reasoning means applying it to these facts step by step.' },
 };
 const vivaDiscipline = (id) => VIVA_DISCIPLINES[id] || VIVA_DISCIPLINES.general;
 const VIVA_MATERIAL_MAX = 30000;
@@ -47,87 +47,89 @@ const VIVA_ANSWER_OPTS = [45, 60, 90, 120, 180, 300];
 
 const VIVA_EXAMINERS = {
   elenchos: {
-    id: 'elenchos', name: 'Elenchos', greek: 'ἔλεγχος', role: 'The Socratic', hair: 'beard',
+    id: 'elenchos', name: 'Elenchos', greek: 'ἔλεγχος', role: t('The Socratic'), hair: 'beard',
     light: 'var(--stage-gold)', tint: 'var(--gold)', voice: { voiceIndex: 0, pitch: 0.82, rate: 0.94 },
-    style: 'Keeps asking why. Accepts nothing on authority and follows each answer one level deeper.',
-    opening: 'Welcome. I will ask you simple questions, and then I will ask why. Take your time, and think out loud.',
-    reactions: ['Noted.', 'I see.', 'Let us continue.', 'Hm.'],
-    cut: 'Let me stop you there. Your answer in one sentence, please.', nudge: 'Tell me where your thinking is, even if it is not finished.',
-    moment: ['Of course. Take a moment.', 'Take your time. Thinking is the point.'],
+    style: t('Keeps asking why. Accepts nothing on authority and follows each answer one level deeper.'),
+    opening: t('Welcome. I will ask you simple questions, and then I will ask why. Take your time, and think out loud.'),
+    reactions: [t('Noted.'), t('I see.'), t('Let us continue.'), t('Hm.')],
+    cut: t('Let me stop you there. Your answer in one sentence, please.'), nudge: t('Tell me where your thinking is, even if it is not finished.'),
+    moment: [t('Of course. Take a moment.'), t('Take your time. Thinking is the point.')],
   },
   akribeia: {
-    id: 'akribeia', name: 'Akribeia', greek: 'ἀκρίβεια', role: 'The Rigorous', hair: 'fillet',
+    id: 'akribeia', name: 'Akribeia', greek: 'ἀκρίβεια', role: t('The Rigorous'), hair: 'fillet',
     light: 'var(--stage-logos)', tint: 'var(--logos)', voice: { voiceIndex: 1, pitch: 1, rate: 1.06 },
-    style: 'Demands precise definitions, stated assumptions, correct units and complete derivations.',
-    opening: 'Good afternoon. Be precise. Define your terms before you use them, and state your assumptions.',
-    reactions: ['Noted.', 'Very well.', 'Next.', 'Understood.'],
-    cut: 'Time. State your conclusion in one sentence.', nudge: 'State where you have got to, even if it is incomplete.',
-    moment: ['Granted. Thirty seconds.', 'Take thirty seconds.'],
+    style: t('Demands precise definitions, stated assumptions, correct units and complete derivations.'),
+    opening: t('Good afternoon. Be precise. Define your terms before you use them, and state your assumptions.'),
+    reactions: [t('Noted.'), t('Very well.'), t('Next.'), t('Understood.')],
+    cut: t('Time. State your conclusion in one sentence.'), nudge: t('State where you have got to, even if it is incomplete.'),
+    moment: [t('Granted. Thirty seconds.'), t('Take thirty seconds.')],
   },
   eunoia: {
-    id: 'eunoia', name: 'Eunoia', greek: 'εὔνοια', role: 'The Encouraging', hair: 'bun',
+    id: 'eunoia', name: 'Eunoia', greek: 'εὔνοια', role: t('The Encouraging'), hair: 'bun',
     light: 'var(--stage-ethos)', tint: 'var(--ethos)', voice: { voiceIndex: 2, pitch: 1.12, rate: 0.98 },
-    style: 'Warm and patient. Offers a stepping stone when you stall, and still expects you to do the thinking.',
-    opening: 'Welcome, and breathe. I want to see how you think, so think out loud. If you get stuck, say so and we will work through it.',
-    reactions: ['Thank you.', 'I see.', 'Let us go on.', 'Mm-hm.'],
-    cut: 'Let me pause you there. Give me your answer in one sentence.', nudge: 'Tell me what you are thinking, even if it is not finished.',
-    moment: ['Of course, take a moment.', 'No rush. Take your time.'],
+    style: t('Warm and patient. Offers a stepping stone when you stall, and still expects you to do the thinking.'),
+    opening: t('Welcome, and breathe. I want to see how you think, so think out loud. If you get stuck, say so and we will work through it.'),
+    reactions: [t('Thank you.'), t('I see.'), t('Let us go on.'), t('Mm-hm.')],
+    cut: t('Let me pause you there. Give me your answer in one sentence.'), nudge: t('Tell me what you are thinking, even if it is not finished.'),
+    moment: [t('Of course, take a moment.'), t('No rush. Take your time.')],
   },
   theoria: {
-    id: 'theoria', name: 'Theoria', greek: 'θεωρία', role: 'The Theorist', hair: 'laurel',
+    id: 'theoria', name: 'Theoria', greek: 'θεωρία', role: t('The Theorist'), hair: 'laurel',
     light: 'var(--stage-ethos)', tint: 'var(--ethos)', voice: { voiceIndex: 0, pitch: 0.96, rate: 1 },
-    style: 'Probes first principles, definitions and why the theory holds.',
-    opening: 'Welcome. There are three of us today. I will ask about the theory, my colleagues about practice and about doubt.',
-    reactions: ['Noted.', 'I see.', 'Let us go on.'],
-    cut: 'Let me stop you there. The principle, in one sentence.', nudge: 'Tell me where your thinking is, even if it is not finished.',
-    moment: ['Take a moment.', 'Of course.'],
+    style: t('Probes first principles, definitions and why the theory holds.'),
+    opening: t('Welcome. There are three of us today. I will ask about the theory, my colleagues about practice and about doubt.'),
+    reactions: [t('Noted.'), t('I see.'), t('Let us go on.')],
+    cut: t('Let me stop you there. The principle, in one sentence.'), nudge: t('Tell me where your thinking is, even if it is not finished.'),
+    moment: [t('Take a moment.'), t('Of course.')],
   },
   praxis: {
-    id: 'praxis', name: 'Praxis', greek: 'πρᾶξις', role: 'The Practitioner', hair: 'curls',
+    id: 'praxis', name: 'Praxis', greek: 'πρᾶξις', role: t('The Practitioner'), hair: 'curls',
     light: 'var(--stage-logos)', tint: 'var(--logos)', voice: { voiceIndex: 3, pitch: 1.08, rate: 1.05 },
-    style: 'Asks for worked examples, estimates and how the idea behaves in the real world.',
-    opening: 'I will want examples. Numbers, if you have them.',
-    reactions: ['Noted.', 'Understood.', 'Next, then.'],
-    cut: 'Let me stop you there. The bottom line, in one sentence.', nudge: 'Talk me through where you are, even roughly.',
-    moment: ['Sure, take a moment.', 'Go ahead, think.'],
+    style: t('Asks for worked examples, estimates and how the idea behaves in the real world.'),
+    opening: t('I will want examples. Numbers, if you have them.'),
+    reactions: [t('Noted.'), t('Understood.'), t('Next, then.')],
+    cut: t('Let me stop you there. The bottom line, in one sentence.'), nudge: t('Talk me through where you are, even roughly.'),
+    moment: [t('Sure, take a moment.'), t('Go ahead, think.')],
   },
   skepsis: {
-    id: 'skepsis', name: 'Skepsis', greek: 'σκέψις', role: 'The Skeptic', hair: 'skeptic',
+    id: 'skepsis', name: 'Skepsis', greek: 'σκέψις', role: t('The Skeptic'), hair: 'skeptic',
     light: 'var(--stage-pathos)', tint: 'var(--pathos)', voice: { voiceIndex: 1, pitch: 0.8, rate: 0.92 },
-    style: 'Challenges claims, hunts misconceptions and asks what would prove you wrong.',
-    opening: 'And I will ask what would prove you wrong.',
-    reactions: ['Noted.', 'Hm.', 'I see.'],
-    cut: 'I will stop you there. Your claim, in one sentence.', nudge: 'Say what you are weighing. An unfinished thought is fine.',
-    moment: ['Take a moment. I will wait.', 'Very well.'],
+    style: t('Challenges claims, hunts misconceptions and asks what would prove you wrong.'),
+    opening: t('And I will ask what would prove you wrong.'),
+    reactions: [t('Noted.'), t('Hm.'), t('I see.')],
+    cut: t('I will stop you there. Your claim, in one sentence.'), nudge: t('Say what you are weighing. An unfinished thought is fine.'),
+    moment: [t('Take a moment. I will wait.'), t('Very well.')],
   },
 };
 const VIVA_PERSONAS = {
-  socratic: { id: 'socratic', label: 'The Socratic', examiners: ['elenchos'], blurb: 'Keeps asking why, one level deeper each time.', prompt: 'Socratic: meet every claim with a further why. Follow-ups probe the reason beneath the reason. Never lecture.' },
-  rigorous: { id: 'rigorous', label: 'The Rigorous', examiners: ['akribeia'], blurb: 'Demands precise definitions, assumptions and derivations.', prompt: 'Rigorous: demand precise definitions, stated assumptions, correct units and complete derivation steps. Follow-ups target any loose word or skipped step.' },
-  encouraging: { id: 'encouraging', label: 'The Encouraging', examiners: ['eunoia'], blurb: 'Warm and patient. Offers a stepping stone when you stall.', prompt: 'Encouraging: warm and patient. If the candidate struggles, the follow-up is a smaller stepping-stone question. Still never give the answer.' },
-  panel: { id: 'panel', label: 'The Panel', examiners: ['theoria', 'praxis', 'skepsis'], blurb: 'A Theorist, a Practitioner and a Skeptic take turns.', prompt: 'Panel of three: theoria (theory, first principles, definitions), praxis (worked examples, estimates, applications), skepsis (misconceptions, objections, edge cases). The best-suited examiner asks each follow-up.' },
+  socratic: { id: 'socratic', label: t('The Socratic'), examiners: ['elenchos'], blurb: t('Keeps asking why, one level deeper each time.'), prompt: 'Socratic: meet every claim with a further why. Follow-ups probe the reason beneath the reason. Never lecture.' },
+  rigorous: { id: 'rigorous', label: t('The Rigorous'), examiners: ['akribeia'], blurb: t('Demands precise definitions, assumptions and derivations.'), prompt: 'Rigorous: demand precise definitions, stated assumptions, correct units and complete derivation steps. Follow-ups target any loose word or skipped step.' },
+  encouraging: { id: 'encouraging', label: t('The Encouraging'), examiners: ['eunoia'], blurb: t('Warm and patient. Offers a stepping stone when you stall.'), prompt: 'Encouraging: warm and patient. If the candidate struggles, the follow-up is a smaller stepping-stone question. Still never give the answer.' },
+  panel: { id: 'panel', label: t('The Panel'), examiners: ['theoria', 'praxis', 'skepsis'], blurb: t('A Theorist, a Practitioner and a Skeptic take turns.'), prompt: 'Panel of three: theoria (theory, first principles, definitions), praxis (worked examples, estimates, applications), skepsis (misconceptions, objections, edge cases). The best-suited examiner asks each follow-up.' },
 };
 
 const VIVA_RUBRIC = [
-  { key: 'accuracy', name: 'Accuracy', letter: 'A', w: 0.3, color: 'var(--logos)', stage: 'var(--stage-logos)', ask: 'Is it correct and precise?', levels: ['Mostly wrong or off the question', 'Some correct pieces, key errors', 'Correct in outline, a few slips', 'Correct, with minor imprecision', 'Correct and precise throughout'] },
-  { key: 'depth', name: 'Depth', full: 'Depth of understanding', letter: 'D', w: 0.3, color: 'var(--ethos)', stage: 'var(--stage-ethos)', ask: 'Do you know why, and not only what?', levels: ['Recall only', 'Some why, mostly what', 'Explains the mechanism', 'Mechanism plus its limits', 'Mechanism, limits and connections'] },
-  { key: 'reasoning', name: 'Reasoning', letter: 'R', w: 0.25, color: 'var(--gold)', stage: 'var(--stage-gold)', ask: 'Could the examiner follow every step?', levels: ['Claims with no steps', 'Steps with gaps', 'Mostly followable', 'Clear, justified steps', 'Every step justified and checked'] },
-  { key: 'communication', name: 'Communication', letter: 'C', w: 0.15, color: 'var(--pathos)', stage: 'var(--stage-pathos)', ask: 'Answer first, clear structure, calm confidence?', levels: ['Hard to follow', 'Rambling, answer buried', 'Clear enough', 'Answer first, well structured', 'Crisp, structured, confident'] },
+  { key: 'accuracy', name: t('Accuracy'), letter: 'A', w: 0.3, color: 'var(--logos)', stage: 'var(--stage-logos)', ask: t('Is it correct and precise?'), levels: [t('Mostly wrong or off the question'), t('Some correct pieces, key errors'), t('Correct in outline, a few slips'), t('Correct, with minor imprecision'), t('Correct and precise throughout')] },
+  { key: 'depth', name: t('Depth'), full: t('Depth of understanding'), letter: 'D', w: 0.3, color: 'var(--ethos)', stage: 'var(--stage-ethos)', ask: t('Do you know why, and not only what?'), levels: [t('Recall only'), t('Some why, mostly what'), t('Explains the mechanism'), t('Mechanism plus its limits'), t('Mechanism, limits and connections')] },
+  { key: 'reasoning', name: t('Reasoning'), letter: 'R', w: 0.25, color: 'var(--gold)', stage: 'var(--stage-gold)', ask: t('Could the examiner follow every step?'), levels: [t('Claims with no steps'), t('Steps with gaps'), t('Mostly followable'), t('Clear, justified steps'), t('Every step justified and checked')] },
+  { key: 'communication', name: t('Communication'), letter: 'C', w: 0.15, color: 'var(--pathos)', stage: 'var(--stage-pathos)', ask: t('Answer first, clear structure, calm confidence?'), levels: [t('Hard to follow'), t('Rambling, answer buried'), t('Clear enough'), t('Answer first, well structured'), t('Crisp, structured, confident')] },
 ];
 const VIVA_KEYS = VIVA_RUBRIC.map((r) => r.key);
 const VIVA_SELF_SCORES = [25, 45, 62, 80, 95];
 const VIVA_HELP_PENALTY = 5;
 const VIVA_FOLLOW_TYPES = ['probe', 'challenge', 'example', 'extend'];
-const VIVA_FOLLOW_LABEL = { probe: 'Probe', challenge: 'Challenge', example: 'Example, please', extend: 'Extension' };
+const VIVA_FOLLOW_LABEL = { probe: t('Probe'), challenge: t('Challenge'), example: t('Example, please'), extend: t('Extension') };
 
 const VIVA_GRADE_GREEK = { Distinction: 'ἀριστεία', Merit: 'ἀξία', Pass: 'ἱκανῶς', 'Not yet': 'οὔπω' };
 const VIVA_GRADES = [
-  { id: 'Distinction', min: 85, laurel: 'var(--gold)', ribbon: 'var(--stage-gold)', bonus: 80, line: 'You answered like someone who owns the subject.' },
-  { id: 'Merit', min: 70, laurel: 'var(--silver)', ribbon: 'var(--stage-ethos)', bonus: 50, line: 'Solid command, with a few soft spots the examiners found.' },
-  { id: 'Pass', min: 55, laurel: 'var(--bronze)', ribbon: 'var(--stage-logos)', bonus: 25, line: 'You got through. The follow-ups found real gaps worth closing.' },
-  { id: 'Not yet', min: 0, laurel: null, ribbon: 'var(--stage-muted)', bonus: 0, line: 'Not yet. Every gap below is now a revision card. Retake when you are ready.' },
-  { id: 'Incomplete', min: -1, laurel: null, ribbon: 'var(--stage-muted)', bonus: 0, line: 'You stopped before the examiners could reach a verdict.' },
+  { id: 'Distinction', min: 85, laurel: 'var(--gold)', ribbon: 'var(--stage-gold)', bonus: 80, line: t('You answered like someone who owns the subject.') },
+  { id: 'Merit', min: 70, laurel: 'var(--silver)', ribbon: 'var(--stage-ethos)', bonus: 50, line: t('Solid command, with a few soft spots the examiners found.') },
+  { id: 'Pass', min: 55, laurel: 'var(--bronze)', ribbon: 'var(--stage-logos)', bonus: 25, line: t('You got through. The follow-ups found real gaps worth closing.') },
+  { id: 'Not yet', min: 0, laurel: null, ribbon: 'var(--stage-muted)', bonus: 0, line: t('Not yet. Every gap below is now a revision card. Retake when you are ready.') },
+  { id: 'Incomplete', min: -1, laurel: null, ribbon: 'var(--stage-muted)', bonus: 0, line: t('You stopped before the examiners could reach a verdict.') },
 ];
+/* Grade ids are logic keys; this is the word shown on screen. */
+const vivaGradeName = (id) => ({ Distinction: t('Distinction'), Merit: t('Merit'), Pass: t('Pass'), 'Not yet': t('Not yet'), Incomplete: t('Incomplete') }[id] || id);
 function vivaGrade(percent) {
   const p = Number(percent);
   const v = isFinite(p) ? Math.max(0, p) : 0;
@@ -136,43 +138,43 @@ function vivaGrade(percent) {
 
 /* ---------- Offline question bank ---------- */
 const VIVA_TEMPLATES = [
-  { kind: 'define', difficulty: 1, q: (x) => `In your own words, what does ${x} mean? Give me a definition precise enough that a classmate could use it.`, keyPoints: ['A one-sentence definition in plain words', 'The conditions or scope where it applies', 'Each technical term inside the definition explained', 'A minimal example that fits the definition'], clarify: (x) => `I want a definition of ${x} you could defend: what it is, and when it applies.` },
-  { kind: 'explain', difficulty: 1, q: (x) => `Explain ${x} to a first-year student who has never met it. What is the core idea, and why should they care?`, keyPoints: ['The core idea in one sentence', 'An accurate intuition or analogy', 'Why it matters: what it lets you predict or do', 'Where the analogy breaks down'], clarify: (x) => `Imagine a bright student who has never heard of ${x}. Teach them the one idea that matters most.` },
-  { kind: 'example', difficulty: 2, q: (x) => `Walk me through a concrete worked example of ${x}, step by step. Think out loud.`, keyPoints: ['A specific, well-chosen example', 'Each step stated with its justification', 'A check of the result: units, limits or a sanity estimate', 'What the example shows about the general idea'], clarify: (x) => `Pick any specific case of ${x} you know well, and show me each step of working it through.` },
-  { kind: 'misconception', difficulty: 2, q: (x) => `What is the most common misconception about ${x}, and how would you show a student it is wrong?`, keyPoints: ['A real, specific misconception', 'Why it is tempting to believe', 'A counterexample or test that exposes it', 'The correct picture stated clearly'], clarify: (x) => `Think of a mistake people often make about ${x}. Name it, then tell me how you would correct it.` },
-  { kind: 'connect', difficulty: 2, q: (x, s) => `How does ${x} connect to the wider field of ${s}? Name one idea it depends on and one idea that builds on it.`, keyPoints: ['A prerequisite idea and how it is used', 'A later idea that depends on it', 'The direction of the dependency explained', 'Why the connection matters in practice'], clarify: (x) => `Place ${x} on a map of the subject: what comes before it, and what comes after it.` },
-  { kind: 'assumption', difficulty: 3, q: (x) => `Every account of ${x} rests on assumptions. Pick one. What happens when it fails?`, keyPoints: ['A clearly named assumption', 'Why the standard account needs it', 'What changes when it fails, qualitatively or quantitatively', 'A real situation where it does fail'], clarify: (x) => `Choose one thing the usual treatment of ${x} takes for granted, and tell me what breaks without it.` },
-  { kind: 'objection', difficulty: 3, q: (x) => `What is the strongest objection to, or limitation of, ${x}? How would you answer it?`, keyPoints: ['A serious objection, stated fairly', 'The evidence or reasoning behind it', 'A response that concedes what is right in it', 'Where the question is still open'], clarify: (x) => `Argue against ${x} as well as you can, then answer your own argument.` },
+  { kind: 'define', difficulty: 1, q: (x) => t`In your own words, what does ${x} mean? Give me a definition precise enough that a classmate could use it.`, keyPoints: [t('A one-sentence definition in plain words'), t('The conditions or scope where it applies'), t('Each technical term inside the definition explained'), t('A minimal example that fits the definition')], clarify: (x) => t`I want a definition of ${x} you could defend: what it is, and when it applies.` },
+  { kind: 'explain', difficulty: 1, q: (x) => t`Explain ${x} to a first-year student who has never met it. What is the core idea, and why should they care?`, keyPoints: [t('The core idea in one sentence'), t('An accurate intuition or analogy'), t('Why it matters: what it lets you predict or do'), t('Where the analogy breaks down')], clarify: (x) => t`Imagine a bright student who has never heard of ${x}. Teach them the one idea that matters most.` },
+  { kind: 'example', difficulty: 2, q: (x) => t`Walk me through a concrete worked example of ${x}, step by step. Think out loud.`, keyPoints: [t('A specific, well-chosen example'), t('Each step stated with its justification'), t('A check of the result: units, limits or a sanity estimate'), t('What the example shows about the general idea')], clarify: (x) => t`Pick any specific case of ${x} you know well, and show me each step of working it through.` },
+  { kind: 'misconception', difficulty: 2, q: (x) => t`What is the most common misconception about ${x}, and how would you show a student it is wrong?`, keyPoints: [t('A real, specific misconception'), t('Why it is tempting to believe'), t('A counterexample or test that exposes it'), t('The correct picture stated clearly')], clarify: (x) => t`Think of a mistake people often make about ${x}. Name it, then tell me how you would correct it.` },
+  { kind: 'connect', difficulty: 2, q: (x, s) => t`How does ${x} connect to the wider field of ${s}? Name one idea it depends on and one idea that builds on it.`, keyPoints: [t('A prerequisite idea and how it is used'), t('A later idea that depends on it'), t('The direction of the dependency explained'), t('Why the connection matters in practice')], clarify: (x) => t`Place ${x} on a map of the subject: what comes before it, and what comes after it.` },
+  { kind: 'assumption', difficulty: 3, q: (x) => t`Every account of ${x} rests on assumptions. Pick one. What happens when it fails?`, keyPoints: [t('A clearly named assumption'), t('Why the standard account needs it'), t('What changes when it fails, qualitatively or quantitatively'), t('A real situation where it does fail')], clarify: (x) => t`Choose one thing the usual treatment of ${x} takes for granted, and tell me what breaks without it.` },
+  { kind: 'objection', difficulty: 3, q: (x) => t`What is the strongest objection to, or limitation of, ${x}? How would you answer it?`, keyPoints: [t('A serious objection, stated fairly'), t('The evidence or reasoning behind it'), t('A response that concedes what is right in it'), t('Where the question is still open')], clarify: (x) => t`Argue against ${x} as well as you can, then answer your own argument.` },
 ];
 const VIVA_DEFENSE_TEMPLATES = [
-  { kind: 'def-why', difficulty: 1, q: () => 'Why did you take the approach you took in your work, and what alternative did you reject?', keyPoints: ['The approach named in one sentence', 'A real alternative you considered', 'The reason you chose between them'], clarify: () => 'Tell me the main choice you made in this work, and what else you could have done instead.' },
-  { kind: 'def-step', difficulty: 1, q: () => 'Pick the step in your work you are proudest of and explain it in your own words, as if I had not read it.', keyPoints: ['One specific step, located in the work', 'What it does, in plain words', 'Why it had to come at that point'], clarify: () => 'Choose one specific step or passage, and explain it without reading it out.' },
-  { kind: 'def-term', difficulty: 2, q: () => 'Choose a technical term you used in your work and explain what it means without using the term.', keyPoints: ['A term actually used in the work', 'A plain explanation that avoids the term', 'Why it matters to your argument or result'], clarify: () => 'Find a term you relied on, and tell me what it means in everyday words.' },
-  { kind: 'def-change', difficulty: 2, q: () => 'Change one assumption or input in your work. What changes, and where in your work would you have to redo it?', keyPoints: ['One assumption or input named', 'What changes in the result', 'The exact places in the work affected'], clarify: () => 'Choose one thing you took for granted. If it were different, which parts of your work would move?' },
-  { kind: 'def-weak', difficulty: 2, q: () => 'What is the weakest claim or step in your work, and how would you defend it if I pressed you?', keyPoints: ['A real weak point, named honestly', 'Why it is weak', 'The best available defense or repair'], clarify: () => 'Point to the place in your work you would least like me to question, and defend it.' },
-  { kind: 'def-decide', difficulty: 3, q: () => 'Which decision in your work would you change now, and why?', keyPoints: ['One specific decision', 'What you know now that you did not know then', 'How the work would differ'], clarify: () => 'Looking back, tell me one choice you would make differently.' },
-  { kind: 'def-extend', difficulty: 3, q: () => 'If you had to extend your work to a harder case, what would break first, and how would you find out?', keyPoints: ['A specific harder case', 'What would fail first and why', 'How you would test it'], clarify: () => 'Imagine a tougher version of your problem or question. Tell me which part of your work gives way first.' },
+  { kind: 'def-why', difficulty: 1, q: () => t('Why did you take the approach you took in your work, and what alternative did you reject?'), keyPoints: [t('The approach named in one sentence'), t('A real alternative you considered'), t('The reason you chose between them')], clarify: () => t('Tell me the main choice you made in this work, and what else you could have done instead.') },
+  { kind: 'def-step', difficulty: 1, q: () => t('Pick the step in your work you are proudest of and explain it in your own words, as if I had not read it.'), keyPoints: [t('One specific step, located in the work'), t('What it does, in plain words'), t('Why it had to come at that point')], clarify: () => t('Choose one specific step or passage, and explain it without reading it out.') },
+  { kind: 'def-term', difficulty: 2, q: () => t('Choose a technical term you used in your work and explain what it means without using the term.'), keyPoints: [t('A term actually used in the work'), t('A plain explanation that avoids the term'), t('Why it matters to your argument or result')], clarify: () => t('Find a term you relied on, and tell me what it means in everyday words.') },
+  { kind: 'def-change', difficulty: 2, q: () => t('Change one assumption or input in your work. What changes, and where in your work would you have to redo it?'), keyPoints: [t('One assumption or input named'), t('What changes in the result'), t('The exact places in the work affected')], clarify: () => t('Choose one thing you took for granted. If it were different, which parts of your work would move?') },
+  { kind: 'def-weak', difficulty: 2, q: () => t('What is the weakest claim or step in your work, and how would you defend it if I pressed you?'), keyPoints: [t('A real weak point, named honestly'), t('Why it is weak'), t('The best available defense or repair')], clarify: () => t('Point to the place in your work you would least like me to question, and defend it.') },
+  { kind: 'def-decide', difficulty: 3, q: () => t('Which decision in your work would you change now, and why?'), keyPoints: [t('One specific decision'), t('What you know now that you did not know then'), t('How the work would differ')], clarify: () => t('Looking back, tell me one choice you would make differently.') },
+  { kind: 'def-extend', difficulty: 3, q: () => t('If you had to extend your work to a harder case, what would break first, and how would you find out?'), keyPoints: [t('A specific harder case'), t('What would fail first and why'), t('How you would test it')], clarify: () => t('Imagine a tougher version of your problem or question. Tell me which part of your work gives way first.') },
 ];
 const VIVA_DEFENSE_ORDER = { quick: ['def-why', 'def-step', 'def-decide'], standard: ['def-why', 'def-step', 'def-term', 'def-change', 'def-decide'], qualifying: ['def-why', 'def-step', 'def-term', 'def-change', 'def-weak', 'def-decide', 'def-extend'], ladder: ['def-weak'] };
 const VIVA_TEMPLATE_ORDER = { ladder: ['explain'], quick: ['define', 'example', 'assumption'], standard: ['define', 'explain', 'example', 'misconception', 'objection'], qualifying: ['define', 'explain', 'example', 'misconception', 'connect', 'assumption', 'objection'] };
 const VIVA_ROLE_OF_KIND = { define: 'theoria', explain: 'theoria', example: 'praxis', connect: 'praxis', misconception: 'skepsis', assumption: 'skepsis', objection: 'skepsis' };
 const VIVA_PROBES = {
-  precise: ['Be more precise. What exactly do you mean by {c}?', 'Define the key term in that answer as carefully as you can.'],
-  why: ['Why does that happen? Take it one level deeper.', 'You told me what. Now tell me why.'],
-  steps: ['Walk me through that again, one step at a time.', 'Which step in that answer are you least sure of, and why?'],
-  restate: ['Give me your answer again in one sentence, then the single best reason.', 'If you had ten seconds, what would your answer be?'],
-  challenge: ['Suppose I told you that is wrong. How would you defend it?', 'A colleague argues the opposite. What evidence would settle it between you?', 'What would have to be true for your answer to fail?'],
-  example: ['Give me a concrete example, with numbers if you can.', 'Where would I see {c} outside a textbook?'],
-  extend: ['Push that to an extreme case. What happens?', 'How would your answer change if the main assumption were removed?', 'What is the next question a researcher would ask here?'],
+  precise: [t('Be more precise. What exactly do you mean by {c}?'), t('Define the key term in that answer as carefully as you can.')],
+  why: [t('Why does that happen? Take it one level deeper.'), t('You told me what. Now tell me why.')],
+  steps: [t('Walk me through that again, one step at a time.'), t('Which step in that answer are you least sure of, and why?')],
+  restate: [t('Give me your answer again in one sentence, then the single best reason.'), t('If you had ten seconds, what would your answer be?')],
+  challenge: [t('Suppose I told you that is wrong. How would you defend it?'), t('A colleague argues the opposite. What evidence would settle it between you?'), t('What would have to be true for your answer to fail?')],
+  example: [t('Give me a concrete example, with numbers if you can.'), t('Where would I see {c} outside a textbook?')],
+  extend: [t('Push that to an extreme case. What happens?'), t('How would your answer change if the main assumption were removed?'), t('What is the next question a researcher would ask here?')],
 };
 const VIVA_HELP_BANK = [
-  'Saying you do not know yet is fine. Tell me what you do know that sits nearby, and reason from there.',
-  'Start smaller. What kind of thing is {c}: a quantity, a process, a rule? Begin with that.',
-  'Think about the extremes. What happens when the key quantity is zero, or very large?',
-  'Try the simplest possible case first. What is the smallest example you could do by hand?',
+  t('Saying you do not know yet is fine. Tell me what you do know that sits nearby, and reason from there.'),
+  t('Start smaller. What kind of thing is {c}: a quantity, a process, a rule? Begin with that.'),
+  t('Think about the extremes. What happens when the key quantity is zero, or very large?'),
+  t('Try the simplest possible case first. What is the smallest example you could do by hand?'),
 ];
 const VIVA_STOP = new Set('a an and are as at be been being but by can could did do does for from had has have how if in into is it its just may might more most no not of on or our so such than that the their them then there these they this those to was we were what when where which while who why will with would you your also about after again all any because before between both each few further here only other over own same should some very one two three use used using thus hence however therefore within without upon via per every many much must shall like make made get got lot lots each such into onto than then them they this that these those were what which while with would could should first second also often given since unit chapter section page week lecture notes example examples figure table homework grading office hours due submit reading students exam quiz policy attendance assignment'.split(' '));
-const VIVA_CLOSE_Q = 'Before we confer: is there anything you would like to correct or add?';
+const VIVA_CLOSE_Q = t('Before we confer: is there anything you would like to correct or add?');
 const VIVA_VERDICT_RE = /\b(correct|right|exactly|good|great|excellent|nice|wrong|incorrect|not quite|close|almost|perfect|well done)\b/i;
 
 /* ---------- Small helpers ---------- */
@@ -215,6 +217,9 @@ function vivaOneQuestion(text) {
   const i = s.indexOf('?');
   return i >= 0 ? s.slice(0, i + 1) : s;
 }
+/* Small text helpers for code where `t` is a local variable (a turn) and would shadow the translator. */
+const vivaThanks = () => t('Thank you.');
+const vivaMicNote = (kind) => (kind === 'error' ? t('The transcription service did not answer.') : t('No words were picked up.'));
 function vivaNoMarkEval(reaction = '') {
   return { scores: null, evidence: [], covered: [], missing: [], misconception: '', notes: '', reaction, next: { action: 'move_on', type: 'probe', question: '', examiner: null }, self: false, unmarked: true };
 }
@@ -326,7 +331,7 @@ function vivaFallbackPlan(doc) {
   const order = work ? VIVA_DEFENSE_ORDER[fmt.id] || VIVA_DEFENSE_ORDER.standard : kinds;
   const make = (k, i) => {
     const T = bank.find((t) => t.kind === k);
-    const c = work ? 'Your own work' : cs[i % cs.length];
+    const c = work ? t('Your own work') : cs[i % cs.length];
     const ex = ids.length > 1 ? (ids.includes(VIVA_ROLE_OF_KIND[k]) ? VIVA_ROLE_OF_KIND[k] : ids[i % ids.length]) : ids[0];
     return { id: 'q' + (i + 1), q: T.q(c, subj), concept: c, difficulty: T.difficulty, keyPoints: T.keyPoints.slice(), examiner: ex, kind: k };
   };
@@ -437,7 +442,7 @@ function vivaNormPlan(raw, doc) {
     const kpRaw = Array.isArray(item.key_points) ? item.key_points : Array.isArray(item.keyPoints) ? item.keyPoints : [];
     const kp = kpRaw.map((x) => vivaStr(x, 180)).filter(Boolean).slice(0, 6);
     const ex = ids.includes(item.examiner) ? item.examiner : ids[qs.length % ids.length];
-    qs.push({ id: 'q' + (qs.length + 1), q: text, concept: vivaStr(item.concept, 60) || vivaStr(doc.topic, 60) || vivaStr(doc.subject, 60) || 'Core idea', difficulty: clamp(Math.round(Number(item.difficulty) || 2), 1, 3), keyPoints: kp.length ? kp : ['A direct answer in the first sentence', 'The reason or mechanism behind it', 'A concrete example'], examiner: ex });
+    qs.push({ id: 'q' + (qs.length + 1), q: text, concept: vivaStr(item.concept, 60) || vivaStr(doc.topic, 60) || vivaStr(doc.subject, 60) || t('Core idea'), difficulty: clamp(Math.round(Number(item.difficulty) || 2), 1, 3), keyPoints: kp.length ? kp : ['A direct answer in the first sentence', 'The reason or mechanism behind it', 'A concrete example'], examiner: ex });
     if (qs.length >= wanted) break;
   }
   if (qs.length < Math.min(n, fmtP.drill ? 1 : 2)) return null;
@@ -573,7 +578,7 @@ function vivaNormEval(raw, ctx = {}) {
     notes: vivaStr(raw.notes, 420),
     answer_first: typeof raw.answer_first === 'boolean' ? raw.answer_first : null,
     commReported: !!ctx.aloud,
-    reaction: reactRaw && (VIVA_VERDICT_RE.test(reactRaw) || wordsOf(reactRaw).length > 12) ? 'Noted.' : reactRaw,
+    reaction: reactRaw && (VIVA_VERDICT_RE.test(reactRaw) || wordsOf(reactRaw).length > 12) ? t('Noted.') : reactRaw,
     next: { action, type, question: action === 'followup' ? question : '', examiner },
     self: false,
   };
@@ -666,17 +671,17 @@ function vivaSelfEval({ marks, covered, turn, plan, follows, ids, rnd = Math.ran
   const ex = vivaEx(turn.examiner);
   return {
     scores, covered: cov.map((i) => kp[i]), misconception: '',
-    notes: 'Self-assessed' + (kp.length ? `: covered ${cov.length} of ${kp.length} key points.` : '.'),
+    notes: kp.length ? t`Self-assessed: covered ${cov.length} of ${kp.length} key points.` : t('Self-assessed.'),
     reaction: vivaPick(ex.reactions, rnd),
     next: vivaOfflineFollow(scores, follows, turn, plan, ids, rnd),
     self: true,
   };
 }
-function vivaOfflineClarify(doc, t) {
-  const p = vivaArr(doc.plan)[t.qi] || {};
+function vivaOfflineClarify(doc, turn) {
+  const p = vivaArr(doc.plan)[turn.qi] || {};
   const T = VIVA_TEMPLATES.find((x) => x.kind === p.kind);
-  if (T && t.kind === 'main') return 'Put another way: ' + T.clarify(p.concept || doc.subject);
-  return `I am asking about ${p.concept || doc.subject}. Answer in one sentence first, then give me your reasoning.`;
+  if (T && turn.kind === 'main') return t`Put another way: ${T.clarify(p.concept || doc.subject)}`;
+  return t`I am asking about ${p.concept || doc.subject}. Answer in one sentence first, then give me your reasoning.`;
 }
 function vivaOfflineHelp(doc, t) {
   const p = vivaArr(doc.plan)[t.qi] || {};
@@ -814,33 +819,33 @@ function vivaCommMetrics(doc) {
   const pitchStd = pitches.length ? +mean(pitches).toFixed(1) : null;
   const notes = [];
   if (spoken) {
-    if (wpm && wpm > 175) notes.push(`You spoke at about ${wpm} words per minute. Examiners follow best between 120 and 160. Slow the first sentence of each answer.`);
-    else if (wpm && wpm < 100) notes.push(`You spoke at about ${wpm} words per minute, which leaves gaps the examiner may fill with a follow-up. Aim for 120 to 160.`);
-    else if (wpm) notes.push(`You spoke at about ${wpm} words per minute, a pace examiners can follow.`);
-    if (pausesLong >= 3) notes.push(`${plural(pausesLong, 'silence')} over two seconds. Say “let me think” and keep going: a named pause reads as composure, an unnamed one as a blank.`);
+    if (wpm && wpm > 175) notes.push(t`You spoke at about ${wpm} words per minute. Examiners follow best between 120 and 160. Slow the first sentence of each answer.`);
+    else if (wpm && wpm < 100) notes.push(t`You spoke at about ${wpm} words per minute, which leaves gaps the examiner may fill with a follow-up. Aim for 120 to 160.`);
+    else if (wpm) notes.push(t`You spoke at about ${wpm} words per minute, a pace examiners can follow.`);
+    if (pausesLong >= 3) notes.push(t`${tn(pausesLong, 'silence', 'silences')} over two seconds. Say “let me think” and keep going: a named pause reads as composure, an unnamed one as a blank.`);
   }
   if (n) {
     notes.push(afRate < 0.6
-      ? `You led with the answer in ${answerFirst} of ${n} replies. Put the answer in your first sentence, then reason. Examiners grade what they hear first.`
-      : `You led with the answer in ${answerFirst} of ${n} replies. Keep doing that: it lets the examiner follow everything after it.`);
-    if (dictated && hedgesPer >= 1.2) notes.push(`${plural(hedges, 'hedge')} (“I think”, “maybe”, “probably”). Hedge once, where the doubt is real, and say what would settle it.`);
-    if (dictated && fillers >= 3) notes.push(`${plural(fillers, 'filler word')} in your answers. When you speak, swap each one for a one-second pause.`);
-    if (!aloud && avgWords > 230) notes.push(`Your answers averaged ${plural(avgWords, 'word')}. Spoken answers land better at 80 to 150 words: one claim, one reason, one example.`);
-    if (!aloud && avgWords > 0 && avgWords < 25) notes.push(`Your answers averaged ${plural(avgWords, 'word')}. Say more: the claim, the reason behind it, and an example.`);
-    if (signPer < 0.5) notes.push('Few signposts. Words like “first”, “because” and “for example” let the examiner follow your structure.');
+      ? t`You led with the answer in ${answerFirst} of ${n} replies. Put the answer in your first sentence, then reason. Examiners grade what they hear first.`
+      : t`You led with the answer in ${answerFirst} of ${n} replies. Keep doing that: it lets the examiner follow everything after it.`);
+    if (dictated && hedgesPer >= 1.2) notes.push(t`${tn(hedges, 'hedge', 'hedges')} (“I think”, “maybe”, “probably”). Hedge once, where the doubt is real, and say what would settle it.`);
+    if (dictated && fillers >= 3) notes.push(t`${tn(fillers, 'filler word', 'filler words')} in your answers. When you speak, swap each one for a one-second pause.`);
+    if (!aloud && avgWords > 230) notes.push(t`Your answers averaged ${tn(avgWords, 'word', 'words')}. Spoken answers land better at 80 to 150 words: one claim, one reason, one example.`);
+    if (!aloud && avgWords > 0 && avgWords < 25) notes.push(t`Your answers averaged ${tn(avgWords, 'word', 'words')}. Say more: the claim, the reason behind it, and an example.`);
+    if (signPer < 0.5) notes.push(t('Few signposts. Words like “first”, “because” and “for example” let the examiner follow your structure.'));
   }
-  if (overtimeCount) notes.push(`You ran over time on ${plural(overtimeCount, 'answer')}. Practice a 30-second version of each answer first, then expand.`);
-  if (helps) notes.push(`You asked for help ${helps === 1 ? 'once' : helps + ' times'}. That is a good move when you are stuck, and it costs a little. Say what you do know first.`);
-  if (aloud && n) notes.push('These notes come from the key points you jotted, so they describe your structure more than your spoken words.');
+  if (overtimeCount) notes.push(t`You ran over time on ${tn(overtimeCount, 'answer', 'answers')}. Practice a 30-second version of each answer first, then expand.`);
+  if (helps) notes.push(helps === 1 ? t`You asked for help once. That is a good move when you are stuck, and it costs a little. Say what you do know first.` : t`You asked for help ${helps} times. That is a good move when you are stuck, and it costs a little. Say what you do know first.`);
+  if (aloud && n) notes.push(t('These notes come from the key points you jotted, so they describe your structure more than your spoken words.'));
   return { n, words, avgWords, fillers, hedges, hedgesPer, signposts, answerFirst, answerFirstRate: afRate, answerFirstEstimated: afEstimated, overtimeCount, helps, clarifies, moments, score, notes, aloud, spoken, wpm, pausesLong, pitchStd, spokenSec: Math.round(spokenSec) };
 }
 const VIVA_PANEL_LINES = {
-  elenchos: (r) => (r.depth >= 75 ? 'You could say why, and then why again. That is rarer than you think. Keep asking it of yourself.' : 'Too many answers stopped at what. Before the real exam, ask yourself why after every sentence you plan to say.'),
-  akribeia: (r) => (r.accuracy >= 75 ? 'Your definitions held up. Keep stating assumptions before I have to ask for them.' : 'Loose terms cost you. Write a one-line definition for every key term and say it exactly.'),
-  eunoia: (r) => (r.communication >= 70 ? 'You stayed calm and let me follow your thinking. Trust that in the real room.' : 'You know more than your answers showed. Lead with the answer, then think out loud, and you will be fine.'),
-  theoria: (r) => (r.depth >= 75 ? 'Your grasp of the principles is sound. Tie every result back to them when you answer.' : 'The principles underneath were thin. Rebuild each result from first principles, out loud.'),
-  praxis: (r) => (r.reasoning >= 75 ? 'Your worked reasoning was easy to follow. More numbers would make it convincing.' : 'Bring a worked example into every answer. Numbers make reasoning visible.'),
-  skepsis: (r) => (r.accuracy >= 75 ? 'Your claims survived my pushing. Next time, name the limits before I do.' : 'Several claims did not survive a push. For each one, find the case that breaks it before the exam.'),
+  elenchos: (r) => (r.depth >= 75 ? t('You could say why, and then why again. That is rarer than you think. Keep asking it of yourself.') : t('Too many answers stopped at what. Before the real exam, ask yourself why after every sentence you plan to say.')),
+  akribeia: (r) => (r.accuracy >= 75 ? t('Your definitions held up. Keep stating assumptions before I have to ask for them.') : t('Loose terms cost you. Write a one-line definition for every key term and say it exactly.')),
+  eunoia: (r) => (r.communication >= 70 ? t('You stayed calm and let me follow your thinking. Trust that in the real room.') : t('You know more than your answers showed. Lead with the answer, then think out loud, and you will be fine.')),
+  theoria: (r) => (r.depth >= 75 ? t('Your grasp of the principles is sound. Tie every result back to them when you answer.') : t('The principles underneath were thin. Rebuild each result from first principles, out loud.')),
+  praxis: (r) => (r.reasoning >= 75 ? t('Your worked reasoning was easy to follow. More numbers would make it convincing.') : t('Bring a worked example into every answer. Numbers make reasoning visible.')),
+  skepsis: (r) => (r.accuracy >= 75 ? t('Your claims survived my pushing. Next time, name the limits before I do.') : t('Several claims did not survive a push. For each one, find the case that breaks it before the exam.')),
 };
 function vivaComputeReport(doc) {
   const qs = vivaQuestionScores(doc);
@@ -864,10 +869,10 @@ function vivaComputeReport(doc) {
   const capNotes = [];
   const capAt = (max, note) => { if (max < capMax) capMax = max; if (percent > max) { percent = max; capNotes.push(note); } };
   if (done.length) {
-    if (rubric.accuracy < 50) capAt(54, 'Your accuracy kept this mark below a Pass.');
-    else if (rubric.accuracy < 70) capAt(84, 'Your accuracy capped this mark at Merit.');
-    else if (rubric.depth < 60) capAt(84, 'Your depth capped this mark at Merit.');
-    if (comm.n && comm.avgWords < 15) capAt(54, 'Answers under 15 words cannot pass. Give the claim, the reason and an example.');
+    if (rubric.accuracy < 50) capAt(54, t('Your accuracy kept this mark below a Pass.'));
+    else if (rubric.accuracy < 70) capAt(84, t('Your accuracy capped this mark at Merit.'));
+    else if (rubric.depth < 60) capAt(84, t('Your depth capped this mark at Merit.'));
+    if (comm.n && comm.avgWords < 15) capAt(54, t('Answers under 15 words cannot pass. Give the claim, the reason and an example.'));
   }
   const answered = qs.filter((q) => q.answered).length;
   const incomplete = answered > 0 && plan.length > 0 && answered < Math.ceil(plan.length * 0.6);
@@ -878,16 +883,16 @@ function vivaComputeReport(doc) {
   const best = order[0], worst = order[order.length - 1];
   const summary = done.length
     ? incomplete
-      ? `You stopped after ${answered} of ${plan.length} questions, before the harder ones. This mark covers only what you reached.`
-      : `You answered ${answered} of ${plan.length} main questions${follows ? ` and ${plural(follows, 'follow-up')}` : ''}. Your strongest dimension was ${(best.full || best.name).toLowerCase()}, and your weakest was ${(worst.full || worst.name).toLowerCase()}.`
-    : 'No answers were marked, so there is nothing to grade yet.';
+      ? t`You stopped after ${answered} of ${plan.length} questions, before the harder ones. This mark covers only what you reached.`
+      : (follows ? t`You answered ${answered} of ${plan.length} main questions and ${tn(follows, 'follow-up', 'follow-ups')}. Your strongest dimension was ${(best.full || best.name).toLowerCase()}, and your weakest was ${(worst.full || worst.name).toLowerCase()}.` : t`You answered ${answered} of ${plan.length} main questions. Your strongest dimension was ${(best.full || best.name).toLowerCase()}, and your weakest was ${(worst.full || worst.name).toLowerCase()}.`)
+    : t('No answers were marked, so there is nothing to grade yet.');
   const strengths = [];
-  if (done.length && rubric[best.key] >= 60) strengths.push(`${best.full || best.name} was your strongest dimension (${rubric[best.key]}).`);
+  if (done.length && rubric[best.key] >= 60) strengths.push(t`${best.full || best.name} was your strongest dimension (${rubric[best.key]}).`);
   const bestQ = done.slice().sort((a, b) => b.score - a.score)[0];
-  if (bestQ && bestQ.score >= 60) strengths.push(`Your best answer was on ${bestQ.concept} (${bestQ.score}).`);
-  if (comm.n && comm.answerFirstRate >= 0.6) strengths.push(`You led with the answer in ${comm.answerFirst} of ${comm.n} replies.`);
-  if (comm.n && !comm.helps && !partial && comm.avgWords >= 15) strengths.push('You worked through every question without asking for help.');
-  if (!strengths.length && done.length && !partial) strengths.push('You sat the whole exam and kept answering under pressure. That is the rep that matters most.');
+  if (bestQ && bestQ.score >= 60) strengths.push(t`Your best answer was on ${bestQ.concept} (${bestQ.score}).`);
+  if (comm.n && comm.answerFirstRate >= 0.6) strengths.push(t`You led with the answer in ${comm.answerFirst} of ${comm.n} replies.`);
+  if (comm.n && !comm.helps && !partial && comm.avgWords >= 15) strengths.push(t('You worked through every question without asking for help.'));
+  if (!strengths.length && done.length && !partial) strengths.push(t('You sat the whole exam and kept answering under pressure. That is the rep that matters most.'));
   const gaps = done.slice().sort((a, b) => a.score - b.score).filter((q, i) => q.score < 75 || (i === 0 && percent < 85)).slice(0, 3).map((q) => {
     const p = plan[q.qi] || {};
     const main = vivaArr(doc.turns).find((t) => t.qi === q.qi && t.kind === 'main' && t.eval);
@@ -896,22 +901,22 @@ function vivaComputeReport(doc) {
     const weak = VIVA_RUBRIC.slice().sort((a, b) => q.rubric[a.key] - q.rubric[b.key])[0];
     const missing = main && main.eval.notes && !main.eval.self
       ? main.eval.notes
-      : missingPts.length ? `Not covered: ${missingPts.slice(0, 3).join('; ')}.` : `${weak.full || weak.name} was the weak spot here (${q.rubric[weak.key]}).`;
-    return { concept: p.concept || 'Question ' + (q.qi + 1), missing, outline: vivaArr(p.keyPoints).slice(0, 5), qi: q.qi };
+      : missingPts.length ? t`Not covered: ${missingPts.slice(0, 3).join('; ')}.` : t`${weak.full || weak.name} was the weak spot here (${q.rubric[weak.key]}).`;
+    return { concept: p.concept || t`Question ${q.qi + 1}`, missing, outline: vivaArr(p.keyPoints).slice(0, 5), qi: q.qi };
   });
-  const panel = vivaPanelIds(doc).map((id) => ({ examiner: id, comment: done.length ? VIVA_PANEL_LINES[id](rubric) : 'We look forward to hearing your answers.' }));
+  const panel = vivaPanelIds(doc).map((id) => ({ examiner: id, comment: done.length ? VIVA_PANEL_LINES[id](rubric) : t('We look forward to hearing your answers.') }));
   const next = [];
   if (done.length) {
     const tips = {
-      accuracy: 'Rewrite the definition of each gap concept from memory, then check it against your notes.',
-      depth: 'For each concept, answer “why does this hold?” out loud in under a minute.',
-      reasoning: 'Do one worked example per concept, narrating every step as if the examiner were watching.',
-      communication: 'Start every answer with a one-sentence answer. Then the reason, then an example.',
+      accuracy: t('Rewrite the definition of each gap concept from memory, then check it against your notes.'),
+      depth: t('For each concept, answer “why does this hold?” out loud in under a minute.'),
+      reasoning: t('Do one worked example per concept, narrating every step as if the examiner were watching.'),
+      communication: t('Start every answer with a one-sentence answer. Then the reason, then an example.'),
     };
     next.push(tips[worst.key]);
-    if (doc.mode === 'dictate' && (comm.hedgesPer >= 1.2 || comm.hedges >= 4)) next.push('Hedge only where the doubt is real, and say how you would check.');
-    if (comm.overtimeCount) next.push('Rehearse 30-second versions of your answers until they fit, then expand.');
-    next.push(doc.source === 'offline' ? 'Retake this exam on your gaps in two or three days.' : 'Revise your flashcards tonight, then retake this exam on your gaps in two or three days.');
+    if (doc.mode === 'dictate' && (comm.hedgesPer >= 1.2 || comm.hedges >= 4)) next.push(t('Hedge only where the doubt is real, and say how you would check.'));
+    if (comm.overtimeCount) next.push(t('Rehearse 30-second versions of your answers until they fit, then expand.'));
+    next.push(doc.source === 'offline' ? t('Retake this exam on your gaps in two or three days.') : t('Revise your flashcards tonight, then retake this exam on your gaps in two or three days.'));
   }
   /* Offline key points are a generic checklist, and a flashcard of that teaches nothing about the subject. */
   const cards = doc.source === 'offline' ? [] : gaps.map((gp) => ({ q: (plan[gp.qi] || {}).q || gp.concept, a: gp.outline.join(' · ') || gp.missing }))
@@ -922,9 +927,9 @@ function vivaComputeReport(doc) {
   const softest = done.slice().sort((a, b) => a.score - b.score)[0];
   const conclusion = done.length ? {
     outcome: incomplete ? 'no verdict' : percent >= 70 ? 'would pass comfortably' : percent >= 60 ? 'would pass' : percent >= 50 ? 'borderline' : 'would fail',
-    why: incomplete ? `You stopped after ${answered} of ${plan.length} questions, so an examiner could not judge the rest.` : `Your marks come to ${percent}%, with ${(worst.full || worst.name).toLowerCase()} the weakest dimension.`,
-    first_doubt: softest ? `Your answer on ${softest.concept}.` : '',
-    ceiling: firmest ? `You held up best on ${firmest.concept}.` : '',
+    why: incomplete ? t`You stopped after ${answered} of ${plan.length} questions, so an examiner could not judge the rest.` : t`Your marks come to ${percent}%, with ${(worst.full || worst.name).toLowerCase()} the weakest dimension.`,
+    first_doubt: softest ? t`Your answer on ${softest.concept}.` : '',
+    ceiling: firmest ? t`You held up best on ${firmest.concept}.` : '',
   } : null;
   return {
     percent, rawPercent, capMax, capNotes, grade: g.id, rubric, answered, total: plan.length, partial, maxDifficulty: reached.length ? Math.max(...reached) : 0, conclusion, correctionCredit: 0,
@@ -1000,11 +1005,11 @@ function vivaComplete(d, report) {
   if (first) {
     Store.act((p, ctx) => {
       if (pay.mains) { p.stats.vivaQuestions = (p.stats.vivaQuestions || 0) + pay.mains; ctx.quest('viva', pay.mains); }
-      if (pay.answers) ctx.xp(pay.answers, 'Answers given');
+      if (pay.answers) ctx.xp(pay.answers, t('Answers given'));
       if (!report.partial) {
         p.stats.vivas = (p.stats.vivas || 0) + 1;
         if (vivaIsSealed(report)) p.stats.vivaBest = Math.max(p.stats.vivaBest || 0, report.percent);
-        ctx.xp(pay.finish + pay.bonus, 'Oral exam complete');
+        ctx.xp(pay.finish + pay.bonus, t('Oral exam complete'));
       }
     });
   }
@@ -1051,21 +1056,21 @@ function vivaLadderHeld(doc) {
 }
 function vivaConductNotes(doc) {
   const out = [];
-  vivaArr(doc && doc.turns).forEach((t) => {
-    const where = t.kind === 'warm' ? 'the warm-up' : t.kind === 'close' ? 'the closing question' : `question ${t.qi + 1}`;
-    if (t.left) out.push(`You left the room ${t.left === 1 ? 'once' : t.left + ' times'} during ${where}.`);
-    if (t.pasted) out.push(`You pasted ${plural(t.pasted, 'word')} during ${where}.`);
-    if (t.hiddenSec > 5) out.push(`You switched away for ${fmtTime(t.hiddenSec)} during ${where}.`);
+  vivaArr(doc && doc.turns).forEach((tu) => {
+    const where = tu.kind === 'warm' ? t('the warm-up') : tu.kind === 'close' ? t('the closing question') : t`question ${tu.qi + 1}`;
+    if (tu.left) out.push(tu.left === 1 ? t`You left the room once during ${where}.` : t`You left the room ${tu.left} times during ${where}.`);
+    if (tu.pasted) out.push(t`You pasted ${tn(tu.pasted, 'word', 'words')} during ${where}.`);
+    if (tu.hiddenSec > 5) out.push(t`You switched away for ${fmtTime(tu.hiddenSec)} during ${where}.`);
   });
   return out.slice(0, 8);
 }
 function vivaHonestyLine(doc) {
   const r = (doc && doc.report) || {};
-  if (r.source === 'self') return 'You marked this yourself. Treat it as practice, and let a real examiner have the last word.';
-  if (vivaIsSpoken(doc)) return 'Marked from the transcript of what you said. Pace, pauses and filler words were measured from the recording. Your tone of voice was not judged, and the audio was not kept.';
-  if (doc && doc.mode === 'aloud') return 'Marked from your notes. Nobody heard you speak, so this is a guide to your knowledge. It says nothing about your delivery.';
-  if (doc && doc.mode === 'dictate') return 'Marked from your dictated words. Nobody heard your voice, so pace, pauses and tone are outside this mark.';
-  return 'Marked from typed answers. This checks what you know. It does not rehearse speaking.';
+  if (r.source === 'self') return t('You marked this yourself. Treat it as practice, and let a real examiner have the last word.');
+  if (vivaIsSpoken(doc)) return t('Marked from the transcript of what you said. Pace, pauses and filler words were measured from the recording. Your tone of voice was not judged, and the audio was not kept.');
+  if (doc && doc.mode === 'aloud') return t('Marked from your notes. Nobody heard you speak, so this is a guide to your knowledge. It says nothing about your delivery.');
+  if (doc && doc.mode === 'dictate') return t('Marked from your dictated words. Nobody heard your voice, so pace, pauses and tone are outside this mark.');
+  return t('Marked from typed answers. This checks what you know. It does not rehearse speaking.');
 }
 /* Concepts whose latest attempt is still weak, across all of this user's finished exams. */
 function vivaWeakConcepts(vivas, max = 6) {
@@ -1298,8 +1303,9 @@ function VivaSeal({ percent, grade, size = 200, stamp = false, className = '' })
   const g = VIVA_GRADES.find((x) => x.id === grade) || vivaGrade(percent);
   const pct = clamp(Math.round(Number(percent) || 0), 0, 100);
   const path = useMemo(() => vivaSealPath(hashStr(g.id + ':' + pct)), [g.id, pct]);
-  const long = g.id.length > 6;
-  return html`<svg className=${'viva-seal' + (stamp ? ' is-stamping' : '') + ' ' + className} width=${size} height=${size * 1.15} viewBox="0 0 200 230" role="img" aria-label=${`${g.id}, ${pct} percent`}>
+  const gname = vivaGradeName(g.id);
+  const long = gname.length > 6;
+  return html`<svg className=${'viva-seal' + (stamp ? ' is-stamping' : '') + ' ' + className} width=${size} height=${size * 1.15} viewBox="0 0 200 230" role="img" aria-label=${t`${gname}, ${pct} percent`}>
     <defs>
       <radialGradient id=${'vw' + rid} cx=".38" cy=".32" r=".78">
         <stop offset="0" style=${{ stopColor: 'var(--viva-wax-hi)' }} /><stop offset=".45" style=${{ stopColor: 'var(--viva-wax)' }} /><stop offset="1" style=${{ stopColor: 'var(--viva-wax-deep)' }} />
@@ -1315,7 +1321,7 @@ function VivaSeal({ percent, grade, size = 200, stamp = false, className = '' })
       <text x="100" y="113" textAnchor="middle" className="viva-seal-num">${pct}<tspan className="viva-seal-pct" dx="1" dy="-15">%</tspan></text>
     </g>
     <path d="M28 150H172L163 161.5L172 173H28L37 161.5Z" className="viva-banner" />
-    <text x="100" y="166" textAnchor="middle" className="viva-banner-text" textLength=${long ? 112 : undefined} lengthAdjust=${long ? 'spacingAndGlyphs' : undefined}>${g.id.toUpperCase()}</text>
+    <text x="100" y="166" textAnchor="middle" className="viva-banner-text" textLength=${long ? 112 : undefined} lengthAdjust=${long ? 'spacingAndGlyphs' : undefined}>${gname.toUpperCase()}</text>
   </svg>`;
 }
 
@@ -1326,7 +1332,7 @@ function VivaRadar({ rubric, size = 220 }) {
   const pt = (k, dx, dy, v) => [c + dx * R * (v / 100), c + dy * R * (v / 100)];
   const shape = axes.map(([k, dx, dy]) => pt(k, dx, dy, clamp(Number(rubric && rubric[k]) || 0, 0, 100)).map((v) => v.toFixed(1)).join(',')).join(' ');
   const ring = (f) => axes.map(([k, dx, dy]) => pt(k, dx, dy, f).join(',')).join(' ');
-  return html`<svg className="viva-radar" viewBox=${`-70 -4 ${size + 140} ${size + 8}`} width="100%" style=${{ maxWidth: size + 140 }} role="img" aria-label=${'Rubric: ' + VIVA_RUBRIC.map((r) => `${r.name} ${rubric ? rubric[r.key] : 0}`).join(', ')}>
+  return html`<svg className="viva-radar" viewBox=${`-70 -4 ${size + 140} ${size + 8}`} width="100%" style=${{ maxWidth: size + 140 }} role="img" aria-label=${t`Rubric: ${VIVA_RUBRIC.map((r) => `${r.name} ${rubric ? rubric[r.key] : 0}`).join(', ')}`}>
     ${[25, 50, 75, 100].map((f) => html`<polygon key=${f} points=${ring(f)} className="viva-radar-ring" />`)}
     ${axes.map(([k, dx, dy]) => html`<line key=${k} x1=${c} y1=${c} x2=${c + dx * R} y2=${c + dy * R} className="viva-radar-axis" />`)}
     <polygon points=${shape} className="viva-radar-shape" />
@@ -1360,8 +1366,8 @@ function VivaTyped({ text, play, playKey, cps = 40, delay = 0, onDone }) {
 /* Running rubric meter beside the klepsydra. */
 function VivaMeter({ doc }) {
   const run = vivaRunning(doc);
-  return html`<div className="viva-meter" aria-label=${run.n ? `Running mark ${run.percent} percent` : 'No marks yet'}>
-    <div className="viva-meter-head"><span className="inscr">Standing</span><b className="num">${run.n ? run.percent : '–'}</b></div>
+  return html`<div className="viva-meter" aria-label=${run.n ? t`Running mark ${run.percent} percent` : t('No marks yet')}>
+    <div className="viva-meter-head"><span className="inscr">${t('Standing')}</span><b className="num">${run.n ? run.percent : '–'}</b></div>
     ${VIVA_RUBRIC.map((r) => html`<div key=${r.key} className="viva-meter-row" title=${r.full || r.name}>
       <span className="viva-meter-l">${r.letter}</span>
       <span className="viva-meter-track"><i style=${{ width: (run.rubric ? run.rubric[r.key] : 0) + '%', background: r.stage }}></i></span>
@@ -1379,13 +1385,13 @@ function VivaPage({ param }) {
   const [vid, view] = raw.split(':');
   if (!vid) return html`<${VivaHome} />`;
   const doc = vivas.find((v) => v.id === vid);
-  if (!doc) return html`<div className="card empty"><${Icon} name="scroll" size=${30} /><h2>That exam isn’t here</h2><p className="small">It may have been deleted, or it lives in another browser.</p><button className="btn" onClick=${() => go('viva')}>Back to Viva</button></div>`;
+  if (!doc) return html`<div className="card empty"><${Icon} name="scroll" size=${30} /><h2>${t('That exam isn’t here')}</h2><p className="small">${t('It may have been deleted, or it lives in another browser.')}</p><button className="btn" onClick=${() => go('viva')}>${t('Back to Viva')}</button></div>`;
   if (doc.status === 'done' && doc.report) return view === 'revise' ? html`<${VivaRevise} doc=${doc} />` : html`<${VivaReport} doc=${doc} />`;
   if (doc.status === 'live' && vivaArr(doc.plan).length) return html`<${VivaRoom} doc=${doc} />`;
   return html`<div className="stack" style=${{ gap: 20 }}>
-    <div className="sec-head"><div><div className="eyebrow">${doc.retakeOf ? 'Retake' : 'Draft exam'} <span className="greek" lang="grc">ἐξέτασις</span></div><h1>${doc.retakeOf ? 'Back in the room, on your gaps' : 'Finish setting up your exam'}</h1>
-      ${doc.retakeOf ? html`<p className="lead" style=${{ marginTop: 8 }}>This exam is seeded with the concepts that tripped you up last time. Adjust anything, then walk back in.</p>` : null}</div>
-      <button className="btn btn-sm" onClick=${() => go('viva')}><${Icon} name="arrowL" size=${15} />All exams</button></div>
+    <div className="sec-head"><div><div className="eyebrow">${doc.retakeOf ? t('Retake') : t('Draft exam')} <span className="greek" lang="grc">ἐξέτασις</span></div><h1>${doc.retakeOf ? t('Back in the room, on your gaps') : t('Finish setting up your exam')}</h1>
+      ${doc.retakeOf ? html`<p className="lead" style=${{ marginTop: 8 }}>${t('This exam is seeded with the concepts that tripped you up last time. Adjust anything, then walk back in.')}</p>` : null}</div>
+      <button className="btn btn-sm" onClick=${() => go('viva')}><${Icon} name="arrowL" size=${15} />${t('All exams')}</button></div>
     <${VivaSetup} draft=${doc} />
   </div>`;
 }
@@ -1412,10 +1418,10 @@ function VivaWeak({ vivas }) {
     go('viva', saved.id);
   };
   return html`<section className="card viva-weak" aria-labelledby="viva-weak-title">
-    <div className="card-head"><div><div className="eyebrow">From your earlier exams</div><h2 id="viva-weak-title">Your weak concepts</h2></div></div>
+    <div className="card-head"><div><div className="eyebrow">${t('From your earlier exams')}</div><h2 id="viva-weak-title">${t('Your weak concepts')}</h2></div></div>
     <div className="stack" style=${{ gap: 4 }}>${weak.map((w) => html`<div key=${w.subject + w.concept} className="viva-weak-row">
-      <span style=${{ minWidth: 0 }}><b>${w.concept}</b><span className="small muted" style=${{ display: 'block' }}>${w.subject} · last mark ${w.score}</span></span>
-      <button className="btn btn-sm" onClick=${() => examine(w)}>Examine me on this</button>
+      <span style=${{ minWidth: 0 }}><b>${w.concept}</b><span className="small muted" style=${{ display: 'block' }}>${t`${w.subject} · last mark ${w.score}`}</span></span>
+      <button className="btn btn-sm" onClick=${() => examine(w)}>${t('Examine me on this')}</button>
     </div>`)}</div>
   </section>`;
 }
@@ -1424,13 +1430,13 @@ function VivaHero({ count, best, questions }) {
   const toSetup = () => { try { const el = document.getElementById('viva-setup'); if (el) el.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' }); } catch (e) { /* ignore */ } };
   return html`<section className="stage viva-hero" aria-labelledby="viva-hero-title">
     <div className="viva-hero-text">
-      <p className="page-whisper"><span className="page-label">Oral exam</span><span className="greek" lang="grc">ἐξέτασις</span></p>
-      <h1 id="viva-hero-title">Rehearse the oral exam before it counts.</h1>
-      <${Scholion} fig="imitation" mark=${['unexamined', 'not worth']} className="page-line">The unexamined answer is not worth giving.<//>
-      <p className="viva-hero-lead">A panel ${Voice.ok ? 'asks out loud' : 'asks'}, waits while you think, and follows up when your answer wobbles. You leave with a grade, your gaps and revision cards.</p>
+      <p className="page-whisper"><span className="page-label">${t('Oral exam')}</span><span className="greek" lang="grc">ἐξέτασις</span></p>
+      <h1 id="viva-hero-title">${t('Rehearse the oral exam before it counts.')}</h1>
+      <${Scholion} fig="imitation" mark=${['unexamined', 'not worth']} className="page-line">${t('The unexamined answer is not worth giving.')}<//>
+      <p className="viva-hero-lead">${Voice.ok ? t('A panel asks out loud, waits while you think, and follows up when your answer wobbles. You leave with a grade, your gaps and revision cards.') : t('A panel asks, waits while you think, and follows up when your answer wobbles. You leave with a grade, your gaps and revision cards.')}</p>
       <div className="row" style=${{ gap: 12, marginTop: 4 }}>
-        <button className="btn-cta gold" onClick=${toSetup}><${Icon} name="scroll" size=${18} />Set up an exam</button>
-        <span className="viva-hero-stats">${count ? html`<span><b className="num">${count}</b> ${count === 1 ? 'exam' : 'exams'}</span><span><b className="num">${best}%</b> best</span>` : html`<span>No exams yet</span>`}${questions ? html`<span><b className="num">${questions}</b> answered</span>` : null}</span>
+        <button className="btn-cta gold" onClick=${toSetup}><${Icon} name="scroll" size=${18} />${t('Set up an exam')}</button>
+        <span className="viva-hero-stats">${count ? html`<span><b className="num">${count}</b> ${count === 1 ? t('exam') : t('exams')}</span><span><b className="num">${best}%</b> ${t('best')}</span>` : html`<span>${t('No exams yet')}</span>`}${questions ? html`<span><b className="num">${questions}</b> ${t('answered')}</span>` : null}</span>
       </div>
     </div>
     <div className="viva-hero-bench"><${VivaBench} ids=${VIVA_PERSONAS.panel.examiners} idle=${true} /></div>
@@ -1447,7 +1453,7 @@ function vivaInitialForm(draft) {
   const fm = vivaFormat(src.format);
   return { subject: src.subject || '', topic: src.topic || '', level: src.level || 'undergrad', format: fm.id, persona: vivaPersona(src.persona).id, material: src.material || '', mode: vivaModeId(src.mode), think: Number(src.think) || fm.think, answer: Number(src.answer) || fm.answer, voice: src.voice !== false, practice: !!src.practice, basis: src.basis === 'work' ? 'work' : 'course', discipline: vivaDiscipline(src.discipline).id };
 }
-const VIVA_SUBJECT_EXAMPLES = ['Thermodynamics', 'Linear algebra', 'Organic chemistry', 'Microeconomics', 'Machine learning', 'Constitutional law'];
+const VIVA_SUBJECT_EXAMPLES = [t('Thermodynamics'), t('Linear algebra'), t('Organic chemistry'), t('Microeconomics'), t('Machine learning'), t('Constitutional law')];
 
 function VivaSetup({ draft }) {
   const { ai } = useStore();
@@ -1468,15 +1474,15 @@ function VivaSetup({ draft }) {
   async function start() {
     if (busy) return;
     if (!f.subject.trim()) {
-      setErr('Name the subject first, for example “Thermodynamics”.');
-      toast('Name the subject first.', 'warn');
+      setErr(t('Name the subject first, for example “Thermodynamics”.'));
+      toast(t('Name the subject first.'), 'warn');
       try { const el = document.getElementById('viva-subject'); el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'center' }); } catch (e) { /* the inline message still shows */ }
       return;
     }
     if (Store.state.ai === 'off' && !f.topic.trim() && !f.material.trim() && f.basis !== 'work' && !vivaArr(draft && draft.focus).length) {
-      setTopicErr('Offline, the questions need a topic to work from. Name one, or paste your notes.');
+      setTopicErr(t('Offline, the questions need a topic to work from. Name one, or paste your notes.'));
       setMore(true);
-      toast('Name a topic first.', 'warn');
+      toast(t('Name a topic first.'), 'warn');
       setTimeout(() => { try { const el = document.getElementById('viva-topic'); el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'center' }); } catch (e) { /* the inline message still shows */ } }, 60);
       return;
     }
@@ -1491,10 +1497,10 @@ function VivaSetup({ draft }) {
       try {
         const raw = await AI.json(vivaPlanPrompt(doc), { cache: false, signal: c.signal, modelTier: 'default' });
         plan = vivaNormPlan(raw, doc);
-        if (!plan) toast('The examiners’ questions came back incomplete, so this exam uses the offline question bank.', 'warn');
+        if (!plan) toast(t('The examiners’ questions came back incomplete, so this exam uses the offline question bank.'), 'warn');
       } catch (e) {
         if (c.signal.aborted || (e && e.code === 'cancelled')) { setBusy(false); return; }
-        toast(aiErrorText(e) + ' This exam uses the offline question bank.', 'warn');
+        toast(aiErrorText(e) + ' ' + t('This exam uses the offline question bank.'), 'warn');
       }
     }
     const source = plan ? 'ai' : 'offline';
@@ -1504,7 +1510,7 @@ function VivaSetup({ draft }) {
     /* Easing in is standard practice. The warm-up isn't marked, and it stays in the transcript. */
     const opener = vivaFormat(doc.format).drill
       ? vivaMakeTurn({ qi: 0, kind: 'main', q: first.q, examiner: lead })
-      : vivaMakeTurn({ qi: -1, kind: 'warm', q: doc.basis === 'work' ? 'Before we begin: which part of your work was hardest to get right, and why?' : `Before we begin: which part of ${doc.subject} did you find hardest, and why?`, examiner: lead });
+      : vivaMakeTurn({ qi: -1, kind: 'warm', q: doc.basis === 'work' ? t('Before we begin: which part of your work was hardest to get right, and why?') : t`Before we begin: which part of ${doc.subject} did you find hardest, and why?`, examiner: lead });
     const saved = Store.saveViva({ ...doc, source, title: plan.title, opening: plan.opening, plan: plan.questions, reserve: plan.reserve || [], turns: [opener], status: 'live', started: Date.now(), report: null }, 0);
     setBusy(false);
     go('viva', saved.id);
@@ -1512,77 +1518,77 @@ function VivaSetup({ draft }) {
   const stop = () => { if (ctrlRef.current) ctrlRef.current.abort(); setBusy(false); };
   return html`<section id="viva-setup" className="viva-setup" aria-labelledby="viva-setup-title">
     <div className="viva-summons card">
-      <div className="viva-summons-head"><span className="inscr">Summons to examination</span><h2 id="viva-setup-title">Set the exam</h2></div>
+      <div className="viva-summons-head"><span className="inscr">${t('Summons to examination')}</span><h2 id="viva-setup-title">${t('Set the exam')}</h2></div>
       <div className="field">
-        <label htmlFor="viva-subject">Subject</label>
-        <input id="viva-subject" className="input viva-subject" value=${f.subject} onInput=${(e) => { set('subject', e.target.value); if (err) setErr(''); }} placeholder="Thermodynamics" maxLength="120" autoComplete="off" aria-invalid=${err ? 'true' : undefined} aria-describedby=${err ? 'viva-subject-err' : undefined} />
+        <label htmlFor="viva-subject">${t('Subject')}</label>
+        <input id="viva-subject" className="input viva-subject" value=${f.subject} onInput=${(e) => { set('subject', e.target.value); if (err) setErr(''); }} placeholder=${t('Thermodynamics')} maxLength="120" autoComplete="off" aria-invalid=${err ? 'true' : undefined} aria-describedby=${err ? 'viva-subject-err' : undefined} />
         ${err ? html`<span id="viva-subject-err" className="hint" style=${{ color: 'var(--bad)' }}>${err}</span>` : null}
         <div className="row" style=${{ gap: 6 }}>${VIVA_SUBJECT_EXAMPLES.map((s) => html`<button key=${s} type="button" className="chip chip-sm" aria-pressed=${f.subject === s} onClick=${() => set('subject', s)}>${s}</button>`)}</div>
       </div>
       <div className="field">
-        <span className="label" id="viva-basis-l">What are you being examined on?</span>
+        <span className="label" id="viva-basis-l">${t('What are you being examined on?')}</span>
         <div className="row" role="group" aria-labelledby="viva-basis-l" style=${{ gap: 6 }}>
-          <button type="button" className="chip" aria-pressed=${f.basis !== 'work'} onClick=${() => set('basis', 'course')}>A course or topic</button>
-          <button type="button" className="chip" aria-pressed=${f.basis === 'work'} onClick=${() => set('basis', 'work')}>My own work</button>
+          <button type="button" className="chip" aria-pressed=${f.basis !== 'work'} onClick=${() => set('basis', 'course')}>${t('A course or topic')}</button>
+          <button type="button" className="chip" aria-pressed=${f.basis === 'work'} onClick=${() => set('basis', 'work')}>${t('My own work')}</button>
         </div>
-        ${f.basis === 'work' ? html`<span className="hint">The examiners ask what only the real author could answer. Paste your work so they can point to specific places in it.</span>` : null}
+        ${f.basis === 'work' ? html`<span className="hint">${t('The examiners ask what only the real author could answer. Paste your work so they can point to specific places in it.')}</span>` : null}
       </div>
       ${f.basis === 'work' ? html`<div className="field">
-        <label htmlFor="viva-material">Paste your essay, problem set, code or project write-up</label>
-        <textarea id="viva-material" className="textarea" rows="6" value=${f.material} onInput=${(e) => set('material', e.target.value)} placeholder="Your submitted work goes here."></textarea>
-        <span className="hint num">${f.material.trim() ? `${wordsOf(f.material).length.toLocaleString()} words${f.material.length > VIVA_WORK_MAX ? ` (the first ${VIVA_WORK_MAX.toLocaleString()} characters are used)` : ''}` : ai === 'off' ? 'Offline, the questions are general ones about your work, and pasting it isn’t needed.' : 'Without your work, the questions can’t point to anything specific in it.'}</span>
+        <label htmlFor="viva-material">${t('Paste your essay, problem set, code or project write-up')}</label>
+        <textarea id="viva-material" className="textarea" rows="6" value=${f.material} onInput=${(e) => set('material', e.target.value)} placeholder=${t('Your submitted work goes here.')}></textarea>
+        <span className="hint num">${f.material.trim() ? (f.material.length > VIVA_WORK_MAX ? t`${wordsOf(f.material).length.toLocaleString()} words (the first ${VIVA_WORK_MAX.toLocaleString()} characters are used)` : t`${wordsOf(f.material).length.toLocaleString()} words`) : ai === 'off' ? t('Offline, the questions are general ones about your work, and pasting it isn’t needed.') : t('Without your work, the questions can’t point to anything specific in it.')}</span>
       </div>` : null}
       <div className="field">
-        <span className="label" id="viva-format-l">Format</span>
+        <span className="label" id="viva-format-l">${t('Format')}</span>
         <div className="viva-opts" role="group" aria-labelledby="viva-format-l">${Object.values(VIVA_FORMATS).map((fm) => html`<button key=${fm.id} type="button" className="viva-opt" aria-pressed=${f.format === fm.id} onClick=${() => pickFormat(fm.id)}>
-          <span className="viva-opt-top"><b>${fm.label}</b><span className="num">${fm.drill ? '1 claim' : `${fm.n} Qs`} · ${fm.range} min</span></span><span className="small muted">${fm.desc}</span>
+          <span className="viva-opt-top"><b>${fm.label}</b><span className="num">${fm.drill ? t`1 claim · ${fm.range} min` : t`${fm.n} Qs · ${fm.range} min`}</span></span><span className="small muted">${fm.desc}</span>
         </button>`)}</div>
       </div>
       <div className="field">
-        <span className="label" id="viva-persona-l">Examiner</span>
+        <span className="label" id="viva-persona-l">${t('Examiner')}</span>
         <div className="viva-personas" role="group" aria-labelledby="viva-persona-l">${Object.values(VIVA_PERSONAS).map((p) => html`<button key=${p.id} type="button" className="viva-persona" aria-pressed=${f.persona === p.id} onClick=${() => set('persona', p.id)}>
           <${VivaNiche} ids=${p.examiners} size=${58} lit=${f.persona === p.id} />
           <span style=${{ minWidth: 0 }}><b>${p.label}</b><span className="small muted" style=${{ display: 'block' }}>${p.blurb}</span></span>
         </button>`)}</div>
       </div>
       <details className="viva-more" open=${more} onToggle=${(e) => setMore(e.target.open)}>
-        <summary><span><b>More options</b><span className="small muted" style=${{ display: 'block' }}>${VIVA_MODES[f.mode].label} · ${lvl.label} · ${vivaDiscipline(f.discipline).label}</span></span><${Icon} name="chevR" size=${18} className="viva-log-chev" /></summary>
+        <summary><span><b>${t('More options')}</b><span className="small muted" style=${{ display: 'block' }}>${VIVA_MODES[f.mode].label} · ${lvl.label} · ${vivaDiscipline(f.discipline).label}</span></span><${Icon} name="chevR" size=${18} className="viva-log-chev" /></summary>
         <div className="viva-more-body">
       <div className="field">
-        <span className="label" id="viva-mode-l">How you answer</span>
-        <div className="viva-opts" role="group" aria-labelledby="viva-mode-l">${Object.values(VIVA_MODES).map((m) => html`<button key=${m.id} type="button" className="viva-opt" aria-pressed=${f.mode === m.id} onClick=${() => set('mode', m.id)}><span className="viva-opt-top"><b><${Icon} name=${m.icon} size=${16} /> ${m.label}</b></span><span className="small muted">${ai === 'off' && m.id === 'write' ? `${m.desc} You mark it against the rubric afterward.` : m.desc}</span></button>`)}</div>
+        <span className="label" id="viva-mode-l">${t('How you answer')}</span>
+        <div className="viva-opts" role="group" aria-labelledby="viva-mode-l">${Object.values(VIVA_MODES).map((m) => html`<button key=${m.id} type="button" className="viva-opt" aria-pressed=${f.mode === m.id} onClick=${() => set('mode', m.id)}><span className="viva-opt-top"><b><${Icon} name=${m.icon} size=${16} /> ${m.label}</b></span><span className="small muted">${ai === 'off' && m.id === 'write' ? t`${m.desc} You mark it against the rubric afterward.` : m.desc}</span></button>`)}</div>
       </div>
       <div className="field">
-        <label htmlFor="viva-topic">Topic focus <span className="muted" style=${{ fontWeight: 500 }}>${ai === 'off' && f.basis !== 'work' ? '(needed offline unless you paste notes)' : '(optional)'}</span></label>
-        <input id="viva-topic" className="input" value=${f.topic} onInput=${(e) => { set('topic', e.target.value); if (topicErr) setTopicErr(''); }} placeholder="Carnot cycle; entropy; the second law" maxLength="300" autoComplete="off" aria-invalid=${topicErr ? 'true' : undefined} aria-describedby=${topicErr ? 'viva-topic-err' : undefined} />
-        ${topicErr ? html`<span id="viva-topic-err" className="hint" style=${{ color: 'var(--bad)' }}>${topicErr}</span>` : html`<span className="hint">Separate several topics with semicolons.</span>`}
+        <label htmlFor="viva-topic">${t('Topic focus')} <span className="muted" style=${{ fontWeight: 500 }}>${ai === 'off' && f.basis !== 'work' ? t('(needed offline unless you paste notes)') : t('(optional)')}</span></label>
+        <input id="viva-topic" className="input" value=${f.topic} onInput=${(e) => { set('topic', e.target.value); if (topicErr) setTopicErr(''); }} placeholder=${t('Carnot cycle; entropy; the second law')} maxLength="300" autoComplete="off" aria-invalid=${topicErr ? 'true' : undefined} aria-describedby=${topicErr ? 'viva-topic-err' : undefined} />
+        ${topicErr ? html`<span id="viva-topic-err" className="hint" style=${{ color: 'var(--bad)' }}>${topicErr}</span>` : html`<span className="hint">${t('Separate several topics with semicolons.')}</span>`}
       </div>
       <div className="field">
-        <span className="label" id="viva-level-l">Level</span>
+        <span className="label" id="viva-level-l">${t('Level')}</span>
         <div className="row" role="group" aria-labelledby="viva-level-l" style=${{ gap: 6 }}>${VIVA_LEVELS.map((l) => html`<button key=${l.id} type="button" className="chip" aria-pressed=${f.level === l.id} onClick=${() => set('level', l.id)}>${l.label}</button>`)}</div>
         <span className="hint">${lvl.note}</span>
       </div>
       <div className="field">
-        <span className="label" id="viva-disc-l">Kind of subject</span>
+        <span className="label" id="viva-disc-l">${t('Kind of subject')}</span>
         <div className="row" role="group" aria-labelledby="viva-disc-l" style=${{ gap: 6 }}>${Object.values(VIVA_DISCIPLINES).map((d) => html`<button key=${d.id} type="button" className="chip" aria-pressed=${f.discipline === d.id} onClick=${() => set('discipline', d.id)}>${d.label}</button>`)}</div>
         <span className="hint">${vivaDiscipline(f.discipline).note}</span>
       </div>
       ${f.basis !== 'work' ? html`<div className="field">
-        <label htmlFor="viva-material">Study material or syllabus <span className="muted" style=${{ fontWeight: 500 }}>(optional)</span></label>
-        <textarea id="viva-material" className="textarea" rows="4" value=${f.material} onInput=${(e) => { set('material', e.target.value); if (topicErr) setTopicErr(''); }} placeholder="Paste lecture notes, a syllabus or a reading list. Questions will be grounded in it."></textarea>
-        <span className="hint num">${f.material.trim() ? `${wordsOf(f.material).length.toLocaleString()} words${f.material.length > VIVA_MATERIAL_MAX ? ` (the first ${VIVA_MATERIAL_MAX.toLocaleString()} characters are used)` : ''}` : 'Without material, questions come from the subject and topic.'}</span>
+        <label htmlFor="viva-material">${t('Study material or syllabus')} <span className="muted" style=${{ fontWeight: 500 }}>${t('(optional)')}</span></label>
+        <textarea id="viva-material" className="textarea" rows="4" value=${f.material} onInput=${(e) => { set('material', e.target.value); if (topicErr) setTopicErr(''); }} placeholder=${t('Paste lecture notes, a syllabus or a reading list. Questions will be grounded in it.')}></textarea>
+        <span className="hint num">${f.material.trim() ? (f.material.length > VIVA_MATERIAL_MAX ? t`${wordsOf(f.material).length.toLocaleString()} words (the first ${VIVA_MATERIAL_MAX.toLocaleString()} characters are used)` : t`${wordsOf(f.material).length.toLocaleString()} words`) : t('Without material, questions come from the subject and topic.')}</span>
       </div>` : null}
       <div className="grid-2" style=${{ gap: 14 }}>
-        <div className="field"><span className="label" id="viva-think-l">Think time</span><div className="row" role="group" aria-labelledby="viva-think-l" style=${{ gap: 6 }}>${VIVA_THINK_OPTS.map((s) => html`<button key=${s} type="button" className="chip chip-sm" aria-pressed=${f.think === s} onClick=${() => set('think', s)}>${s} s</button>`)}</div></div>
-        <div className="field"><span className="label" id="viva-ans-l">Answer time</span><div className="row" role="group" aria-labelledby="viva-ans-l" style=${{ gap: 6 }}>${VIVA_ANSWER_OPTS.map((s) => html`<button key=${s} type="button" className="chip chip-sm" aria-pressed=${f.answer === s} onClick=${() => set('answer', s)}>${s < 120 ? s + ' s' : s / 60 + ' min'}</button>`)}</div></div>
+        <div className="field"><span className="label" id="viva-think-l">${t('Think time')}</span><div className="row" role="group" aria-labelledby="viva-think-l" style=${{ gap: 6 }}>${VIVA_THINK_OPTS.map((s) => html`<button key=${s} type="button" className="chip chip-sm" aria-pressed=${f.think === s} onClick=${() => set('think', s)}>${t`${s} s`}</button>`)}</div></div>
+        <div className="field"><span className="label" id="viva-ans-l">${t('Answer time')}</span><div className="row" role="group" aria-labelledby="viva-ans-l" style=${{ gap: 6 }}>${VIVA_ANSWER_OPTS.map((s) => html`<button key=${s} type="button" className="chip chip-sm" aria-pressed=${f.answer === s} onClick=${() => set('answer', s)}>${s < 120 ? t`${s} s` : t`${s / 60} min`}</button>`)}</div></div>
       </div>
       <label className="viva-toggle">
         <input type="checkbox" checked=${f.voice && voiceOk} disabled=${!voiceOk} onChange=${(e) => set('voice', e.target.checked)} />
-        <span><b>Examiners read questions aloud</b><span className="small muted" style=${{ display: 'block' }}>${voiceOk ? 'Each examiner has their own voice. Turn your sound on.' : 'Speech isn’t available in this browser, so questions appear as text.'}</span></span>
+        <span><b>${t('Examiners read questions aloud')}</b><span className="small muted" style=${{ display: 'block' }}>${voiceOk ? t('Each examiner has their own voice. Turn your sound on.') : t('Speech isn’t available in this browser, so questions appear as text.')}</span></span>
       </label>
       <label className="viva-toggle">
         <input type="checkbox" checked=${!!f.practice} onChange=${(e) => set('practice', e.target.checked)} />
-        <span><b>Show my marks as I go (practice mode, unlike a real exam)</b><span className="small muted" style=${{ display: 'block' }}>Real examiners stay unreadable, so this is off by default. Learning to keep going without a signal is part of the rehearsal.</span></span>
+        <span><b>${t('Show my marks as I go (practice mode, unlike a real exam)')}</b><span className="small muted" style=${{ display: 'block' }}>${t('Real examiners stay unreadable, so this is off by default. Learning to keep going without a signal is part of the rehearsal.')}</span></span>
       </label>
         </div>
       </details>
@@ -1595,19 +1601,19 @@ function VivaSetup({ draft }) {
           <b className="viva-brief-title">${persona.label}</b>
           <span className="small muted">${persona.examiners.length > 1 ? persona.blurb : vivaEx(persona.examiners[0]).style}</span>
         </div>
-        <div className="viva-brief-facts"><span><b className="num">${fmt.n}</b>${fmt.drill ? 'claim' : 'questions'}</span><span><b className="num viva-range">${fmt.range}</b>minutes</span><span><b className="num">≤${followCap}</b>follow-ups each</span></div>
+        <div className="viva-brief-facts"><span><b className="num">${fmt.n}</b>${fmt.drill ? t('claim') : t('questions')}</span><span><b className="num viva-range">${fmt.range}</b>${t('minutes')}</span><span><b className="num">≤${followCap}</b>${t('follow-ups each')}</span></div>
       </div>
       <ol className="viva-how">
-        <li><b>Set the exam.</b> Subject, level and examiner. Paste your syllabus to ground the questions.</li>
-        <li><b>Think, then answer.</b> The klepsydra times your thinking and your answer. Follow-ups get a shorter clock, and the examiner stops you if you run on.</li>
-        <li><b>Survive the follow-ups.</b> The examiner probes, challenges or asks for an example, up to ${followCap === 1 ? 'once' : followCap === 2 ? 'twice' : followCap + ' times'} per question. Pushback doesn’t mean you were wrong.</li>
-        <li><b>Read the verdict.</b> ${ai === 'off' ? 'A self-assessed mark, a rubric breakdown and your gaps.' : 'A grade, a rubric breakdown, your gaps with model-answer outlines, and flashcards.'}</li>
+        <li><b>${t('Set the exam.')}</b> ${t('Subject, level and examiner. Paste your syllabus to ground the questions.')}</li>
+        <li><b>${t('Think, then answer.')}</b> ${t('The klepsydra times your thinking and your answer. Follow-ups get a shorter clock, and the examiner stops you if you run on.')}</li>
+        <li><b>${t('Survive the follow-ups.')}</b> ${followCap === 1 ? t('The examiner probes, challenges or asks for an example, up to once per question. Pushback doesn’t mean you were wrong.') : followCap === 2 ? t('The examiner probes, challenges or asks for an example, up to twice per question. Pushback doesn’t mean you were wrong.') : t`The examiner probes, challenges or asks for an example, up to ${followCap} times per question. Pushback doesn’t mean you were wrong.`}</li>
+        <li><b>${t('Read the verdict.')}</b> ${ai === 'off' ? t('A self-assessed mark, a rubric breakdown and your gaps.') : t('A grade, a rubric breakdown, your gaps with model-answer outlines, and flashcards.')}</li>
       </ol>
-      ${ai === 'off' ? html`<div className="notice notice-warn"><${Icon} name="info" size=${18} /><span><b>Offline exam.</b> Questions come from a template bank built on your subject and material, and you mark yourself on the same rubric the examiners use. A self-marked exam counts as practice, so it earns no seal.</span></div>` : null}
+      ${ai === 'off' ? html`<div className="notice notice-warn"><${Icon} name="info" size=${18} /><span><b>${t('Offline exam.')}</b> ${t('Questions come from a template bank built on your subject and material, and you mark yourself on the same rubric the examiners use. A self-marked exam counts as practice, so it earns no seal.')}</span></div>` : null}
       <div className="viva-enter">
-      ${busy ? html`<div className="viva-seating"><span className="spin"></span><span>The examiners are taking their seats…</span><button className="btn btn-sm" onClick=${stop}>Stop</button></div>`
-        : html`<button className="btn-cta wide" onClick=${start}><${Icon} name="vivaDoor" size=${19} />Enter the exam room</button>`}
-      <p className="hint" style=${{ textAlign: 'center' }}>+30 XP per answer · +10 per follow-up · +${fmt.finishXp || 60} XP or more to finish, paid when the exam ends</p>
+      ${busy ? html`<div className="viva-seating"><span className="spin"></span><span>${t('The examiners are taking their seats…')}</span><button className="btn btn-sm" onClick=${stop}>${t('Stop')}</button></div>`
+        : html`<button className="btn-cta wide" onClick=${start}><${Icon} name="vivaDoor" size=${19} />${t('Enter the exam room')}</button>`}
+      <p className="hint" style=${{ textAlign: 'center' }}>${t`+30 XP per answer · +10 per follow-up · +${fmt.finishXp || 60} XP or more to finish, paid when the exam ends`}</p>
       </div>
     </aside>
   </section>`;
@@ -1616,24 +1622,24 @@ function VivaSetup({ draft }) {
 function VivaHistory({ vivas }) {
   const [confirm, setConfirm] = useState(null);
   const list = vivaArr(vivas);
-  if (!list.length) return html`<section className="card viva-history"><div className="card-head"><div><div className="eyebrow">Your exams</div><h2>No exams yet</h2></div></div><p className="small muted">Your first exam will appear here with its grade, so you can watch your marks climb.</p></section>`;
+  if (!list.length) return html`<section className="card viva-history"><div className="card-head"><div><div className="eyebrow">${t('Your exams')}</div><h2>${t('No exams yet')}</h2></div></div><p className="small muted">${t('Your first exam will appear here with its grade, so you can watch your marks climb.')}</p></section>`;
   return html`<section className="card viva-history">
-    <div className="card-head"><div><div className="eyebrow">Your exams</div><h2>${plural(list.length, 'exam')}</h2></div></div>
+    <div className="card-head"><div><div className="eyebrow">${t('Your exams')}</div><h2>${tn(list.length, 'exam', 'exams')}</h2></div></div>
     <div className="stack" style=${{ gap: 4 }}>${list.map((v) => {
       const r = v.report;
       const status = v.status === 'done' && r ? 'done' : v.status === 'live' ? 'live' : 'setup';
       const answered = vivaAnsweredMains(v);
       return html`<div key=${v.id} className="viva-row">
-        ${confirm === v.id ? html`<div className="viva-row-confirm" role="group" aria-label="Confirm delete"><span>Delete “${v.subject || 'Untitled exam'}”? This can’t be undone.</span><span className="row" style=${{ gap: 6 }}><button className="btn btn-sm" style=${{ color: 'var(--bad)' }} onClick=${() => { Store.deleteViva(v.id); setConfirm(null); toast('Exam deleted'); }}>Delete</button><button className="btn btn-sm btn-ghost" onClick=${() => setConfirm(null)}>Keep it</button></span></div>` : html`<${Fragment}>
+        ${confirm === v.id ? html`<div className="viva-row-confirm" role="group" aria-label=${t('Confirm delete')}><span>${t`Delete “${v.subject || t('Untitled exam')}”? This can’t be undone.`}</span><span className="row" style=${{ gap: 6 }}><button className="btn btn-sm" style=${{ color: 'var(--bad)' }} onClick=${() => { Store.deleteViva(v.id); setConfirm(null); toast(t('Exam deleted')); }}>${t('Delete')}</button><button className="btn btn-sm btn-ghost" onClick=${() => setConfirm(null)}>${t('Keep it')}</button></span></div>` : html`<${Fragment}>
           <button className="viva-row-main" onClick=${() => go('viva', v.id)}>
             <span className="viva-row-medal">${status === 'done' && vivaIsSealed(r) ? html`<${VivaSeal} percent=${r.percent} grade=${r.grade} size=${46} />` : status === 'done' ? html`<span className="viva-row-ic done"><${Icon} name="file" size=${18} /></span>` : html`<span className=${'viva-row-ic ' + status}><${Icon} name=${status === 'live' ? 'play' : 'pen'} size=${18} /></span>`}</span>
             <span style=${{ minWidth: 0 }}>
-              <span className="li-title" style=${{ display: 'block' }}>${v.subject || 'Untitled exam'}${v.topic ? html`<span className="muted" style=${{ fontWeight: 500 }}> · ${v.topic}</span>` : null}</span>
-              <span className="small muted">${fmtDate(v.updated || v.created)} · ${vivaPersona(v.persona).label} · ${status === 'done' ? `${r.source === 'self' ? 'Self-assessed' : r.grade}, ${r.percent}%` : status === 'live' ? `In progress, ${answered} of ${vivaArr(v.plan).length} answered` : 'Not started'}</span>
+              <span className="li-title" style=${{ display: 'block' }}>${v.subject || t('Untitled exam')}${v.topic ? html`<span className="muted" style=${{ fontWeight: 500 }}> · ${v.topic}</span>` : null}</span>
+              <span className="small muted">${fmtDate(v.updated || v.created)} · ${vivaPersona(v.persona).label} · ${status === 'done' ? t`${r.source === 'self' ? t('Self-assessed') : vivaGradeName(r.grade)}, ${r.percent}%` : status === 'live' ? t`In progress, ${answered} of ${vivaArr(v.plan).length} answered` : t('Not started')}</span>
             </span>
-            <span className="viva-row-go">${status === 'live' ? 'Resume' : status === 'done' ? 'Report' : 'Set up'}<${Icon} name="chevR" size=${16} /></span>
+            <span className="viva-row-go">${status === 'live' ? t('Resume') : status === 'done' ? t('Report') : t('Set up')}<${Icon} name="chevR" size=${16} /></span>
           </button>
-          <button className="btn btn-icon btn-ghost btn-sm" aria-label=${'Delete ' + (v.subject || 'exam')} onClick=${() => setConfirm(v.id)}><${Icon} name="trash" size=${16} /></button>
+          <button className="btn btn-icon btn-ghost btn-sm" aria-label=${t`Delete ${v.subject || t('exam')}`} onClick=${() => setConfirm(v.id)}><${Icon} name="trash" size=${16} /></button>
         <//>`}
       </div>`;
     })}</div>
@@ -1643,11 +1649,11 @@ function VivaHistory({ vivas }) {
 function VivaTechnique() {
   const { profile: p } = useStore();
   return html`<section className="stack viva-technique">
-    <div className="sec-head"><div><div className="eyebrow">Viva technique <span className="greek" lang="grc">τέχνη</span></div><h2>Four habits examiners reward</h2><p className="small muted" style=${{ marginTop: 4 }}>Short lessons with a quiz and a drill. Take them before your first exam.</p></div></div>
+    <div className="sec-head"><div><div className="eyebrow">${t('Viva technique')} <span className="greek" lang="grc">τέχνη</span></div><h2>${t('Four habits examiners reward')}</h2><p className="small muted" style=${{ marginTop: 4 }}>${t('Short lessons with a quiz and a drill. Take them before your first exam.')}</p></div></div>
     <div className="viva-lessons">${VIVA_LESSONS.map((l, i) => html`<button key=${l.id} className=${'viva-lesson' + (p.done && p.done[l.id] ? ' done' : '')} style=${{ '--pc': POLES[l.pole].color }} onClick=${() => go('lesson', l.id)}>
       <span className="viva-lesson-num">${p.done && p.done[l.id] ? html`<${Icon} name="check" size=${18} stroke=${3} />` : toRoman(i + 1)}</span>
       <b>${l.title}</b>
-      <span className="small muted">${l.minutes} min · ${POLES[l.pole].name}</span>
+      <span className="small muted">${t`${l.minutes} min · ${POLES[l.pole].name}`}</span>
     </button>`)}</div>
   </section>`;
 }
@@ -1838,7 +1844,7 @@ function VivaRoom({ doc, startPhase }) {
       /* The microphone went away mid-exam: this exam continues typed, and the report says so. */
       R.cap = null;
       Store.saveViva({ ...cur(), micFallback: true }, 0);
-      toast('The microphone could not start, so you can type this answer instead.', 'warn');
+      toast(t('The microphone could not start, so you can type this answer instead.'), 'warn');
     }
   }
   function cutOff() {
@@ -1877,7 +1883,7 @@ function VivaRoom({ doc, startPhase }) {
     R.delivery = delivery; R.transcriptSource = tr.source;
     if (!tr.text) {
       /* Nothing came back: let the candidate type what they said, and tell the examiner that happened. */
-      setMic((m) => ({ ...m, note: tr.source === 'error' ? 'The transcription service did not answer.' : 'No words were picked up.' }));
+      setMic((m) => ({ ...m, note: tr.source === 'error' ? vivaMicNote('error') : vivaMicNote('none') }));
       R.transcriptSource = 'typed';
       R.phase = 'retype'; setPhase('retype');
       return;
@@ -1959,7 +1965,7 @@ function VivaRoom({ doc, startPhase }) {
     lsDel('viva.draft.' + t.id);
     Voice.stop(); setSpeaking(null); setSay(null);
     Sound.play('tap');
-    if (t.kind === 'warm' || t.kind === 'close') { applyEval(d2, idx, vivaNoMarkEval(t.kind === 'warm' ? 'Thank you.' : '')); return; }
+    if (t.kind === 'warm' || t.kind === 'close') { applyEval(d2, idx, vivaNoMarkEval(t.kind === 'warm' ? vivaThanks() : '')); return; }
     /* Once one turn of a question is waiting for self-marks, the rest of that question joins it. */
     const selfPending = d2.turns.some((x, i) => i !== idx && x.qi === t.qi && x.answered && !x.eval);
     if (d2.source === 'ai' && Store.state.ai !== 'off' && !selfPending) evaluate(d2, idx);
@@ -1990,7 +1996,7 @@ function VivaRoom({ doc, startPhase }) {
       applyEval(cur(), idx, ev);
     } catch (e) {
       if (c.signal.aborted) return;
-      toast(aiErrorText(e) + ' Send it again, or mark it yourself.', 'warn');
+      toast(aiErrorText(e) + ' ' + t('Send it again, or mark it yourself.'), 'warn');
       setSelfReason('error'); setPhase('pending');
     }
   }
@@ -1999,7 +2005,7 @@ function VivaRoom({ doc, startPhase }) {
     /* Self-marks cover the whole question: the main answer and its follow-ups together. */
     const marked = { ...d, turns: d.turns.map((x, i) => (i === idx || (ev.self && x.qi === qiNow && x.answered && !x.eval) ? { ...x, eval: ev } : x)) };
     const adv = vivaAdvance(marked, ev);
-    const closing = adv.next === 'verdict' ? [ev.reaction, 'That concludes our questions. We will confer.'].filter(Boolean).join(' ') : marked.closing;
+    const closing = adv.next === 'verdict' ? [ev.reaction, t('That concludes our questions. We will confer.')].filter(Boolean).join(' ') : marked.closing;
     const saved = Store.saveViva({ ...marked, turns: adv.turns, closing, ...(adv.plan ? { plan: adv.plan, reserve: adv.reserve } : {}) }, 0);
     setDraft(''); setMarks({}); setCovered([]); setAskOpen(false);
     if (adv.next === 'verdict') {
@@ -2025,7 +2031,7 @@ function VivaRoom({ doc, startPhase }) {
     if (d.source === 'ai' && Store.state.ai !== 'off' && any) {
       const c = new AbortController(); R.ctrl = c;
       try { const raw = await AI.json(vivaReportPrompt(d), { cache: false, signal: c.signal, modelTier: 'default' }); report = vivaNormReport(raw, d); }
-      catch (e) { if (c.signal.aborted) return; toast(aiErrorText(e) + ' Your report was computed from your marks instead.', 'warn'); }
+      catch (e) { if (c.signal.aborted) return; toast(aiErrorText(e) + ' ' + t('Your report was computed from your marks instead.'), 'warn'); }
     }
     if (!report) report = vivaComputeReport(d);
     VivaFx.release = FX.hold(120000); // rewards wait until the seal has landed
@@ -2037,10 +2043,10 @@ function VivaRoom({ doc, startPhase }) {
     const dropped = ts[ts.length - 1];
     if (ts.length && !ts[ts.length - 1].answered) { ts = ts.slice(0, -1); if (dropped) lsDel('viva.draft.' + dropped.id); }
     if (ts.length && !ts[ts.length - 1].eval) ts = ts.slice(0, -1);
-    if (!ts.some(vivaMarked)) { toast('Answer at least one question before you ask for a verdict.', 'warn'); return; }
+    if (!ts.some(vivaMarked)) { toast(t('Answer at least one question before you ask for a verdict.'), 'warn'); return; }
     Voice.stop(); setSpeaking(null); if (R.ctrl) R.ctrl.abort();
     if (R.cap) { try { R.cap.stop(); } catch (e) { /* ignore */ } R.cap = null; }
-    const closing = 'We will stop here. Let us confer.';
+    const closing = t('We will stop here. Let us confer.');
     Store.saveViva({ ...d, turns: ts, ended: true, closing }, 0);
     setLeaving(false); setBusy('');
     setSay({ text: closing, examiner: ids[0], key: Date.now(), kind: 'closing' });
@@ -2055,7 +2061,7 @@ function VivaRoom({ doc, startPhase }) {
       const p = sup.mic ? await SpeechCapture.permit() : { ok: false, reason: 'unsupported' };
       if (!p.ok) {
         Store.saveViva({ ...d, micFallback: true, micReason: p.reason }, 0);
-        toast(p.reason === 'denied' ? 'The microphone was blocked, so this exam is typed. Allow it in the browser’s address bar to speak next time.' : 'No microphone here, so this exam is typed.', 'warn');
+        toast(p.reason === 'denied' ? t('The microphone was blocked, so this exam is typed. Allow it in the browser’s address bar to speak next time.') : t('No microphone here, so this exam is typed.'), 'warn');
       }
     }
     vivaChime('enter'); beginTurn(turn);
@@ -2092,56 +2098,56 @@ function VivaRoom({ doc, startPhase }) {
     }));
   };
   const status = {
-    intro: turns.some((t) => t.answered) ? 'Welcome back. The panel is ready when you are.' : 'The panel is seated. Take a breath.',
-    asking: 'Listen to the question.',
-    think: 'Think time. Plan your first sentence: the answer.',
-    answer: over ? (typedBox ? 'Over time. Land your point and submit.' : 'Over time. Finish your sentence.') : shown && shown.kind === 'close' ? 'Correct or add anything you like. Saying nothing costs nothing.' : !typedBox ? 'Speak now, as if the examiner sat across the table. Lead with your answer, then the reason.' : 'Answer now. Lead with your answer, then reason.',
-    transcribing: 'Writing down what you said…',
-    retype: mic.note ? `${mic.note} Type what you said, as you said it.` : 'Type what you said, as you said it.',
-    evaluating: `${ex.name} is weighing your answer…`,
-    self: 'Mark your answer as a strict examiner would.',
-    pending: 'Your last answer is waiting to be marked.',
-    verdict: 'That concludes the questions.',
-    deliberating: 'The panel is conferring…',
+    intro: turns.some((t) => t.answered) ? t('Welcome back. The panel is ready when you are.') : t('The panel is seated. Take a breath.'),
+    asking: t('Listen to the question.'),
+    think: t('Think time. Plan your first sentence: the answer.'),
+    answer: over ? (typedBox ? t('Over time. Land your point and submit.') : t('Over time. Finish your sentence.')) : shown && shown.kind === 'close' ? t('Correct or add anything you like. Saying nothing costs nothing.') : !typedBox ? t('Speak now, as if the examiner sat across the table. Lead with your answer, then the reason.') : t('Answer now. Lead with your answer, then reason.'),
+    transcribing: t('Writing down what you said…'),
+    retype: mic.note ? t`${mic.note} Type what you said, as you said it.` : t('Type what you said, as you said it.'),
+    evaluating: t`${ex.name} is weighing your answer…`,
+    self: t('Mark your answer as a strict examiner would.'),
+    pending: t('Your last answer is waiting to be marked.'),
+    verdict: t('That concludes the questions.'),
+    deliberating: t('The panel is conferring…'),
   }[phase] || '';
   const controls = (phase === 'think' || phase === 'answer') && shown && !shown.answered && vivaIsQuestionTurn(shown);
   const roomRules = [
-    speak ? 'Speak each answer aloud. Rostra records it, writes it down and hands the words to the examiner. The audio is not kept.' : doc.micFallback ? 'The microphone is not available, so you type your answers this time.' : 'You’re typing, so this checks what you know. It does not rehearse speaking.',
+    speak ? t('Speak each answer aloud. Rostra records it, writes it down and hands the words to the examiner. The audio is not kept.') : doc.micFallback ? t('The microphone is not available, so you type your answers this time.') : t('You’re typing, so this checks what you know. It does not rehearse speaking.'),
     vivaDiscipline(doc.discipline).room,
-    'Lead with your answer, then reason out loud.',
-    'Ask for clarification or a moment whenever you need one.',
-    'If you don’t know, say so, and reason from what you do know.',
+    t('Lead with your answer, then reason out loud.'),
+    t('Ask for clarification or a moment whenever you need one.'),
+    t('If you don’t know, say so, and reason from what you do know.'),
   ].filter(Boolean);
   return html`<div className="viva-room-wrap stack" style=${{ gap: 18 }}>
-    <section className=${'stage viva-room' + (over ? ' is-over' : '') + (closingPhase ? ' is-closing' : '')} data-phase=${phase} aria-label="Exam room">
+    <section className=${'stage viva-room' + (over ? ' is-over' : '') + (closingPhase ? ' is-closing' : '')} data-phase=${phase} aria-label=${t('Exam room')}>
       <header className="viva-room-top">
-        <div className="viva-room-id"><span className="inscr">Viva voce</span><b>${doc.subject}</b>${doc.source === 'offline' ? html`<span className="chip chip-sm">Offline · self-marked</span>` : null}</div>
+        <div className="viva-room-id"><span className="inscr">${t('Viva voce')}</span><b>${doc.subject}</b>${doc.source === 'offline' ? html`<span className="chip chip-sm">${t('Offline · self-marked')}</span>` : null}</div>
         <div className="viva-progress">
-          <span className="viva-qcount num">${closingPhase ? 'Verdict' : shown && shown.kind === 'warm' ? 'Warm-up' : shown && shown.kind === 'close' ? 'Closing question' : html`Question ${qi + 1} <i>of ${N}</i>`}</span>
-          ${followN ? html`<span className="chip chip-sm viva-follow-chip">Follow-up ${followN}${doc.practice ? ` · ${VIVA_FOLLOW_LABEL[shown.fType] || 'Probe'}` : ''}</span>` : null}
-          <div className="viva-progress-bar"><${MeanderBar} value=${N ? (answeredMains / N) * 100 : 0} color="var(--stage-gold)" height=${12} label=${`${answeredMains} of ${N} questions answered`} /></div>
+          <span className="viva-qcount num">${closingPhase ? t('Verdict') : shown && shown.kind === 'warm' ? t('Warm-up') : shown && shown.kind === 'close' ? t('Closing question') : html`${t`Question ${qi + 1}`} <i>${t`of ${N}`}</i>`}</span>
+          ${followN ? html`<span className="chip chip-sm viva-follow-chip">${t`Follow-up ${followN}`}${doc.practice ? ` · ${VIVA_FOLLOW_LABEL[shown.fType] || t('Probe')}` : ''}</span>` : null}
+          <div className="viva-progress-bar"><${MeanderBar} value=${N ? (answeredMains / N) * 100 : 0} color="var(--stage-gold)" height=${12} label=${t`${answeredMains} of ${N} questions answered`} /></div>
         </div>
         <div className="row" style=${{ gap: 6 }}>
-          ${Voice.ok ? html`<button className="btn btn-sm btn-icon" onClick=${toggleVoice} aria-label=${doc.voice ? 'Mute the examiners' : 'Let the examiners speak'} title=${doc.voice ? 'Mute the examiners' : 'Let the examiners speak'}><${Icon} name=${doc.voice ? 'volume' : 'volumeOff'} size=${16} /></button>` : null}
-          <button className="btn btn-sm" onClick=${() => setLeaving((v) => !v)} aria-expanded=${leaving}><${Icon} name="vivaDoor" size=${15} />Leave</button>
+          ${Voice.ok ? html`<button className="btn btn-sm btn-icon" onClick=${toggleVoice} aria-label=${doc.voice ? t('Mute the examiners') : t('Let the examiners speak')} title=${doc.voice ? t('Mute the examiners') : t('Let the examiners speak')}><${Icon} name=${doc.voice ? 'volume' : 'volumeOff'} size=${16} /></button>` : null}
+          <button className="btn btn-sm" onClick=${() => setLeaving((v) => !v)} aria-expanded=${leaving}><${Icon} name="vivaDoor" size=${15} />${t('Leave')}</button>
         </div>
       </header>
-      ${leaving ? html`<div className="viva-leave" role="group" aria-label="Leave the exam">
-        <span>Your exam is saved, with your draft and your clock as they are. You can resume it from the Oral exam page. Leaving is noted on your report.</span>
+      ${leaving ? html`<div className="viva-leave" role="group" aria-label=${t('Leave the exam')}>
+        <span>${t('Your exam is saved, with your draft and your clock as they are. You can resume it from the Oral exam page. Leaving is noted on your report.')}</span>
         <span className="row" style=${{ gap: 8 }}>
-          <button className="btn btn-sm" onClick=${leave}>Leave and resume later</button>
-          <button className="btn btn-sm" disabled=${!canEnd || closingPhase} onClick=${endEarly}>End now and get my report</button>
-          <button className="btn btn-sm btn-ghost" onClick=${() => setLeaving(false)}>Stay</button>
+          <button className="btn btn-sm" onClick=${leave}>${t('Leave and resume later')}</button>
+          <button className="btn btn-sm" disabled=${!canEnd || closingPhase} onClick=${endEarly}>${t('End now and get my report')}</button>
+          <button className="btn btn-sm btn-ghost" onClick=${() => setLeaving(false)}>${t('Stay')}</button>
         </span>
       </div>` : null}
       <${VivaBench} ids=${ids} active=${closingPhase ? null : shown && shown.examiner} speaking=${speaking} thinking=${thinking} entering=${entering} />
       <div className="viva-dais">
         <div className="viva-speech" aria-live="polite">
-          <div className="viva-speaker"><span className="inscr" style=${{ color: ex.light }}>${closingPhase ? ids.map((id) => vivaEx(id).name).join(' · ') : ex.name}</span><span className="viva-role">${closingPhase ? (ids.length > 1 ? 'The panel' : ex.role) : ex.role}</span></div>
+          <div className="viva-speaker"><span className="inscr" style=${{ color: ex.light }}>${closingPhase ? ids.map((id) => vivaEx(id).name).join(' · ') : ex.name}</span><span className="viva-role">${closingPhase ? (ids.length > 1 ? t('The panel') : ex.role) : ex.role}</span></div>
           ${phase === 'intro' ? html`<${Fragment}>
-            <p className="viva-q viva-q-intro">${turns.some((t) => t.answered) ? `Welcome back. We were on question ${qi + 1} of ${N}.` : doc.opening || ex.opening}</p>
+            <p className="viva-q viva-q-intro">${turns.some((t) => t.answered) ? t`Welcome back. We were on question ${qi + 1} of ${N}.` : doc.opening || ex.opening}</p>
             <ul className="viva-rules">${roomRules.map((rule) => html`<li key=${rule}>${rule}</li>`)}</ul>
-          <//>` : closingPhase ? html`<p className="viva-q">That concludes the examination.</p>` : shown ? html`<${Fragment}>
+          <//>` : closingPhase ? html`<p className="viva-q">${t('That concludes the examination.')}</p>` : shown ? html`<${Fragment}>
             ${shown.lead ? html`<p className="viva-lead">${shown.lead}</p>` : null}
             <p className="viva-q" onClick=${phase === 'asking' ? skipAsk : undefined}><${VivaTyped} key=${shown.id} text=${shown.q} play=${phase === 'asking' && !utter.skip || !!utter.replay} playKey=${utter.key} cps=${cps} delay=${phase === 'asking' && voiceOn && shown.lead ? shown.lead.length / cps : 0} onDone=${phase === 'asking' ? onTyped : undefined} /></p>
           <//>` : null}
@@ -2149,53 +2155,53 @@ function VivaRoom({ doc, startPhase }) {
         </div>
         <aside className="viva-clock">
           <${Klepsydra} total=${clock.full || clock.total} remaining=${clockOn ? left : clock.kind === 'answer' && phase !== 'asking' ? Math.min(left, clock.total) : clock.full || clock.total} size=${92} running=${running} />
-          <span className=${'viva-clock-label' + (over ? ' over' : '')}>${clockOn ? (clock.kind === 'think' ? 'Think' : over ? 'Over time' : 'Answer') : phase === 'asking' ? 'Listening' : '—'}</span>
+          <span className=${'viva-clock-label' + (over ? ' over' : '')}>${clockOn ? (clock.kind === 'think' ? t('Think') : over ? t('Over time') : t('Answer')) : phase === 'asking' ? t('Listening') : '—'}</span>
           ${doc.practice ? html`<${VivaMeter} doc=${doc} />` : null}
         </aside>
       </div>
       <div className="viva-lectern">
         <p className=${'viva-status' + (over ? ' over' : '')}>${!typedBox && phase === 'answer' ? html`<span className="viva-onair" aria-hidden="true"></span>` : null}${status}</p>
-        ${controls ? html`<div className="viva-controls" role="group" aria-label="Candidate controls">
-          <button className="chip" onClick=${repeat}><${Icon} name="repeat" size=${15} />Repeat the question</button>
-          <button className="chip" aria-expanded=${askOpen} disabled=${!!busy || vivaArr(shown.clarify).length >= 2} onClick=${() => setAskOpen((v) => !v)}>${busy === 'clarify' ? html`<span className="spin" style=${{ width: 14, height: 14 }}></span>` : html`<${Icon} name="help" size=${15} />`}Ask for clarification</button>
-          <button className="chip" disabled=${!!shown.moment} onClick=${takeMoment}><${Icon} name="hourglass" size=${15} />${shown.moment ? 'Moment taken' : 'I need a moment'}</button>
-          <button className="chip" disabled=${!!busy || vivaArr(shown.help).length >= 2} onClick=${() => interject('help')}>${busy === 'help' ? html`<span className="spin" style=${{ width: 14, height: 14 }}></span>` : html`<${Icon} name="bulb" size=${15} />`}I don’t know, help me reason</button>
+        ${controls ? html`<div className="viva-controls" role="group" aria-label=${t('Candidate controls')}>
+          <button className="chip" onClick=${repeat}><${Icon} name="repeat" size=${15} />${t('Repeat the question')}</button>
+          <button className="chip" aria-expanded=${askOpen} disabled=${!!busy || vivaArr(shown.clarify).length >= 2} onClick=${() => setAskOpen((v) => !v)}>${busy === 'clarify' ? html`<span className="spin" style=${{ width: 14, height: 14 }}></span>` : html`<${Icon} name="help" size=${15} />`}${t('Ask for clarification')}</button>
+          <button className="chip" disabled=${!!shown.moment} onClick=${takeMoment}><${Icon} name="hourglass" size=${15} />${shown.moment ? t('Moment taken') : t('I need a moment')}</button>
+          <button className="chip" disabled=${!!busy || vivaArr(shown.help).length >= 2} onClick=${() => interject('help')}>${busy === 'help' ? html`<span className="spin" style=${{ width: 14, height: 14 }}></span>` : html`<${Icon} name="bulb" size=${15} />`}${t('I don’t know, help me reason')}</button>
         </div>` : null}
         ${controls && askOpen ? html`<form className="viva-ask" onSubmit=${(e) => { e.preventDefault(); interject('clarify'); }}>
-          <input className="input" value=${askText} onInput=${(e) => setAskText(e.target.value)} placeholder="What should they clarify? Leave blank to ask for a rephrase." aria-label="Your clarification request" maxLength="300" />
-          <button className="btn btn-sm" type="submit">Ask</button>
+          <input className="input" value=${askText} onInput=${(e) => setAskText(e.target.value)} placeholder=${t('What should they clarify? Leave blank to ask for a rephrase.')} aria-label=${t('Your clarification request')} maxLength="300" />
+          <button className="btn btn-sm" type="submit">${t('Ask')}</button>
         </form>` : null}
-        ${controls && vivaArr(shown.help).length ? html`<p className="hint">Asking for help costs a few points on this question. Admitting a gap and reasoning on is still the strongest move.</p>` : null}
-        ${phase === 'intro' ? html`<div className="row" style=${{ gap: 10 }}><button className="btn-cta gold" onClick=${begin}><${Icon} name="play" size=${18} />${turns.some((t) => t.answered) ? 'Continue the exam' : 'Begin the exam'}</button><span className="hint">${speak ? 'Your browser will ask to use the microphone.' : voiceOn ? 'The examiners will speak. Turn your sound on.' : 'Questions appear as text.'}</span></div>` : null}
-        ${phase === 'asking' ? html`<button className="btn btn-sm" onClick=${skipAsk}>Skip to think time</button>` : null}
-        ${phase === 'think' ? html`<button className="btn-cta" onClick=${startAnswer}><${Icon} name=${!typedBox ? 'mic' : 'pen'} size=${18} />Start my answer now</button>` : null}
+        ${controls && vivaArr(shown.help).length ? html`<p className="hint">${t('Asking for help costs a few points on this question. Admitting a gap and reasoning on is still the strongest move.')}</p>` : null}
+        ${phase === 'intro' ? html`<div className="row" style=${{ gap: 10 }}><button className="btn-cta gold" onClick=${begin}><${Icon} name="play" size=${18} />${turns.some((t) => t.answered) ? t('Continue the exam') : t('Begin the exam')}</button><span className="hint">${speak ? t('Your browser will ask to use the microphone.') : voiceOn ? t('The examiners will speak. Turn your sound on.') : t('Questions appear as text.')}</span></div>` : null}
+        ${phase === 'asking' ? html`<button className="btn btn-sm" onClick=${skipAsk}>${t('Skip to think time')}</button>` : null}
+        ${phase === 'think' ? html`<button className="btn-cta" onClick=${startAnswer}><${Icon} name=${!typedBox ? 'mic' : 'pen'} size=${18} />${t('Start my answer now')}</button>` : null}
         ${phase === 'answer' && typedBox ? html`<div className="viva-answer">
-          <textarea ref=${boxRef} className="textarea viva-textarea" rows="6" value=${draft} onInput=${onBox} onKeyDown=${onBoxKey} onPaste=${onBoxPaste} placeholder=${doc.mode === 'dictate' ? 'Your dictated words appear here. Lead with your answer.' : 'Lead with your answer in one sentence. Then the reason, then an example.'} aria-label="Your answer"></textarea>
-          <div className="row-between"><span className="hint num">${wordsOf(draft).length} words · ⌘/Ctrl + Enter to submit</span><span className="row" style=${{ gap: 8 }}>
-            ${shown && shown.kind === 'warm' ? html`<button className="btn btn-sm" onClick=${() => submit({ skip: true })}>Skip the warm-up</button>` : null}
-            ${shown && shown.kind === 'close' ? html`<button className="btn btn-sm" onClick=${() => submit({ skip: true })}>Nothing to add</button>` : null}
-            <button className="btn-cta" disabled=${!wordsOf(draft).length || !!busy} onClick=${() => submit()}><${Icon} name="send" size=${17} />Submit answer</button>
+          <textarea ref=${boxRef} className="textarea viva-textarea" rows="6" value=${draft} onInput=${onBox} onKeyDown=${onBoxKey} onPaste=${onBoxPaste} placeholder=${doc.mode === 'dictate' ? t('Your dictated words appear here. Lead with your answer.') : t('Lead with your answer in one sentence. Then the reason, then an example.')} aria-label=${t('Your answer')}></textarea>
+          <div className="row-between"><span className="hint num">${t`${wordsOf(draft).length} words · ⌘/Ctrl + Enter to submit`}</span><span className="row" style=${{ gap: 8 }}>
+            ${shown && shown.kind === 'warm' ? html`<button className="btn btn-sm" onClick=${() => submit({ skip: true })}>${t('Skip the warm-up')}</button>` : null}
+            ${shown && shown.kind === 'close' ? html`<button className="btn btn-sm" onClick=${() => submit({ skip: true })}>${t('Nothing to add')}</button>` : null}
+            <button className="btn-cta" disabled=${!wordsOf(draft).length || !!busy} onClick=${() => submit()}><${Icon} name="send" size=${17} />${t('Submit answer')}</button>
           </span></div>
         </div>` : null}
         ${phase === 'answer' && !typedBox ? html`<div className="viva-mic" aria-live="off">
-          <div className="viva-mic-row"><span className="viva-mic-dot" aria-hidden="true"></span><span className="viva-mic-label">Recording · ${fmtTime(Math.max(0, (clock.full || clock.total) - left))}</span><span className="viva-mic-meter" role="img" aria-label="Microphone level"><span style=${{ transform: `scaleX(${Math.max(0.04, mic.level)})` }}></span></span></div>
+          <div className="viva-mic-row"><span className="viva-mic-dot" aria-hidden="true"></span><span className="viva-mic-label">${t`Recording · ${fmtTime(Math.max(0, (clock.full || clock.total) - left))}`}</span><span className="viva-mic-meter" role="img" aria-label=${t('Microphone level')}><span style=${{ transform: `scaleX(${Math.max(0.04, mic.level)})` }}></span></span></div>
           ${mic.live ? html`<p className="viva-mic-live">${vivaClip(mic.live, 400)}</p>` : null}
         </div>` : null}
-        ${phase === 'answer' && !typedBox && !shortAsk ? html`<button className="btn-cta" onClick=${() => finishSpeaking()}><${Icon} name="check" size=${18} />I’ve finished speaking</button>` : null}
-        ${phase === 'answer' && !typedBox && shortAsk ? html`<div className="viva-check" role="group" aria-label="Is that your full answer?"><p className="viva-check-q">Is that your full answer?</p><div className="row" style=${{ gap: 8 }}><button className="btn btn-sm" onClick=${() => setShortAsk(false)}>Keep speaking</button><button className="btn btn-sm" onClick=${() => finishSpeaking(true)}>Yes</button></div></div>` : null}
-        ${phase === 'transcribing' ? html`<div className="viva-weigh"><span className="spin"></span><span>Turning your ${fmtTime(R.spoken || 0)} of speech into text.</span></div>` : null}
+        ${phase === 'answer' && !typedBox && !shortAsk ? html`<button className="btn-cta" onClick=${() => finishSpeaking()}><${Icon} name="check" size=${18} />${t('I’ve finished speaking')}</button>` : null}
+        ${phase === 'answer' && !typedBox && shortAsk ? html`<div className="viva-check" role="group" aria-label=${t('Is that your full answer?')}><p className="viva-check-q">${t('Is that your full answer?')}</p><div className="row" style=${{ gap: 8 }}><button className="btn btn-sm" onClick=${() => setShortAsk(false)}>${t('Keep speaking')}</button><button className="btn btn-sm" onClick=${() => finishSpeaking(true)}>${t('Yes')}</button></div></div>` : null}
+        ${phase === 'transcribing' ? html`<div className="viva-weigh"><span className="spin"></span><span>${t`Turning your ${fmtTime(R.spoken || 0)} of speech into text.`}</span></div>` : null}
         ${phase === 'retype' ? html`<div className="viva-answer">
-          <textarea ref=${boxRef} className="textarea viva-textarea" rows="5" value=${draft} onInput=${onBox} onKeyDown=${onBoxKey} onPaste=${onBoxPaste} placeholder="What you said, as closely as you can." aria-label="What you said"></textarea>
-          <div className="row-between"><span className="hint num">${wordsOf(draft).length} words</span><button className="btn-cta" disabled=${!wordsOf(draft).length || !!busy} onClick=${() => submit({ text: draft })}><${Icon} name="send" size=${17} />Send to the examiner</button></div>
+          <textarea ref=${boxRef} className="textarea viva-textarea" rows="5" value=${draft} onInput=${onBox} onKeyDown=${onBoxKey} onPaste=${onBoxPaste} placeholder=${t('What you said, as closely as you can.')} aria-label=${t('What you said')}></textarea>
+          <div className="row-between"><span className="hint num">${t`${wordsOf(draft).length} words`}</span><button className="btn-cta" disabled=${!wordsOf(draft).length || !!busy} onClick=${() => submit({ text: draft })}><${Icon} name="send" size=${17} />${t('Send to the examiner')}</button></div>
         </div>` : null}
-        ${phase === 'evaluating' ? html`<div className="viva-weigh"><span className="spin"></span><span>Marking on accuracy, depth, reasoning and communication.</span></div>` : null}
+        ${phase === 'evaluating' ? html`<div className="viva-weigh"><span className="spin"></span><span>${t('Marking on accuracy, depth, reasoning and communication.')}</span></div>` : null}
         ${phase === 'self' && lastT ? html`<${VivaSelfMark} turn=${lastT} answers=${turns.filter((x) => x.qi === lastT.qi && x.answered && !x.eval).map((x) => x.answer)} offline=${doc.source === 'offline'} plan=${plan[lastT.qi]} marks=${marks} setMarks=${setMarks} covered=${covered} setCovered=${setCovered} reason=${selfReason} onSubmit=${recordSelf} />` : null}
         ${phase === 'pending' ? html`<div className="row" style=${{ gap: 10 }}>
-          ${doc.source === 'ai' && Store.state.ai !== 'off' ? html`<button className="btn-cta" onClick=${() => { const d = cur(); evaluate(d, d.turns.length - 1); }}><${Icon} name="send" size=${17} />Send it to the examiner</button>` : null}
-          <button className="btn" onClick=${() => { const d = cur(); selfRoute(d, d.turns.length - 1); }}>Mark it myself</button>
+          ${doc.source === 'ai' && Store.state.ai !== 'off' ? html`<button className="btn-cta" onClick=${() => { const d = cur(); evaluate(d, d.turns.length - 1); }}><${Icon} name="send" size=${17} />${t('Send it to the examiner')}</button>` : null}
+          <button className="btn" onClick=${() => { const d = cur(); selfRoute(d, d.turns.length - 1); }}>${t('Mark it myself')}</button>
         </div>` : null}
-        ${phase === 'verdict' ? html`<div className="row" style=${{ gap: 12 }}><button className="btn-cta gold" onClick=${finish}><${Icon} name="vivaSeal" size=${19} />Hear the verdict</button><span className="hint">${doc.source === 'ai' && Store.state.ai !== 'off' ? 'The panel writes your report: grade, gaps and flashcards.' : 'Your report is computed from your marks.'}</span></div>` : null}
-        ${phase === 'deliberating' ? html`<div className="viva-weigh"><span className="spin"></span><span>Weighing every answer. This takes a few seconds.</span></div>` : null}
+        ${phase === 'verdict' ? html`<div className="row" style=${{ gap: 12 }}><button className="btn-cta gold" onClick=${finish}><${Icon} name="vivaSeal" size=${19} />${t('Hear the verdict')}</button><span className="hint">${doc.source === 'ai' && Store.state.ai !== 'off' ? t('The panel writes your report: grade, gaps and flashcards.') : t('Your report is computed from your marks.')}</span></div>` : null}
+        ${phase === 'deliberating' ? html`<div className="viva-weigh"><span className="spin"></span><span>${t('Weighing every answer. This takes a few seconds.')}</span></div>` : null}
       </div>
     </section>
     <${VivaLog} doc=${doc} />
@@ -2208,16 +2214,16 @@ function VivaSelfMark({ turn, answers, offline, plan, marks, setMarks, covered, 
   const ready = VIVA_KEYS.every((k) => marks[k]);
   const toggle = (i) => setCovered((c) => (c.includes(i) ? c.filter((x) => x !== i) : [...c, i]));
   return html`<div className="viva-self">
-    <p className="small viva-self-why">${reason === 'error' ? 'The examiner couldn’t be reached, so mark this one yourself. Be as strict as they would be.' : 'Offline exam: you are the examiner now. Strict marks make the report useful.'}</p>
+    <p className="small viva-self-why">${reason === 'error' ? t('The examiner couldn’t be reached, so mark this one yourself. Be as strict as they would be.') : t('Offline exam: you are the examiner now. Strict marks make the report useful.')}</p>
     ${said.map((a, i) => html`<blockquote key=${i} className="viva-self-answer">${vivaClip(a, 600)}</blockquote>`)}
-    ${said.length > 1 ? html`<p className="small viva-self-why">These marks cover the question and its follow-up together.</p>` : null}
-    ${kp.length ? html`<div className="stack" style=${{ gap: 8 }}><span className="inscr">${offline ? 'Checklist for any answer of this kind · tap what you said' : 'A strong answer covers · tap what you said'}</span>
+    ${said.length > 1 ? html`<p className="small viva-self-why">${t('These marks cover the question and its follow-up together.')}</p>` : null}
+    ${kp.length ? html`<div className="stack" style=${{ gap: 8 }}><span className="inscr">${offline ? t('Checklist for any answer of this kind · tap what you said') : t('A strong answer covers · tap what you said')}</span>
       <div className="row" style=${{ gap: 6 }}>${kp.map((k, i) => html`<button key=${i} type="button" className="chip chip-sm viva-kp" aria-pressed=${covered.includes(i)} onClick=${() => toggle(i)}>${covered.includes(i) ? html`<${Icon} name="check" size=${13} stroke=${3} />` : null}${k}</button>`)}</div></div>` : null}
     <div className="viva-self-grid">${VIVA_RUBRIC.map((r) => html`<div key=${r.key} className="viva-self-row" role="group" aria-label=${r.full || r.name}>
       <div><b style=${{ color: r.stage }}>${r.full || r.name}</b><span className="tiny" style=${{ display: 'block', color: 'var(--stage-muted)' }}>${marks[r.key] ? r.levels[marks[r.key] - 1] : r.ask}</span></div>
-      <div className="viva-self-pips">${[1, 2, 3, 4, 5].map((m) => html`<button key=${m} type="button" aria-pressed=${marks[r.key] === m} aria-label=${`${m} of 5: ${r.levels[m - 1]}`} style=${{ '--c': r.stage }} onClick=${() => setMarks((x) => ({ ...x, [r.key]: m }))}>${m}</button>`)}</div>
+      <div className="viva-self-pips">${[1, 2, 3, 4, 5].map((m) => html`<button key=${m} type="button" aria-pressed=${marks[r.key] === m} aria-label=${t`${m} of 5: ${r.levels[m - 1]}`} style=${{ '--c': r.stage }} onClick=${() => setMarks((x) => ({ ...x, [r.key]: m }))}>${m}</button>`)}</div>
     </div>`)}</div>
-    <div className="row-between"><span className="hint">${ready ? `Your marks come to about ${Math.round(vivaWeighted(Object.fromEntries(VIVA_KEYS.map((k) => [k, VIVA_SELF_SCORES[marks[k] - 1]]))))}.` : 'Choose a mark for all four.'}</span><button className="btn-cta" disabled=${!ready} onClick=${onSubmit}><${Icon} name="check" size=${17} />Record my marks</button></div>
+    <div className="row-between"><span className="hint">${ready ? t`Your marks come to about ${Math.round(vivaWeighted(Object.fromEntries(VIVA_KEYS.map((k) => [k, VIVA_SELF_SCORES[marks[k] - 1]]))))}.` : t('Choose a mark for all four.')}</span><button className="btn-cta" disabled=${!ready} onClick=${onSubmit}><${Icon} name="check" size=${17} />${t('Record my marks')}</button></div>
   </div>`;
 }
 
@@ -2225,10 +2231,10 @@ function VivaLog({ doc }) {
   const done = vivaArr(doc.turns).filter((t) => t.answered);
   return html`<div className="viva-below">
     <details className="card viva-log">
-      <summary><span><span className="eyebrow">Transcript so far</span><b>${done.length ? plural(done.length, 'answer') : 'Nothing answered yet'}</b></span><${Icon} name="chevR" size=${18} className="viva-log-chev" /></summary>
-      ${done.length ? html`<ol className="viva-log-list">${done.map((t) => html`<li key=${t.id}><span className="tiny muted">${vivaTurnLabel(doc, t, !!doc.practice)} · ${vivaEx(t.examiner).name}</span><p className="viva-log-q">${t.q}</p><p className="small">${vivaClip(t.answer, 400) || (t.kind === 'warm' || t.kind === 'close' ? '(nothing to add)' : '(no answer)')}</p></li>`)}</ol>` : html`<p className="small muted">Your answers will collect here as you go.</p>`}
+      <summary><span><span className="eyebrow">${t('Transcript so far')}</span><b>${done.length ? tn(done.length, 'answer', 'answers') : t('Nothing answered yet')}</b></span><${Icon} name="chevR" size=${18} className="viva-log-chev" /></summary>
+      ${done.length ? html`<ol className="viva-log-list">${done.map((tu) => html`<li key=${tu.id}><span className="tiny muted">${vivaTurnLabel(doc, tu, !!doc.practice)} · ${vivaEx(tu.examiner).name}</span><p className="viva-log-q">${tu.q}</p><p className="small">${vivaClip(tu.answer, 400) || (tu.kind === 'warm' || tu.kind === 'close' ? t('(nothing to add)') : t('(no answer)'))}</p></li>`)}</ol>` : html`<p className="small muted">${t('Your answers will collect here as you go.')}</p>`}
     </details>
-    <div className="card-flat viva-tip"><span className="inscr">Room rules</span><p className="small">Answer first, then reason. Think out loud. If you don’t know, say so, bridge to what you do know, and reason from there.</p><button className="btn btn-sm btn-ghost" onClick=${() => go('lesson', 'v1')}>Read the technique lessons<${Icon} name="chevR" size=${14} /></button></div>
+    <div className="card-flat viva-tip"><span className="inscr">${t('Room rules')}</span><p className="small">${t('Answer first, then reason. Think out loud. If you don’t know, say so, bridge to what you do know, and reason from there.')}</p><button className="btn btn-sm btn-ghost" onClick=${() => go('lesson', 'v1')}>${t('Read the technique lessons')}<${Icon} name="chevR" size=${14} /></button></div>
   </div>`;
 }
 
@@ -2245,6 +2251,9 @@ function VivaVerdictLights({ percent }) {
   </svg>`;
 }
 
+/* Report vocabulary: the stored values are logic keys, these give the words shown on screen. */
+const vivaOutcomeText = (o) => ({ 'would pass comfortably': t('You would pass comfortably'), 'would pass': t('You would pass'), borderline: t('You are borderline'), 'would fail': t('You would fail'), 'no verdict': t('They could not reach a verdict') }[o] || o);
+const vivaGapStatus = (st) => ({ Closed: t('Closed'), 'Still open': t('Still open'), 'Not retested': t('Not retested') }[st] || st);
 const VivaFx = { release: null };
 function VivaReport({ doc }) {
   const r = doc.report;
@@ -2276,8 +2285,8 @@ function VivaReport({ doc }) {
   const cards = vivaArr(r.cards);
   const spokenExam = vivaIsSpoken(doc);
   const dictated = doc.mode === 'dictate' || spokenExam;
-  const commTitle = spokenExam ? 'How you sounded' : doc.mode === 'aloud' ? 'What you reported' : dictated ? 'How you sounded, from dictation' : 'How your answers read';
-  const modeChip = spokenExam ? 'Spoken and transcribed' : doc.mode === 'aloud' ? 'Spoken, marked from notes' : dictated ? 'Dictated' : 'Typed, not spoken';
+  const commTitle = spokenExam ? t('How you sounded') : doc.mode === 'aloud' ? t('What you reported') : dictated ? t('How you sounded, from dictation') : t('How your answers read');
+  const modeChip = spokenExam ? t('Spoken and transcribed') : doc.mode === 'aloud' ? t('Spoken, marked from notes') : dictated ? t('Dictated') : t('Typed, not spoken');
   const offlineExam = doc.source === 'offline';
   const prev = doc.retakeOf ? vivaArr(Store.state && Store.state.vivas).find((v) => v.id === doc.retakeOf) : null;
   const cmp = vivaRetakeCompare(doc, prev);
@@ -2285,148 +2294,148 @@ function VivaReport({ doc }) {
   const conduct = vivaConductNotes(doc);
   const concl = r.conclusion && r.conclusion.outcome ? r.conclusion : null;
   const extras = vivaArr(doc.turns).filter((t) => (t.kind === 'warm' || t.kind === 'close') && t.answered);
-  const line = r.source === 'self' && !incomplete ? 'You marked this yourself, so it counts as practice.' : g.line;
+  const line = r.source === 'self' && !incomplete ? t('You marked this yourself, so it counts as practice.') : g.line;
   const metrics = [
-    [`Led with the answer${m.answerFirstEstimated ? ' (estimated)' : ''}`, m.n ? `${m.answerFirst}/${m.n}` : '–', m.n && m.answerFirstRate >= 0.6 ? 'good' : 'warn'],
+    [m.answerFirstEstimated ? t('Led with the answer (estimated)') : t('Led with the answer'), m.n ? `${m.answerFirst}/${m.n}` : '–', m.n && m.answerFirstRate >= 0.6 ? 'good' : 'warn'],
     ...(spokenExam ? [
-      ['Pace', m.wpm ? `${m.wpm} wpm` : '–', m.wpm && (m.wpm > 175 || m.wpm < 100) ? 'warn' : 'good'],
-      ['Silences over 2 s', m.pausesLong != null ? m.pausesLong : '–', (m.pausesLong || 0) >= 3 ? 'warn' : 'good'],
+      [t('Pace'), m.wpm ? t`${m.wpm} wpm` : '–', m.wpm && (m.wpm > 175 || m.wpm < 100) ? 'warn' : 'good'],
+      [t('Silences over 2 s'), m.pausesLong != null ? m.pausesLong : '–', (m.pausesLong || 0) >= 3 ? 'warn' : 'good'],
     ] : []),
     ...(dictated ? [
-      ['Hedges', m.hedges != null ? m.hedges : '–', m.n && m.hedges / m.n >= 1.2 ? 'warn' : 'good'],
-      ['Filler words', m.fillers != null ? m.fillers : '–', (m.fillers || 0) >= 3 ? 'warn' : 'good'],
+      [t('Hedges'), m.hedges != null ? m.hedges : '–', m.n && m.hedges / m.n >= 1.2 ? 'warn' : 'good'],
+      [t('Filler words'), m.fillers != null ? m.fillers : '–', (m.fillers || 0) >= 3 ? 'warn' : 'good'],
     ] : []),
-    [doc.mode === 'aloud' ? 'Avg. words in notes' : 'Avg. words', m.avgWords || '–', ''],
-    ['Over time', m.overtimeCount != null ? m.overtimeCount : '–', m.overtimeCount ? 'warn' : 'good'],
-    ['Help asked', m.helps != null ? m.helps : '–', ''],
+    [doc.mode === 'aloud' ? t('Avg. words in notes') : t('Avg. words'), m.avgWords || '–', ''],
+    [t('Over time'), m.overtimeCount != null ? m.overtimeCount : '–', m.overtimeCount ? 'warn' : 'good'],
+    [t('Help asked'), m.helps != null ? m.helps : '–', ''],
   ];
   return html`<div className="viva-report stack" style=${{ gap: 22 }}>
     <section className=${'stage viva-verdict grade-' + vivaSlug(g.id)} aria-labelledby="viva-verdict-title">
       <${VivaVerdictLights} percent=${r.percent} />
-      <div className="viva-verdict-seal">${sealed ? html`<${VivaSeal} percent=${r.percent} grade=${r.grade} size=${210} stamp=${stamp} />` : html`<div className="viva-verdict-plain"><b className="num">${r.percent}</b><span>${incomplete ? `on the ${plural(r.answered, 'question')} you reached` : 'self-assessed'}</span></div>`}</div>
+      <div className="viva-verdict-seal">${sealed ? html`<${VivaSeal} percent=${r.percent} grade=${r.grade} size=${210} stamp=${stamp} />` : html`<div className="viva-verdict-plain"><b className="num">${r.percent}</b><span>${incomplete ? t`on the ${tn(r.answered, 'question', 'questions')} you reached` : t('self-assessed')}</span></div>`}</div>
       <div className="viva-verdict-text">
         <span className="viva-verdict-greek" lang="grc">${VIVA_GRADE_GREEK[g.id] || 'κρίσις'}</span>
-        <h1 id="viva-verdict-title">${incomplete ? 'Incomplete' : r.source === 'self' ? html`Self-assessed: <span className="num">${r.percent}</span>` : html`${g.id}<span className="viva-verdict-pct num"> · <${CountUp} value=${r.percent} />%</span>`}</h1>
+        <h1 id="viva-verdict-title">${incomplete ? t('Incomplete') : r.source === 'self' ? html`${t('Self-assessed:')} <span className="num">${r.percent}</span>` : html`${vivaGradeName(g.id)}<span className="viva-verdict-pct num"> · <${CountUp} value=${r.percent} />%</span>`}</h1>
         <p className="viva-verdict-line">${line}</p>
         <p className="viva-verdict-summary">${r.summary}</p>
         ${vivaArr(r.capNotes).map((c, i) => html`<p key=${i} className="viva-verdict-cap">${c}</p>`)}
-        ${r.correctionCredit ? html`<p className="viva-verdict-cap">Your closing correction earned ${r.correctionCredit} extra ${r.correctionCredit === 1 ? 'point' : 'points'}.</p>` : null}
+        ${r.correctionCredit ? html`<p className="viva-verdict-cap">${r.correctionCredit === 1 ? t('Your closing correction earned 1 extra point.') : t`Your closing correction earned ${r.correctionCredit} extra points.`}</p>` : null}
         <p className="viva-honesty">${vivaHonestyLine(doc)}</p>
         <div className="row" style=${{ gap: 6 }}>
           <span className="chip chip-sm">${doc.subject}</span>
           <span className="chip chip-sm">${vivaLevel(doc.level).label}</span>
           <span className="chip chip-sm">${vivaPersona(doc.persona).label}</span>
           <span className="chip chip-sm">${modeChip}</span>
-          ${r.partial ? html`<span className="chip chip-sm">Ended early · ${r.answered} of ${r.total}</span>` : null}
-          ${r.source === 'self' ? html`<span className="chip chip-sm">Self-marked: practice only</span>` : r.source === 'computed' ? html`<span className="chip chip-sm">Computed from your marks</span>` : null}
-          ${r.maxDifficulty ? html`<span className="chip chip-sm">Hardest question reached: level ${r.maxDifficulty} of 3</span>` : null}
-          ${cmp ? html`<span className="chip chip-sm">${cmp.delta === 0 ? 'No change' : (cmp.delta > 0 ? '+' : '−') + Math.abs(cmp.delta)} since your last attempt</span>` : null}
+          ${r.partial ? html`<span className="chip chip-sm">${t`Ended early · ${r.answered} of ${r.total}`}</span>` : null}
+          ${r.source === 'self' ? html`<span className="chip chip-sm">${t('Self-marked: practice only')}</span>` : r.source === 'computed' ? html`<span className="chip chip-sm">${t('Computed from your marks')}</span>` : null}
+          ${r.maxDifficulty ? html`<span className="chip chip-sm">${t`Hardest question reached: level ${r.maxDifficulty} of 3`}</span>` : null}
+          ${cmp ? html`<span className="chip chip-sm">${cmp.delta === 0 ? t('No change since your last attempt') : t`${(cmp.delta > 0 ? '+' : '−') + Math.abs(cmp.delta)} since your last attempt`}</span>` : null}
           ${r.xpEarned ? html`<span className="xp-earned">+${r.xpEarned} XP</span>` : null}
         </div>
       </div>
     </section>
     ${concl ? html`<section className="card viva-conclusion" aria-labelledby="viva-concl-title">
-      <div className="eyebrow">What a real examiner would conclude</div>
-      <h2 id="viva-concl-title">${concl.outcome === 'no verdict' ? 'They could not reach a verdict' : `You ${concl.outcome}`}</h2>
+      <div className="eyebrow">${t('What a real examiner would conclude')}</div>
+      <h2 id="viva-concl-title">${vivaOutcomeText(concl.outcome)}</h2>
       ${concl.why ? html`<p>${concl.why}</p>` : null}
       <dl className="viva-concl-grid">
-        ${concl.first_doubt ? html`<div><dt>The first thing they would go back to</dt><dd>${concl.first_doubt}</dd></div>` : null}
-        ${concl.ceiling ? html`<div><dt>Your ceiling</dt><dd>${concl.ceiling}</dd></div>` : null}
+        ${concl.first_doubt ? html`<div><dt>${t('The first thing they would go back to')}</dt><dd>${concl.first_doubt}</dd></div>` : null}
+        ${concl.ceiling ? html`<div><dt>${t('Your ceiling')}</dt><dd>${concl.ceiling}</dd></div>` : null}
       </dl>
     </section>` : null}
     ${r.defense ? html`<section className="card viva-conclusion" aria-labelledby="viva-defense-title">
-      <div className="eyebrow">Defending your own work</div>
-      <h2 id="viva-defense-title">Would an examiner believe this is your work? ${{ yes: 'Yes.', partly: 'Partly.', no: 'No.' }[r.defense.believe] || ''}</h2>
+      <div className="eyebrow">${t('Defending your own work')}</div>
+      <h2 id="viva-defense-title">${t('Would an examiner believe this is your work?')} ${{ yes: t('Yes.'), partly: t('Partly.'), no: t('No.') }[r.defense.believe] || ''}</h2>
       ${r.defense.why ? html`<p>${r.defense.why}</p>` : null}
     </section>` : null}
-    ${ladder ? html`<section className="card viva-conclusion" aria-label="Why ladder result">
-      <div className="eyebrow">Why ladder</div>
-      <h2>You held ${plural(ladder.held, 'level')}.</h2>
-      <p>${ladder.brokeAt ? `Your answer stopped holding at: ${ladder.brokeAt}` : 'Your answer never gave way in this round. Try a harder claim next.'}</p>
+    ${ladder ? html`<section className="card viva-conclusion" aria-label=${t('Why ladder result')}>
+      <div className="eyebrow">${t('Why ladder')}</div>
+      <h2>${t`You held ${tn(ladder.held, 'level', 'levels')}.`}</h2>
+      <p>${ladder.brokeAt ? t`Your answer stopped holding at: ${ladder.brokeAt}` : t('Your answer never gave way in this round. Try a harder claim next.')}</p>
     </section>` : null}
     ${cmp ? html`<section className="card viva-compare" aria-labelledby="viva-compare-title">
-      <div className="eyebrow">Retake</div>
-      <h2 id="viva-compare-title">Since your last attempt</h2>
+      <div className="eyebrow">${t('Retake')}</div>
+      <h2 id="viva-compare-title">${t('Since your last attempt')}</h2>
       <div className="viva-compare-rows">
-        <div className="viva-compare-row head"><span>Mark</span><span className="num">Then</span><span className="num">Now</span><span></span></div>
-        <div className="viva-compare-row"><b>Overall</b><span className="num">${cmp.was}</span><span className="num">${r.percent}</span><${Delta} value=${cmp.delta} /></div>
+        <div className="viva-compare-row head"><span>${t('Mark')}</span><span className="num">${t('Then')}</span><span className="num">${t('Now')}</span><span></span></div>
+        <div className="viva-compare-row"><b>${t('Overall')}</b><span className="num">${cmp.was}</span><span className="num">${r.percent}</span><${Delta} value=${cmp.delta} /></div>
         ${cmp.rubric.map((x) => html`<div key=${x.key} className="viva-compare-row"><span>${x.name}</span><span className="num">${x.was == null ? '–' : x.was}</span><span className="num">${x.now == null ? '–' : x.now}</span>${x.was != null && x.now != null ? html`<${Delta} value=${x.now - x.was} />` : html`<span></span>`}</div>`)}
       </div>
-      ${cmp.gaps.length ? html`<ul className="viva-gap-status">${cmp.gaps.map((gp, i) => html`<li key=${i}><span>${gp.concept}</span><span className=${'chip chip-sm ' + (gp.status === 'Closed' ? 'chip-good' : gp.status === 'Still open' ? 'chip-warn' : '')}>${gp.status}${gp.score != null ? ` · ${gp.score}` : ''}</span></li>`)}</ul>` : null}
+      ${cmp.gaps.length ? html`<ul className="viva-gap-status">${cmp.gaps.map((gp, i) => html`<li key=${i}><span>${gp.concept}</span><span className=${'chip chip-sm ' + (gp.status === 'Closed' ? 'chip-good' : gp.status === 'Still open' ? 'chip-warn' : '')}>${vivaGapStatus(gp.status)}${gp.score != null ? ` · ${gp.score}` : ''}</span></li>`)}</ul>` : null}
     </section>` : null}
     <div className="viva-actions">
-      ${cards.length ? html`<button className="btn-cta gold" onClick=${() => go('viva', doc.id + ':revise')}><${Icon} name="vivaCards" size=${18} />Revise ${plural(cards.length, 'card')}</button>` : null}
-      <button className="btn-cta" onClick=${retake}><${Icon} name="refresh" size=${18} />Retake on my gaps</button>
-      <button className="btn" onClick=${download}><${Icon} name="download" size=${16} />Download transcript</button>
-      <button className="btn btn-ghost" onClick=${() => go('viva')}>All exams</button>
+      ${cards.length ? html`<button className="btn-cta gold" onClick=${() => go('viva', doc.id + ':revise')}><${Icon} name="vivaCards" size=${18} />${t`Revise ${tn(cards.length, 'card', 'cards')}`}</button>` : null}
+      <button className="btn-cta" onClick=${retake}><${Icon} name="refresh" size=${18} />${t('Retake on my gaps')}</button>
+      <button className="btn" onClick=${download}><${Icon} name="download" size=${16} />${t('Download transcript')}</button>
+      <button className="btn btn-ghost" onClick=${() => go('viva')}>${t('All exams')}</button>
     </div>
     <div className="viva-report-grid">
       <section className="card stack" style=${{ gap: 14 }}>
-        <div><div className="eyebrow">Rubric</div><h2>How the marks break down</h2></div>
+        <div><div className="eyebrow">${t('Rubric')}</div><h2>${t('How the marks break down')}</h2></div>
         <${VivaRadar} rubric=${r.rubric} />
         <div className="stack" style=${{ gap: 10 }}>${VIVA_RUBRIC.map((k) => html`<div key=${k.key} className="viva-rub-row">
           <div className="row-between"><b>${k.full || k.name}</b><span className="num viva-rub-v" style=${{ color: k.color }}>${r.rubric[k.key]}</span></div>
           <${MeanderBar} value=${r.rubric[k.key]} color=${k.color} height=${12} label=${k.full || k.name} />
-          <span className="tiny muted">${k.key === 'communication' && doc.mode === 'aloud' ? 'Self-reported, because nobody heard you. ' : ''}${k.ask} Weight ${Math.round(k.w * 100)}%.</span>
+          <span className="tiny muted">${k.key === 'communication' && doc.mode === 'aloud' ? t('Self-reported, because nobody heard you.') + ' ' : ''}${k.ask} ${t`Weight ${Math.round(k.w * 100)}%.`}</span>
         </div>`)}</div>
-        <p className="tiny muted">Harder questions count for more in the overall mark. An accuracy below 50 can’t pass, and an accuracy below 70 or a depth below 60 can’t reach Distinction.</p>
-        ${conduct.length ? html`<div className="viva-conduct"><span className="inscr">What the room noted</span>${conduct.map((c, i) => html`<p key=${i} className="small">${c}</p>`)}</div>` : null}
+        <p className="tiny muted">${t('Harder questions count for more in the overall mark. An accuracy below 50 can’t pass, and an accuracy below 70 or a depth below 60 can’t reach Distinction.')}</p>
+        ${conduct.length ? html`<div className="viva-conduct"><span className="inscr">${t('What the room noted')}</span>${conduct.map((c, i) => html`<p key=${i} className="small">${c}</p>`)}</div>` : null}
       </section>
       <section className="card stack" style=${{ gap: 14 }}>
-        <div><div className="eyebrow">Communication</div><h2>${commTitle}</h2></div>
+        <div><div className="eyebrow">${t('Communication')}</div><h2>${commTitle}</h2></div>
         <div className="viva-metrics">${metrics.map(([l, v, tone]) => html`<div key=${l} className=${'viva-metric ' + tone}><b className="num">${v}</b><span className="tiny">${l}</span></div>`)}</div>
         <ul className="viva-notes">${vivaArr(r.commNotes).map((n, i) => html`<li key=${i}>${n}</li>`)}</ul>
         ${spokenExam ? html`<div className="viva-hear">
-          <span className="inscr">What was measured</span>
-          <p className="small">Pace, silences and filler words come from the recording of each answer, on your device. Filler words and silences over two seconds lower the communication mark by up to 12 points on that answer. Nothing about your voice was judged.</p>
+          <span className="inscr">${t('What was measured')}</span>
+          <p className="small">${t('Pace, silences and filler words come from the recording of each answer, on your device. Filler words and silences over two seconds lower the communication mark by up to 12 points on that answer. Nothing about your voice was judged.')}</p>
         </div>` : html`<div className="viva-hear">
-          <span className="inscr">Hear yourself</span>
-          <p className="small">Record your next exam on your phone, then bring the recording to Analyze for pace, pauses and pitch. That measures your delivery. Your content marks still come from the exam.</p>
-          <ul className="viva-notes small"><li>Did your first sentence answer the question?</li><li>Count your silences over five seconds.</li><li>Note where you restated the question.</li></ul>
-          <button className="btn btn-sm" onClick=${() => go('analyze')}><${Icon} name="wave" size=${15} />Analyze a recording</button>
+          <span className="inscr">${t('Hear yourself')}</span>
+          <p className="small">${t('Record your next exam on your phone, then bring the recording to Analyze for pace, pauses and pitch. That measures your delivery. Your content marks still come from the exam.')}</p>
+          <ul className="viva-notes small"><li>${t('Did your first sentence answer the question?')}</li><li>${t('Count your silences over five seconds.')}</li><li>${t('Note where you restated the question.')}</li></ul>
+          <button className="btn btn-sm" onClick=${() => go('analyze')}><${Icon} name="wave" size=${15} />${t('Analyze a recording')}</button>
         </div>`}
       </section>
     </div>
     ${vivaArr(r.panel).length ? html`<section className="stack" style=${{ gap: 12 }}>
-      <div><div className="eyebrow">From the panel</div><h2>${ids.length > 1 ? 'What each examiner said' : 'What your examiner said'}</h2></div>
+      <div><div className="eyebrow">${t('From the panel')}</div><h2>${ids.length > 1 ? t('What each examiner said') : t('What your examiner said')}</h2></div>
       <div className=${'viva-panel-notes n' + r.panel.length}>${r.panel.map((p) => { const e = vivaEx(p.examiner); return html`<figure key=${p.examiner} className="viva-panel-note">
         <${VivaNiche} ids=${[p.examiner]} size=${78} />
         <div><figcaption><span className="inscr" style=${{ color: e.tint }}>${e.name}</span><span className="small muted"> · ${e.role}</span></figcaption><blockquote>${p.comment}</blockquote></div>
       </figure>`; })}</div>
     </section>` : null}
     ${vivaArr(r.gaps).length ? html`<section className="stack" style=${{ gap: 12 }}>
-      <div><div className="eyebrow">Gaps to close</div><h2>Where the follow-ups found you out</h2></div>
+      <div><div className="eyebrow">${t('Gaps to close')}</div><h2>${t('Where the follow-ups found you out')}</h2></div>
       <div className="viva-gaps">${r.gaps.map((gp, i) => html`<article key=${i} className="card viva-gap">
         <span className="viva-gap-num">${toRoman(i + 1)}</span>
         <h3>${gp.concept}</h3>
         ${gp.missing ? html`<p className="small" style=${{ color: 'var(--ink-2)' }}>${gp.missing}</p>` : null}
-        ${gp.outline.length ? html`<div><span className="inscr" style=${{ color: 'var(--muted)' }}>${offlineExam ? 'Checklist for any answer of this kind' : 'Model answer outline'}</span><ol className="viva-outline">${gp.outline.map((s, k) => html`<li key=${k}>${s}</li>`)}</ol></div>` : null}
-        <button className="btn btn-sm btn-ghost" onClick=${() => Router.coach(`I’m preparing for an oral exam in ${doc.subject}. Quiz me on ${gp.concept}, one question at a time, and tell me what a strong spoken answer includes.`)}><${Icon} name="message" size=${15} />Practice this with the coach</button>
+        ${gp.outline.length ? html`<div><span className="inscr" style=${{ color: 'var(--muted)' }}>${offlineExam ? t('Checklist for any answer of this kind') : t('Model answer outline')}</span><ol className="viva-outline">${gp.outline.map((s, k) => html`<li key=${k}>${s}</li>`)}</ol></div>` : null}
+        <button className="btn btn-sm btn-ghost" onClick=${() => Router.coach(`I’m preparing for an oral exam in ${doc.subject}. Quiz me on ${gp.concept}, one question at a time, and tell me what a strong spoken answer includes.`)}><${Icon} name="message" size=${15} />${t('Practice this with the coach')}</button>
       </article>`)}</div>
     </section>` : null}
     <div className="grid-2">
-      ${vivaArr(r.strengths).length ? html`<section className="card stack" style=${{ gap: 10 }}><div><div className="eyebrow">Strengths</div><h2>Keep doing this</h2></div><ul className="viva-notes good">${r.strengths.map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></section>` : null}
-      ${vivaArr(r.next).length ? html`<section className="card stack" style=${{ gap: 10 }}><div><div className="eyebrow">Next steps</div><h2>Before the real exam</h2></div><ol className="viva-notes">${r.next.map((s, i) => html`<li key=${i}>${s}</li>`)}</ol></section>` : null}
+      ${vivaArr(r.strengths).length ? html`<section className="card stack" style=${{ gap: 10 }}><div><div className="eyebrow">${t('Strengths')}</div><h2>${t('Keep doing this')}</h2></div><ul className="viva-notes good">${r.strengths.map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></section>` : null}
+      ${vivaArr(r.next).length ? html`<section className="card stack" style=${{ gap: 10 }}><div><div className="eyebrow">${t('Next steps')}</div><h2>${t('Before the real exam')}</h2></div><ol className="viva-notes">${r.next.map((s, i) => html`<li key=${i}>${s}</li>`)}</ol></section>` : null}
     </div>
     <section className="card stack" style=${{ gap: 12 }}>
-      <div><div className="eyebrow">Transcript</div><h2>Question by question</h2></div>
-      <div className="viva-transcript">${extras.map((t) => html`<details key=${t.id} className="viva-tq">
-          <summary><span className="viva-tq-n num">·</span><span style=${{ minWidth: 0 }}><b>${t.kind === 'warm' ? 'Warm-up' : 'Closing question'}</b><span className="small muted" style=${{ display: 'block' }}>Not marked</span></span><span className="num viva-tq-score">–</span></summary>
-          <div className="viva-tq-body"><div className="viva-tq-turn"><p className="viva-tq-q">${t.q}</p><p className="viva-tq-a">${t.answer || (t.aloud ? 'You answered aloud.' : 'Nothing to add.')}</p></div></div>
+      <div><div className="eyebrow">${t('Transcript')}</div><h2>${t('Question by question')}</h2></div>
+      <div className="viva-transcript">${extras.map((tu) => html`<details key=${tu.id} className="viva-tq">
+          <summary><span className="viva-tq-n num">·</span><span style=${{ minWidth: 0 }}><b>${tu.kind === 'warm' ? t('Warm-up') : t('Closing question')}</b><span className="small muted" style=${{ display: 'block' }}>${t('Not marked')}</span></span><span className="num viva-tq-score">–</span></summary>
+          <div className="viva-tq-body"><div className="viva-tq-turn"><p className="viva-tq-q">${tu.q}</p><p className="viva-tq-a">${tu.answer || (tu.aloud ? t('You answered aloud.') : t('Nothing to add.'))}</p></div></div>
         </details>`)}${plan.map((p, qi) => {
-        const ts = vivaArr(doc.turns).filter((t) => t.qi === qi);
+        const ts = vivaArr(doc.turns).filter((tu) => tu.qi === qi);
         const pq = vivaArr(r.perQuestion).find((x) => x.qi === qi);
         return html`<details key=${qi} className="viva-tq">
-          <summary><span className="viva-tq-n num">${qi + 1}</span><span style=${{ minWidth: 0 }}><b>${p.concept}</b><span className="small muted" style=${{ display: 'block' }}>${ts.length ? `${vivaEx(p.examiner).name} · ${ts.filter((t) => t.kind === 'follow').length ? plural(ts.filter((t) => t.kind === 'follow').length, 'follow-up') : 'no follow-ups'}` : 'Not reached'}</span></span><span className="num viva-tq-score">${pq && pq.score != null ? pq.score : '–'}</span></summary>
-          <div className="viva-tq-body">${ts.length ? ts.map((t) => html`<div key=${t.id} className=${'viva-tq-turn ' + t.kind}>
-            <p className="viva-tq-q"><span className="inscr" style=${{ color: vivaEx(t.examiner).tint }}>${vivaEx(t.examiner).name}${t.kind === 'follow' ? ' · ' + (VIVA_FOLLOW_LABEL[t.fType] || 'Probe') : ''}</span>${t.q}</p>
-            ${vivaArr(t.clarify).map((c, k) => html`<p key=${'c' + k} className="small viva-tq-aside"><b>You asked for clarification.</b> ${c.reply}</p>`)}
-            ${vivaArr(t.help).map((h, k) => html`<p key=${'h' + k} className="small viva-tq-aside"><b>You asked for help reasoning.</b> ${h}</p>`)}
-            ${t.answered ? html`<p className="viva-tq-a"><span className="tiny muted">${t.aloud ? `You spoke for ${fmtTime(t.answerSec || 0)}, then jotted` : 'You answered'}${t.overtime > 3 ? ` · ${fmtTime(t.overtime)} over time` : ''}${t.overClaim ? ' · your notes hold more words than fit in that time' : ''}</span>${t.answer || '(no answer)'}</p>` : null}
-            ${t.eval && t.eval.scores ? html`<div className="viva-tq-marks">${VIVA_RUBRIC.map((k) => html`<span key=${k.key} className="viva-tq-mark" style=${{ '--c': k.color }}>${k.letter} <b className="num">${t.eval.scores[k.key]}</b></span>`)}${t.eval.self ? html`<span className="tiny muted">self-marked</span>` : null}</div>` : null}
-            ${t.eval && t.eval.notes && !t.eval.self ? html`<p className="small viva-tq-note"><b>Examiner’s note.</b> ${t.eval.notes}</p>` : null}
-            ${t.eval && t.eval.misconception ? html`<p className="small viva-tq-note warn"><b>Misconception.</b> ${t.eval.misconception}</p>` : null}
-          </div>`) : html`<p className="small muted">The exam ended before this question.</p>`}</div>
+          <summary><span className="viva-tq-n num">${qi + 1}</span><span style=${{ minWidth: 0 }}><b>${p.concept}</b><span className="small muted" style=${{ display: 'block' }}>${ts.length ? `${vivaEx(p.examiner).name} · ${ts.filter((tu) => tu.kind === 'follow').length ? tn(ts.filter((tu) => tu.kind === 'follow').length, 'follow-up', 'follow-ups') : t('no follow-ups')}` : t('Not reached')}</span></span><span className="num viva-tq-score">${pq && pq.score != null ? pq.score : '–'}</span></summary>
+          <div className="viva-tq-body">${ts.length ? ts.map((tu) => html`<div key=${tu.id} className=${'viva-tq-turn ' + tu.kind}>
+            <p className="viva-tq-q"><span className="inscr" style=${{ color: vivaEx(tu.examiner).tint }}>${vivaEx(tu.examiner).name}${tu.kind === 'follow' ? ' · ' + (VIVA_FOLLOW_LABEL[tu.fType] || t('Probe')) : ''}</span>${tu.q}</p>
+            ${vivaArr(tu.clarify).map((c, k) => html`<p key=${'c' + k} className="small viva-tq-aside"><b>${t('You asked for clarification.')}</b> ${c.reply}</p>`)}
+            ${vivaArr(tu.help).map((h, k) => html`<p key=${'h' + k} className="small viva-tq-aside"><b>${t('You asked for help reasoning.')}</b> ${h}</p>`)}
+            ${tu.answered ? html`<p className="viva-tq-a"><span className="tiny muted">${tu.aloud ? t`You spoke for ${fmtTime(tu.answerSec || 0)}, then jotted` : t('You answered')}${tu.overtime > 3 ? ` · ${t`${fmtTime(tu.overtime)} over time`}` : ''}${tu.overClaim ? ` · ${t('your notes hold more words than fit in that time')}` : ''}</span>${tu.answer || t('(no answer)')}</p>` : null}
+            ${tu.eval && tu.eval.scores ? html`<div className="viva-tq-marks">${VIVA_RUBRIC.map((k) => html`<span key=${k.key} className="viva-tq-mark" style=${{ '--c': k.color }}>${k.letter} <b className="num">${tu.eval.scores[k.key]}</b></span>`)}${tu.eval.self ? html`<span className="tiny muted">${t('self-marked')}</span>` : null}</div>` : null}
+            ${tu.eval && tu.eval.notes && !tu.eval.self ? html`<p className="small viva-tq-note"><b>${t('Examiner’s note.')}</b> ${tu.eval.notes}</p>` : null}
+            ${tu.eval && tu.eval.misconception ? html`<p className="small viva-tq-note warn"><b>${t('Misconception.')}</b> ${tu.eval.misconception}</p>` : null}
+          </div>`) : html`<p className="small muted">${t('The exam ended before this question.')}</p>`}</div>
         </details>`;
       })}</div>
     </section>
@@ -2440,8 +2449,8 @@ function VivaRevise({ doc, initial }) {
   const [pos, setPos] = useState((initial && initial.pos) || 0);
   const [flip, setFlip] = useState(!!(initial && initial.flip));
   const [res, setRes] = useState((initial && initial.res) || {});
-  const backBtn = html`<button className="btn btn-sm" onClick=${() => go('viva', doc.id)}><${Icon} name="arrowL" size=${15} />Back to the report</button>`;
-  if (!cards.length) return html`<div className="card empty"><${Icon} name="vivaCards" size=${30} /><h2>No flashcards for this exam</h2>${backBtn}</div>`;
+  const backBtn = html`<button className="btn btn-sm" onClick=${() => go('viva', doc.id)}><${Icon} name="arrowL" size=${15} />${t('Back to the report')}</button>`;
+  if (!cards.length) return html`<div className="card empty"><${Icon} name="vivaCards" size=${30} /><h2>${t('No flashcards for this exam')}</h2>${backBtn}</div>`;
   const done = pos >= order.length;
   const idx = order[Math.min(pos, order.length - 1)];
   const card = cards[idx];
@@ -2466,29 +2475,29 @@ function VivaRevise({ doc, initial }) {
   }
   const again = (list) => { setOrder(list); setPos(0); setFlip(false); setRes({}); };
   return html`<div className="viva-revise stack" style=${{ gap: 18 }}>
-    <div className="sec-head"><div><div className="eyebrow">Revise · ${doc.subject}</div><h1>${done ? 'Round complete' : `Card ${pos + 1} of ${order.length}`}</h1></div>${backBtn}</div>
-    <${MeanderBar} value=${(Math.min(pos, order.length) / order.length) * 100} color="var(--gold)" height=${14} label="Revision progress" />
+    <div className="sec-head"><div><div className="eyebrow">${t`Revise · ${doc.subject}`}</div><h1>${done ? t('Round complete') : t`Card ${pos + 1} of ${order.length}`}</h1></div>${backBtn}</div>
+    <${MeanderBar} value=${(Math.min(pos, order.length) / order.length) * 100} color="var(--gold)" height=${14} label=${t('Revision progress')} />
     ${done ? html`<section className="card viva-revise-done">
       <${Icon} name="vivaCards" size=${34} />
-      <h2>${known === order.length ? 'You knew every card.' : `You knew ${known} of ${order.length}.`}</h2>
-      <p className="muted">${missed.length ? 'Go again with the ones you missed while they are fresh. Say each answer out loud before you flip.' : 'Retake the exam on your gaps when you are ready, or go through the deck once more tomorrow.'}</p>
+      <h2>${known === order.length ? t('You knew every card.') : t`You knew ${known} of ${order.length}.`}</h2>
+      <p className="muted">${missed.length ? t('Go again with the ones you missed while they are fresh. Say each answer out loud before you flip.') : t('Retake the exam on your gaps when you are ready, or go through the deck once more tomorrow.')}</p>
       <div className="row" style=${{ gap: 10, justifyContent: 'center' }}>
-        ${missed.length ? html`<button className="btn-cta gold" onClick=${() => again(missed)}><${Icon} name="repeat" size=${17} />Go again with ${missed.length}</button>` : null}
-        <button className="btn" onClick=${() => again(shuffle(cards.map((_, i) => i)))}>Shuffle all and restart</button>
+        ${missed.length ? html`<button className="btn-cta gold" onClick=${() => again(missed)}><${Icon} name="repeat" size=${17} />${t`Go again with ${missed.length}`}</button>` : null}
+        <button className="btn" onClick=${() => again(shuffle(cards.map((_, i) => i)))}>${t('Shuffle all and restart')}</button>
         ${backBtn}
       </div>
     </section>` : html`<${Fragment}>
-      <button className=${'viva-card' + (flip ? ' is-flipped' : '')} onClick=${() => setFlip((v) => !v)} aria-pressed=${flip} aria-label=${flip ? `Answer: ${card.a} Activate to see the question.` : `Question: ${card.q} Activate to see the answer.`}>
+      <button className=${'viva-card' + (flip ? ' is-flipped' : '')} onClick=${() => setFlip((v) => !v)} aria-pressed=${flip} aria-label=${flip ? t`Answer: ${card.a} Activate to see the question.` : t`Question: ${card.q} Activate to see the answer.`}>
         <span className="viva-card-inner">
-          <span className="viva-card-face front"><span className="inscr">Question</span><span className="viva-card-text">${card.q}</span><span className="tiny viva-card-hint">Say your answer aloud, then flip</span></span>
-          <span className="viva-card-face back"><span className="inscr">A strong answer</span><span className="viva-card-text small-text">${card.a}</span></span>
+          <span className="viva-card-face front"><span className="inscr">${t('Question')}</span><span className="viva-card-text">${card.q}</span><span className="tiny viva-card-hint">${t('Say your answer aloud, then flip')}</span></span>
+          <span className="viva-card-face back"><span className="inscr">${t('A strong answer')}</span><span className="viva-card-text small-text">${card.a}</span></span>
         </span>
       </button>
       <div className="row" style=${{ justifyContent: 'center', gap: 10 }}>
-        ${flip ? html`<button className="btn-cta pathos" onClick=${() => mark(false)}><${Icon} name="x" size=${17} />Not yet</button><button className="btn-cta logos" onClick=${() => mark(true)}><${Icon} name="check" size=${17} />I knew it</button>`
-          : html`<button className="btn-cta" onClick=${() => setFlip(true)}><${Icon} name="refresh" size=${17} />Flip the card</button>`}
+        ${flip ? html`<button className="btn-cta pathos" onClick=${() => mark(false)}><${Icon} name="x" size=${17} />${t('Not yet')}</button><button className="btn-cta logos" onClick=${() => mark(true)}><${Icon} name="check" size=${17} />${t('I knew it')}</button>`
+          : html`<button className="btn-cta" onClick=${() => setFlip(true)}><${Icon} name="refresh" size=${17} />${t('Flip the card')}</button>`}
       </div>
-      <p className="hint" style=${{ textAlign: 'center' }}>${known} known · ${Object.values(res).filter((v) => v === false).length} to review</p>
+      <p className="hint" style=${{ textAlign: 'center' }}>${t`${known} known · ${Object.values(res).filter((v) => v === false).length} to review`}</p>
     <//>`}
   </div>`;
 }
@@ -2498,75 +2507,75 @@ function VivaRevise({ doc, initial }) {
    ================================================================ */
 const VIVA_LESSONS = [
   {
-    id: 'v1', pole: 'logos', title: 'Answer first, then reason', minutes: 4,
+    id: 'v1', pole: 'logos', title: t('Answer first, then reason'), minutes: 4,
     concept: [
-      'In an oral exam the examiner hears your first sentence most clearly. If it is “So, um, there are a lot of factors…”, they start to doubt you before you have said anything wrong. Put your answer in the first sentence, then spend the rest of your time earning it.',
-      'Two structures make this automatic. BLUF (bottom line up front): state the conclusion, then the support. PREP: Point, Reason, Example, Point again. A PREP answer to “Why does ice float?” sounds like this: “Ice floats because it is less dense than liquid water. Hydrogen bonds lock the molecules into an open lattice that takes up more space. That is why lakes freeze from the top down. So floating comes down to density, and the density comes from the lattice.”',
+      t('In an oral exam the examiner hears your first sentence most clearly. If it is “So, um, there are a lot of factors…”, they start to doubt you before you have said anything wrong. Put your answer in the first sentence, then spend the rest of your time earning it.'),
+      t('Two structures make this automatic. BLUF (bottom line up front): state the conclusion, then the support. PREP: Point, Reason, Example, Point again. A PREP answer to “Why does ice float?” sounds like this: “Ice floats because it is less dense than liquid water. Hydrogen bonds lock the molecules into an open lattice that takes up more space. That is why lakes freeze from the top down. So floating comes down to density, and the density comes from the lattice.”'),
     ],
     terms: [
-      { term: 'BLUF', def: 'Bottom line up front: the conclusion in your first sentence, the support after it.' },
-      { term: 'PREP', def: 'Point, Reason, Example, Point. Four moves that make any answer easy to follow.' },
-      { term: 'Signposting', def: 'Short markers like “first”, “the reason is” and “for example” that let the listener track your structure.' },
+      { term: t('BLUF'), def: t('Bottom line up front: the conclusion in your first sentence, the support after it.') },
+      { term: t('PREP'), def: t('Point, Reason, Example, Point. Four moves that make any answer easy to follow.') },
+      { term: t('Signposting'), def: t('Short markers like “first”, “the reason is” and “for example” that let the listener track your structure.') },
     ],
-    example: { quote: 'A house divided against itself cannot stand. I believe this government cannot endure, permanently half slave and half free.', who: 'Abraham Lincoln, Springfield, 1858', note: 'Two short sentences carry the whole thesis. The rest of the speech is the proof, so listeners always know where he is heading.' },
+    example: { quote: 'A house divided against itself cannot stand. I believe this government cannot endure, permanently half slave and half free.', who: 'Abraham Lincoln, Springfield, 1858', note: t('Two short sentences carry the whole thesis. The rest of the speech is the proof, so listeners always know where he is heading.') },
     quiz: [
-      { q: 'The examiner asks: “Is the Carnot efficiency achievable in a real engine?” Which opening is answer-first?', options: ['“That’s a great question, and there are many factors to consider.”', '“No. Every real engine has irreversibilities, such as friction and finite-rate heat transfer, so it falls short of Carnot.”', '“So, um, Carnot was a French engineer in the 1820s…”', '“It depends on what you mean by real.”'], answer: 1, why: 'It gives the answer in one word, then the reason. The examiner knows your position at once and can probe the reasoning.' },
-      { q: 'In PREP, what comes after the Example?', options: ['A new, unrelated point', 'An apology for running long', 'The Point again, restated in light of the example', 'A question back to the examiner'], answer: 2, why: 'Returning to the point closes the loop and shows that the example proved what you claimed.' },
+      { q: t('The examiner asks: “Is the Carnot efficiency achievable in a real engine?” Which opening is answer-first?'), options: [t('“That’s a great question, and there are many factors to consider.”'), t('“No. Every real engine has irreversibilities, such as friction and finite-rate heat transfer, so it falls short of Carnot.”'), t('“So, um, Carnot was a French engineer in the 1820s…”'), t('“It depends on what you mean by real.”')], answer: 1, why: t('It gives the answer in one word, then the reason. The examiner knows your position at once and can probe the reasoning.') },
+      { q: t('In PREP, what comes after the Example?'), options: [t('A new, unrelated point'), t('An apology for running long'), t('The Point again, restated in light of the example'), t('A question back to the examiner')], answer: 2, why: t('Returning to the point closes the loop and shows that the example proved what you claimed.') },
     ],
-    drill: 'Pick a concept from your course. Write a four-sentence PREP answer to “Why does it work?”: Point, Reason, Example, Point. Then read it aloud in under 40 seconds.',
+    drill: t('Pick a concept from your course. Write a four-sentence PREP answer to “Why does it work?”: Point, Reason, Example, Point. Then read it aloud in under 40 seconds.'),
   },
   {
-    id: 'v2', pole: 'logos', title: 'Think out loud', minutes: 4,
+    id: 'v2', pole: 'logos', title: t('Think out loud'), minutes: 4,
     concept: [
-      'Oral exams grade how you reason as well as what you remember. Thirty seconds of silence followed by a final answer hides the part the examiner most wants to see. Narrate your thinking instead: what you know, what you are assuming, what you are checking.',
-      'A good think-aloud has three moves. Name the principle you will use. Take one step at a time, saying why each step follows. Check the result against something you trust, like units, a limiting case or a rough estimate. If you go wrong, the examiner can see where and steer you, and the steps you got right still earn credit.',
+      t('Oral exams grade how you reason as well as what you remember. Thirty seconds of silence followed by a final answer hides the part the examiner most wants to see. Narrate your thinking instead: what you know, what you are assuming, what you are checking.'),
+      t('A good think-aloud has three moves. Name the principle you will use. Take one step at a time, saying why each step follows. Check the result against something you trust, like units, a limiting case or a rough estimate. If you go wrong, the examiner can see where and steer you, and the steps you got right still earn credit.'),
     ],
     terms: [
-      { term: 'Narrated reasoning', def: 'Saying each step and its justification as you go, so the examiner can follow and credit it.' },
-      { term: 'Sanity check', def: 'Testing a result against units, extreme cases or an estimate before you commit to it.' },
-      { term: 'Assumption flag', def: 'Saying out loud what you are taking for granted, such as “assuming no friction”.' },
+      { term: t('Narrated reasoning'), def: t('Saying each step and its justification as you go, so the examiner can follow and credit it.') },
+      { term: t('Sanity check'), def: t('Testing a result against units, extreme cases or an estimate before you commit to it.') },
+      { term: t('Assumption flag'), def: t('Saying out loud what you are taking for granted, such as “assuming no friction”.') },
     ],
-    example: { quote: 'I don’t remember the formula, so let me rebuild it. Energy is conserved, so the heat in has to equal the work done plus the change in internal energy. If no heat gets in and the gas does work, its internal energy must drop, so it cools. That matches how air rushing out of a tyre valve feels cold, so I trust it.', who: 'Classroom example, a thermodynamics viva', note: 'The candidate names the principle, reasons one step at a time, then checks against real life. With the formula forgotten, every step still earns credit.' },
+    example: { quote: t('I don’t remember the formula, so let me rebuild it. Energy is conserved, so the heat in has to equal the work done plus the change in internal energy. If no heat gets in and the gas does work, its internal energy must drop, so it cools. That matches how air rushing out of a tyre valve feels cold, so I trust it.'), who: t('Classroom example, a thermodynamics viva'), note: t('The candidate names the principle, reasons one step at a time, then checks against real life. With the formula forgotten, every step still earns credit.') },
     quiz: [
-      { q: 'You blank on a formula halfway through an answer. What is the strongest move?', options: ['Stay silent until it comes back', 'Guess a formula confidently and move on', 'Say you don’t remember it, and rebuild it out loud from a principle you trust', 'Ask to skip the question'], answer: 2, why: 'Rebuilding from first principles shows understanding, and the examiner can credit each correct step.' },
-      { q: 'Which of these is a sanity check?', options: ['Repeating the question back', 'Checking that the units of your answer match the quantity asked for', 'Speaking faster to fit more in', 'Listing every formula you know'], answer: 1, why: 'Units, limiting cases and rough estimates catch errors before the examiner does.' },
+      { q: t('You blank on a formula halfway through an answer. What is the strongest move?'), options: [t('Stay silent until it comes back'), t('Guess a formula confidently and move on'), t('Say you don’t remember it, and rebuild it out loud from a principle you trust'), t('Ask to skip the question')], answer: 2, why: t('Rebuilding from first principles shows understanding, and the examiner can credit each correct step.') },
+      { q: t('Which of these is a sanity check?'), options: [t('Repeating the question back'), t('Checking that the units of your answer match the quantity asked for'), t('Speaking faster to fit more in'), t('Listing every formula you know')], answer: 1, why: t('Units, limiting cases and rough estimates catch errors before the examiner does.') },
     ],
-    drill: 'Take one problem from your course and solve it out loud: the principle, each step, and one sanity check. Then write down the three sentences you said that carried the most reasoning.',
+    drill: t('Take one problem from your course and solve it out loud: the principle, each step, and one sanity check. Then write down the three sentences you said that carried the most reasoning.'),
   },
   {
-    id: 'v3', pole: 'ethos', title: 'Say “I don’t know” with integrity', minutes: 3,
+    id: 'v3', pole: 'ethos', title: t('Say “I don’t know” with integrity'), minutes: 3,
     concept: [
-      'Every oral exam reaches the edge of what you know. That is by design: examiners push until they find it, and how you behave there is part of the grade. Bluffing is the worst option. A single follow-up exposes it, and then the examiner starts to doubt your earlier answers too.',
-      'Use a three-part recovery. Admit the edge plainly: “I don’t know that result.” Bridge to what you do know: “What I do know is…”. Then reason toward the gap: “So I would expect…, and I would check it by…”. Examiners hear honesty plus reasoning, and they often help you the rest of the way.',
+      t('Every oral exam reaches the edge of what you know. That is by design: examiners push until they find it, and how you behave there is part of the grade. Bluffing is the worst option. A single follow-up exposes it, and then the examiner starts to doubt your earlier answers too.'),
+      t('Use a three-part recovery. Admit the edge plainly: “I don’t know that result.” Bridge to what you do know: “What I do know is…”. Then reason toward the gap: “So I would expect…, and I would check it by…”. Examiners hear honesty plus reasoning, and they often help you the rest of the way.'),
     ],
     terms: [
-      { term: 'The edge', def: 'The point where your knowledge runs out. Examiners look for it on purpose.' },
-      { term: 'Bridge', def: 'A sentence that moves from what you don’t know to the nearest thing you do.' },
-      { term: 'Bluff', def: 'A confident answer you can’t support. Follow-up questions expose it fast.' },
+      { term: t('The edge'), def: t('The point where your knowledge runs out. Examiners look for it on purpose.') },
+      { term: t('Bridge'), def: t('A sentence that moves from what you don’t know to the nearest thing you do.') },
+      { term: t('Bluff'), def: t('A confident answer you can’t support. Follow-up questions expose it fast.') },
     ],
-    example: { quote: 'he knows nothing, and thinks that he knows; I neither know nor think that I know.', who: 'Socrates, in Plato’s Apology (trans. Benjamin Jowett)', note: 'Socrates counts knowing the limits of his knowledge as a kind of wisdom. In a viva, naming your edge honestly earns more trust than a bluff.' },
+    example: { quote: 'he knows nothing, and thinks that he knows; I neither know nor think that I know.', who: 'Socrates, in Plato’s Apology (trans. Benjamin Jowett)', note: t('Socrates counts knowing the limits of his knowledge as a kind of wisdom. In a viva, naming your edge honestly earns more trust than a bluff.') },
     quiz: [
-      { q: 'An examiner asks about a result you have never seen. Which reply is strongest?', options: ['Make up a plausible answer and say it confidently', '“I don’t know that result. What I do know is the conservation law behind it, so I would expect…”', '“We didn’t cover that in class.”', 'Stay quiet and wait for the next question'], answer: 1, why: 'It admits the edge, bridges to known ground, and starts reasoning. That is exactly what an oral exam is testing.' },
-      { q: 'Why is bluffing especially risky in an oral exam?', options: ['Examiners can’t hear confident answers', 'Written exams punish it more', 'One follow-up can expose it, and then the examiner doubts your other answers too', 'It is fine as long as you speak quickly'], answer: 2, why: 'Follow-ups exist to test claims. A caught bluff costs you credibility across the whole exam.' },
+      { q: t('An examiner asks about a result you have never seen. Which reply is strongest?'), options: [t('Make up a plausible answer and say it confidently'), t('“I don’t know that result. What I do know is the conservation law behind it, so I would expect…”'), t('“We didn’t cover that in class.”'), t('Stay quiet and wait for the next question')], answer: 1, why: t('It admits the edge, bridges to known ground, and starts reasoning. That is exactly what an oral exam is testing.') },
+      { q: t('Why is bluffing especially risky in an oral exam?'), options: [t('Examiners can’t hear confident answers'), t('Written exams punish it more'), t('One follow-up can expose it, and then the examiner doubts your other answers too'), t('It is fine as long as you speak quickly')], answer: 2, why: t('Follow-ups exist to test claims. A caught bluff costs you credibility across the whole exam.') },
     ],
-    drill: 'Write three questions from your course you could not fully answer today. For each, write a recovery: one sentence admitting the edge, one bridge to what you know, and one sentence of reasoning toward the answer.',
+    drill: t('Write three questions from your course you could not fully answer today. For each, write a recovery: one sentence admitting the edge, one bridge to what you know, and one sentence of reasoning toward the answer.'),
   },
   {
-    id: 'v4', pole: 'ethos', title: 'Recover, and hold your ground', minutes: 4,
+    id: 'v4', pole: 'ethos', title: t('Recover, and hold your ground'), minutes: 4,
     concept: [
-      'Examiners challenge answers for two reasons: because you are wrong, or to see whether you can defend what is right. Treat both the same way at first. Pause, restate the challenge in your own words, and re-check your reasoning out loud.',
-      'If you find a mistake, correct it cleanly: “You’re right, I had the sign wrong. With that fixed, the result is…”. A quick, clear correction counts in your favour. If your reasoning holds, defend it calmly with evidence: “I still think it’s true, because…”. Changing a correct answer under pressure is one of the commonest ways to lose marks.',
+      t('Examiners challenge answers for two reasons: because you are wrong, or to see whether you can defend what is right. Treat both the same way at first. Pause, restate the challenge in your own words, and re-check your reasoning out loud.'),
+      t('If you find a mistake, correct it cleanly: “You’re right, I had the sign wrong. With that fixed, the result is…”. A quick, clear correction counts in your favour. If your reasoning holds, defend it calmly with evidence: “I still think it’s true, because…”. Changing a correct answer under pressure is one of the commonest ways to lose marks.'),
     ],
     terms: [
-      { term: 'Clean correction', def: 'Name the error, fix it, and carry on, all in two sentences.' },
-      { term: 'Steelman', def: 'Restate the examiner’s challenge in its strongest form before you answer it.' },
-      { term: 'Holding ground', def: 'Defending a correct answer with evidence instead of folding under pressure.' },
+      { term: t('Clean correction'), def: t('Name the error, fix it, and carry on, all in two sentences.') },
+      { term: t('Steelman'), def: t('Restate the examiner’s challenge in its strongest form before you answer it.') },
+      { term: t('Holding ground'), def: t('Defending a correct answer with evidence instead of folding under pressure.') },
     ],
-    example: { quote: 'I shall try to correct errors when shown to be errors; and I shall adopt new views so fast as they shall appear to be true views.', who: 'Abraham Lincoln, letter to Horace Greeley, 1862', note: 'Lincoln ties changing his mind to evidence. Correct an error the moment it is shown, and hold firm until it is.' },
+    example: { quote: 'I shall try to correct errors when shown to be errors; and I shall adopt new views so fast as they shall appear to be true views.', who: 'Abraham Lincoln, letter to Horace Greeley, 1862', note: t('Lincoln ties changing his mind to evidence. Correct an error the moment it is shown, and hold firm until it is.') },
     quiz: [
-      { q: 'The examiner says, “Are you sure? I think that’s wrong.” What should you do first?', options: ['Change your answer immediately', 'Pause, restate the challenge, and re-check your reasoning out loud', 'Repeat your answer more loudly', 'Apologise and move on'], answer: 1, why: 'Re-checking shows composure. It either surfaces a real error or lets you defend the answer with evidence.' },
-      { q: 'You realise you made a sign error two minutes ago. The best response is:', options: ['Hope the examiner didn’t notice', 'Start the whole answer again from scratch', '“I need to correct something: I had the sign wrong. With that fixed, the result is…”', 'Say the error doesn’t matter'], answer: 2, why: 'A quick, clean correction shows you check your own work, which examiners value highly.' },
+      { q: t('The examiner says, “Are you sure? I think that’s wrong.” What should you do first?'), options: [t('Change your answer immediately'), t('Pause, restate the challenge, and re-check your reasoning out loud'), t('Repeat your answer more loudly'), t('Apologise and move on')], answer: 1, why: t('Re-checking shows composure. It either surfaces a real error or lets you defend the answer with evidence.') },
+      { q: t('You realise you made a sign error two minutes ago. The best response is:'), options: [t('Hope the examiner didn’t notice'), t('Start the whole answer again from scratch'), t('“I need to correct something: I had the sign wrong. With that fixed, the result is…”'), t('Say the error doesn’t matter')], answer: 2, why: t('A quick, clean correction shows you check your own work, which examiners value highly.') },
     ],
-    drill: 'Pick an answer you are confident about. Write the strongest challenge an examiner could make to it. Then write two replies: a clean correction, as if the challenge were right, and a calm defense with evidence, as if it were wrong.',
+    drill: t('Pick an answer you are confident about. Write the strongest challenge an examiner could make to it. Then write two replies: a clean correction, as if the challenge were right, and a calm defense with evidence, as if it were wrong.'),
   },
 ];

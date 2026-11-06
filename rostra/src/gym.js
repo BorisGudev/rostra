@@ -16,25 +16,25 @@ Object.assign(ICONS, {
 
 /* ---------- Stations ---------- */
 const GYM_STATIONS = [
-  { id: 'breath', roman: 'I', name: 'Triangle Breathing', short: 'Breathing', icon: 'wind', mins: '1–2 min', color: 'var(--ethos)', stat: 'rounds breathed', blurb: 'Follow a light around three sides of breath to steady your nerves before you speak.' },
-  { id: 'warmup', roman: 'II', name: 'Vocal Warm-up', short: 'Warm-up', icon: 'mic', mins: '3 min', color: 'var(--gold)', stat: 'warm-ups done', blurb: 'Six guided exercises in the mirror: posture, lips, pitch, jaw, resonance and projection.' },
-  { id: 'twisters', roman: 'III', name: 'Tongue Twisters', short: 'Twisters', icon: 'repeat', mins: '2 min', color: 'var(--logos)', stat: 'clean rounds', blurb: 'Say each word as it lights up. Stay clean to unlock faster tempos.' },
-  { id: 'impromptu', roman: 'IV', name: 'Impromptu Roulette', short: 'Roulette', icon: 'gymWheel', mins: '3 min', color: 'var(--pathos)', stat: 'impromptus spoken', blurb: 'Spin for a topic, think for thirty seconds, then take the floor.' },
-  { id: 'lab', roman: 'V', name: 'Device Lab', short: 'Device Lab', icon: 'gymPrism', mins: '2 min', color: 'var(--violet)', stat: 'lines crafted', blurb: 'Turn a plain sentence into one that lands, with a classic rhetorical device.' },
+  { id: 'breath', roman: 'I', name: t('Triangle Breathing'), short: t('Breathing'), icon: 'wind', mins: t('1–2 min'), color: 'var(--ethos)', stat: t('rounds breathed'), blurb: t('Follow a light around three sides of breath to steady your nerves before you speak.') },
+  { id: 'warmup', roman: 'II', name: t('Vocal Warm-up'), short: t('Warm-up'), icon: 'mic', mins: t('3 min'), color: 'var(--gold)', stat: t('warm-ups done'), blurb: t('Six guided exercises in the mirror: posture, lips, pitch, jaw, resonance and projection.') },
+  { id: 'twisters', roman: 'III', name: t('Tongue Twisters'), short: t('Twisters'), icon: 'repeat', mins: t('2 min'), color: 'var(--logos)', stat: t('clean rounds'), blurb: t('Say each word as it lights up. Stay clean to unlock faster tempos.') },
+  { id: 'impromptu', roman: 'IV', name: t('Impromptu Roulette'), short: t('Roulette'), icon: 'gymWheel', mins: t('3 min'), color: 'var(--pathos)', stat: t('impromptus spoken'), blurb: t('Spin for a topic, think for thirty seconds, then take the floor.') },
+  { id: 'lab', roman: 'V', name: t('Device Lab'), short: t('Device Lab'), icon: 'gymPrism', mins: t('2 min'), color: 'var(--violet)', stat: t('lines crafted'), blurb: t('Turn a plain sentence into one that lands, with a classic rhetorical device.') },
 ];
 const gymStation = (id) => GYM_STATIONS.find((s) => s.id === id) || GYM_STATIONS[0];
 const gymNextStation = (id) => { const i = GYM_STATIONS.findIndex((s) => s.id === id); return GYM_STATIONS[(i + 1) % GYM_STATIONS.length]; };
 
 /* ---------- I. Breathing ---------- */
 const GYM_BREATH_PRESETS = [
-  { id: 'even', name: 'Even', phases: [4, 4, 4], note: 'Equal sides. Simple and steady, a good first try.' },
-  { id: 'settle', name: 'Settle', phases: [4, 2, 6], note: 'A longer exhale than inhale, which can slow your heart rate.' },
-  { id: 'deep', name: 'Deep calm', phases: [4, 7, 8], note: 'The classic 4-7-8. Slow, deep and very calming.' },
+  { id: 'even', name: t('Even'), phases: [4, 4, 4], note: t('Equal sides. Simple and steady, a good first try.') },
+  { id: 'settle', name: t('Settle'), phases: [4, 2, 6], note: t('A longer exhale than inhale, which can slow your heart rate.') },
+  { id: 'deep', name: t('Deep calm'), phases: [4, 7, 8], note: t('The classic 4-7-8. Slow, deep and very calming.') },
 ];
 const GYM_BREATH_CUES = [
-  { word: 'Breathe in', sub: 'through your nose', color: 'var(--stage-ethos)' },
-  { word: 'Hold', sub: 'soft shoulders, still throat', color: 'var(--stage-logos)' },
-  { word: 'Breathe out', sub: 'slowly, through your mouth', color: 'var(--stage-pathos)' },
+  { word: t('Breathe in'), sub: t('through your nose'), color: 'var(--stage-ethos)' },
+  { word: t('Hold'), sub: t('soft shoulders, still throat'), color: 'var(--stage-logos)' },
+  { word: t('Breathe out'), sub: t('slowly, through your mouth'), color: 'var(--stage-pathos)' },
 ];
 const GYM_BREATH_LEAD = 3;
 /* Inverted triangle: rise up the left side, hold across the top, fall down the right. */
@@ -43,19 +43,19 @@ const GYM_TRI_C = [200, (330 + 64 + 64) / 3];
 
 /* ---------- II. Vocal warm-up ---------- */
 const GYM_WARMUP = [
-  { id: 'posture', title: 'Posture check', how: ['Stand with your feet hip-width apart and your knees soft.', 'Let your shoulders drop away from your ears.', 'Imagine a thread lifting the crown of your head.'], feel: 'You should feel tall and loose, with nothing locked.', say: 'Stand tall. Feet apart, knees soft. Let your shoulders drop, and imagine a thread lifting the top of your head.' },
-  { id: 'trills', title: 'Lip trills', how: ['Close your lips loosely and blow air through them so they flutter.', 'Slide the sound up and down, like a motorboat changing gear.', 'If your lips stick, press a fingertip into each cheek.'], feel: 'A tickle on your lips means your breath is doing the work.', say: 'Blow air through loose lips so they flutter, like a motorboat. Slide the sound up and down.' },
-  { id: 'siren', title: 'Humming siren', how: ['Hum on “mmm” at your lowest comfortable note.', 'Glide slowly up to your highest note, then back down.', 'Keep the glide smooth, with no jumps or breaks.'], feel: 'The buzz should travel from your chest up into your face.', say: 'Hum from your lowest note, glide slowly up to your highest, and back down, like a siren.' },
-  { id: 'jaw', title: 'Jaw release', how: ['Rest your palms on your cheeks and massage slowly downwards.', 'Let your jaw hang open, heavy and relaxed.', 'Say “yah, yah, yah” with a loose, floppy jaw.'], feel: 'A loose jaw makes room for a fuller sound.', say: 'Palms on your cheeks. Massage downwards and let your jaw hang open. Say yah, yah, yah.' },
-  { id: 'resonance', title: 'Resonance', how: ['Say “mum, mum, mum” and feel the buzz on your lips.', 'Then chant “mee, may, mah, moh, moo” on one note.', 'Aim the sound at the front of your face.'], feel: 'A forward buzz carries further without extra effort.', say: 'Say mum, mum, mum. Then mee, may, mah, moh, moo, on one note. Feel the buzz at the front of your face.' },
-  { id: 'project', title: 'Projection count', how: ['Count from one to ten out loud.', 'Get a little louder on each number, powered from your belly.', 'Send “ten” to the back wall of the room.'], feel: 'Loud and relaxed is the goal. Ease off if your throat tightens.', say: 'Count from one to ten, a little louder each time, and send ten to the back wall.' },
+  { id: 'posture', title: t('Posture check'), how: [t('Stand with your feet hip-width apart and your knees soft.'), t('Let your shoulders drop away from your ears.'), t('Imagine a thread lifting the crown of your head.')], feel: t('You should feel tall and loose, with nothing locked.'), say: t('Stand tall. Feet apart, knees soft. Let your shoulders drop, and imagine a thread lifting the top of your head.') },
+  { id: 'trills', title: t('Lip trills'), how: [t('Close your lips loosely and blow air through them so they flutter.'), t('Slide the sound up and down, like a motorboat changing gear.'), t('If your lips stick, press a fingertip into each cheek.')], feel: t('A tickle on your lips means your breath is doing the work.'), say: t('Blow air through loose lips so they flutter, like a motorboat. Slide the sound up and down.') },
+  { id: 'siren', title: t('Humming siren'), how: [t('Hum on “mmm” at your lowest comfortable note.'), t('Glide slowly up to your highest note, then back down.'), t('Keep the glide smooth, with no jumps or breaks.')], feel: t('The buzz should travel from your chest up into your face.'), say: t('Hum from your lowest note, glide slowly up to your highest, and back down, like a siren.') },
+  { id: 'jaw', title: t('Jaw release'), how: [t('Rest your palms on your cheeks and massage slowly downwards.'), t('Let your jaw hang open, heavy and relaxed.'), t('Say “yah, yah, yah” with a loose, floppy jaw.')], feel: t('A loose jaw makes room for a fuller sound.'), say: t('Palms on your cheeks. Massage downwards and let your jaw hang open. Say yah, yah, yah.') },
+  { id: 'resonance', title: t('Resonance'), how: [t('Say “mum, mum, mum” and feel the buzz on your lips.'), t('Then chant “mee, may, mah, moh, moo” on one note.'), t('Aim the sound at the front of your face.')], feel: t('A forward buzz carries further without extra effort.'), say: t('Say mum, mum, mum. Then mee, may, mah, moh, moo, on one note. Feel the buzz at the front of your face.') },
+  { id: 'project', title: t('Projection count'), how: [t('Count from one to ten out loud.'), t('Get a little louder on each number, powered from your belly.'), t('Send “ten” to the back wall of the room.')], feel: t('Loud and relaxed is the goal. Ease off if your throat tightens.'), say: t('Count from one to ten, a little louder each time, and send ten to the back wall.') },
 ];
 
 /* ---------- III. Tongue twisters (traditional) ---------- */
 const GYM_TIERS = [
-  { id: 0, name: 'Warm', desc: 'Short and friendly' },
-  { id: 1, name: 'Steady', desc: 'Classic workouts' },
-  { id: 2, name: 'Fierce', desc: 'For nimble tongues' },
+  { id: 0, name: t('Warm'), desc: t('Short and friendly') },
+  { id: 1, name: t('Steady'), desc: t('Classic workouts') },
+  { id: 2, name: t('Fierce'), desc: t('For nimble tongues') },
 ];
 const GYM_TWISTERS = [
   { id: 't01', tier: 0, focus: 'R · L', text: 'Red lorry, yellow lorry.' },
@@ -92,11 +92,11 @@ const GYM_TWISTERS = [
   { id: 't32', tier: 2, focus: 'V · L', text: 'Seventy-seven benevolent elephants.' },
 ];
 const GYM_PACES = [
-  { id: 'slow', name: 'Slow', sps: 2.5 },
-  { id: 'steady', name: 'Steady', sps: 3.5 },
-  { id: 'brisk', name: 'Brisk', sps: 4.5 },
-  { id: 'quick', name: 'Quick', sps: 5.5 },
-  { id: 'blaze', name: 'Blazing', sps: 6.5 },
+  { id: 'slow', name: t('Slow'), sps: 2.5 },
+  { id: 'steady', name: t('Steady'), sps: 3.5 },
+  { id: 'brisk', name: t('Brisk'), sps: 4.5 },
+  { id: 'quick', name: t('Quick'), sps: 5.5 },
+  { id: 'blaze', name: t('Blazing'), sps: 6.5 },
 ];
 const GYM_TW_REPS = 3;
 const GYM_TW_STREAK = 2;
@@ -106,16 +106,16 @@ const gymVoiceRate = (sps) => clamp(sps / 3.6, 0.6, 1.8);
 
 /* ---------- IV. Impromptu roulette ---------- */
 const GYM_CATS = [
-  { id: 'story', name: 'Story', c: 'var(--gym-w0)', structs: ['scr', 'ppf'] },
-  { id: 'opinion', name: 'Opinion', c: 'var(--gym-w1)', structs: ['prep', 'wsn'] },
-  { id: 'tribute', name: 'Tribute', c: 'var(--gym-w2)', structs: ['ppf', 'scr'] },
-  { id: 'explain', name: 'Explain', c: 'var(--gym-w3)', structs: ['wsn', 'ppf', 'prep'] },
-  { id: 'persuade', name: 'Persuade', c: 'var(--gym-w4)', structs: ['psb', 'prep'] },
-  { id: 'future', name: 'Future', c: 'var(--gym-w5)', structs: ['ppf', 'wsn'] },
-  { id: 'absurd', name: 'Absurd', c: 'var(--gym-w6)', structs: ['prep', 'scr', 'psb'] },
-  { id: 'pitch', name: 'Pitch', c: 'var(--gym-w7)', structs: ['psb', 'prep'] },
-  { id: 'toast', name: 'Toast', c: 'var(--gym-w8)', structs: ['ppf', 'scr'] },
-  { id: 'debate', name: 'Debate', c: 'var(--gym-w9)', structs: ['prep', 'psb'] },
+  { id: 'story', name: t('Story'), c: 'var(--gym-w0)', structs: ['scr', 'ppf'] },
+  { id: 'opinion', name: t('Opinion'), c: 'var(--gym-w1)', structs: ['prep', 'wsn'] },
+  { id: 'tribute', name: t('Tribute'), c: 'var(--gym-w2)', structs: ['ppf', 'scr'] },
+  { id: 'explain', name: t('Explain'), c: 'var(--gym-w3)', structs: ['wsn', 'ppf', 'prep'] },
+  { id: 'persuade', name: t('Persuade'), c: 'var(--gym-w4)', structs: ['psb', 'prep'] },
+  { id: 'future', name: t('Future'), c: 'var(--gym-w5)', structs: ['ppf', 'wsn'] },
+  { id: 'absurd', name: t('Absurd'), c: 'var(--gym-w6)', structs: ['prep', 'scr', 'psb'] },
+  { id: 'pitch', name: t('Pitch'), c: 'var(--gym-w7)', structs: ['psb', 'prep'] },
+  { id: 'toast', name: t('Toast'), c: 'var(--gym-w8)', structs: ['ppf', 'scr'] },
+  { id: 'debate', name: t('Debate'), c: 'var(--gym-w9)', structs: ['prep', 'psb'] },
 ];
 const GYM_PROMPTS = {
   story: [
@@ -230,42 +230,42 @@ const GYM_PROMPTS = {
   ],
 };
 const GYM_STRUCTS = {
-  prep: { id: 'prep', name: 'PREP', parts: [{ n: 'Point', h: 'Say your view in one line.' }, { n: 'Reason', h: 'Give the main reason.' }, { n: 'Example', h: 'One concrete example or story.' }, { n: 'Point', h: 'Repeat your view, sharper.' }] },
-  ppf: { id: 'ppf', name: 'Past · Present · Future', parts: [{ n: 'Past', h: 'Where it started.' }, { n: 'Present', h: 'Where it stands now.' }, { n: 'Future', h: 'Where it goes next.' }] },
-  psb: { id: 'psb', name: 'Problem · Solution · Benefit', parts: [{ n: 'Problem', h: 'Name the pain.' }, { n: 'Solution', h: 'Offer the fix.' }, { n: 'Benefit', h: 'Show the payoff.' }] },
-  wsn: { id: 'wsn', name: 'What · So what · Now what', parts: [{ n: 'What', h: 'What it is or what happened.' }, { n: 'So what', h: 'Why it matters.' }, { n: 'Now what', h: 'What we should do.' }] },
-  scr: { id: 'scr', name: 'Situation · Complication · Resolution', parts: [{ n: 'Situation', h: 'Set the scene.' }, { n: 'Complication', h: 'What went wrong.' }, { n: 'Resolution', h: 'How it ended, and the lesson.' }] },
+  prep: { id: 'prep', name: t('PREP'), parts: [{ n: t('Point'), h: t('Say your view in one line.') }, { n: t('Reason'), h: t('Give the main reason.') }, { n: t('Example'), h: t('One concrete example or story.') }, { n: t('Point'), h: t('Repeat your view, sharper.') }] },
+  ppf: { id: 'ppf', name: t('Past · Present · Future'), parts: [{ n: t('Past'), h: t('Where it started.') }, { n: t('Present'), h: t('Where it stands now.') }, { n: t('Future'), h: t('Where it goes next.') }] },
+  psb: { id: 'psb', name: t('Problem · Solution · Benefit'), parts: [{ n: t('Problem'), h: t('Name the pain.') }, { n: t('Solution'), h: t('Offer the fix.') }, { n: t('Benefit'), h: t('Show the payoff.') }] },
+  wsn: { id: 'wsn', name: t('What · So what · Now what'), parts: [{ n: t('What'), h: t('What it is or what happened.') }, { n: t('So what'), h: t('Why it matters.') }, { n: t('Now what'), h: t('What we should do.') }] },
+  scr: { id: 'scr', name: t('Situation · Complication · Resolution'), parts: [{ n: t('Situation'), h: t('Set the scene.') }, { n: t('Complication'), h: t('What went wrong.') }, { n: t('Resolution'), h: t('How it ended, and the lesson.') }] },
 };
 const GYM_REVIEW_DIMS = [
-  { id: 'structure', name: 'Structure', ask: 'Did it have a clear shape?', c: 'var(--ethos)' },
-  { id: 'clarity', name: 'Clarity', ask: 'Could a stranger follow it?', c: 'var(--logos)' },
-  { id: 'confidence', name: 'Confidence', ask: 'Did you sound sure of yourself?', c: 'var(--pathos)' },
-  { id: 'pace', name: 'Pace', ask: 'Steady, with real pauses?', c: 'var(--gold)' },
+  { id: 'structure', name: t('Structure'), ask: t('Did it have a clear shape?'), c: 'var(--ethos)' },
+  { id: 'clarity', name: t('Clarity'), ask: t('Could a stranger follow it?'), c: 'var(--logos)' },
+  { id: 'confidence', name: t('Confidence'), ask: t('Did you sound sure of yourself?'), c: 'var(--pathos)' },
+  { id: 'pace', name: t('Pace'), ask: t('Steady, with real pauses?'), c: 'var(--gold)' },
 ];
-const GYM_RATE_WORDS = ['', 'Rough', 'Shaky', 'Okay', 'Good', 'Great'];
+const GYM_RATE_WORDS = ['', t('Rough'), t('Shaky'), t('Okay'), t('Good'), t('Great')];
 const GYM_REVIEW_TIPS = {
-  structure: { praise: 'Your round had a shape the audience could follow.', tip: (s) => `Next spin, say your ${s.parts[0].n.toLowerCase()} in the very first sentence, then announce each part as you reach it.` },
-  clarity: { praise: 'You kept it clear enough for a stranger to follow.', tip: () => 'Next spin, pick one example and stay with it. One vivid example beats three quick ones.' },
-  confidence: { praise: 'You sounded like you meant it.', tip: () => 'Next spin, plant your feet, look at one spot, and finish your first sentence before you think about the second.' },
-  pace: { praise: 'Your pace gave the ideas room to land.', tip: () => 'Next spin, pause for a full breath after your opening line and before your last one.' },
+  structure: { praise: t('Your round had a shape the audience could follow.'), tip: (s) => t`Next spin, say your ${s.parts[0].n.toLowerCase()} in the very first sentence, then announce each part as you reach it.` },
+  clarity: { praise: t('You kept it clear enough for a stranger to follow.'), tip: () => t('Next spin, pick one example and stay with it. One vivid example beats three quick ones.') },
+  confidence: { praise: t('You sounded like you meant it.'), tip: () => t('Next spin, plant your feet, look at one spot, and finish your first sentence before you think about the second.') },
+  pace: { praise: t('Your pace gave the ideas room to land.'), tip: () => t('Next spin, pause for a full breath after your opening line and before your last one.') },
 };
 
 /* ---------- V. Device lab ---------- */
 const GYM_DEVICES = {
-  anaphora: { name: 'Anaphora', greek: 'ἀναφορά', def: 'Repeating the same opening words at the start of each clause or sentence.', recipe: 'Pick a strong phrase and start three short sentences with it.', checks: ['Do two or more clauses start with the same words?', 'Do the repeated words carry the main idea?'] },
-  epistrophe: { name: 'Epistrophe', greek: 'ἐπιστροφή', def: 'Repeating the same word or words at the end of each clause.', recipe: 'End two or three clauses on the same word so it rings.', checks: ['Do your clauses end on the same word?', 'Is that word the one you want them to remember?'] },
-  antithesis: { name: 'Antithesis', greek: 'ἀντίθεσις', def: 'Setting opposite ideas side by side in balanced phrases.', recipe: 'Find the two opposites, then give both halves the same grammar.', checks: ['Are the two halves opposites?', 'Do both halves have the same shape and length?'] },
-  chiasmus: { name: 'Chiasmus', greek: 'χιασμός', def: 'Repeating ideas in reverse order: A then B, then B then A.', recipe: 'Write the first half, then swap its two key words in the second half.', checks: ['Do two key words appear twice?', 'Does their order flip in the second half?'] },
-  tricolon: { name: 'Tricolon', greek: 'τρίκωλον', def: 'A series of three parallel words, phrases or clauses.', recipe: 'Say it in three beats with the same shape, and put the strongest last.', checks: ['Are there exactly three items?', 'Do they share the same grammatical shape?'] },
-  question: { name: 'Rhetorical question', greek: 'ἐρώτημα', def: 'A question asked for effect, where the answer is already clear.', recipe: 'Turn your claim into a question the audience can only answer one way.', checks: ['Is it a question?', 'Is there only one sensible answer?'] },
-  hypophora: { name: 'Hypophora', greek: 'ὑποφορά', def: 'Asking a question and then answering it yourself.', recipe: 'Ask the question your audience is thinking, then answer it in one line.', checks: ['Do you ask a real question?', 'Do you answer it straight away?'] },
-  metaphor: { name: 'Metaphor', greek: 'μεταφορά', def: 'Describing one thing as if it were another, to make it vivid.', recipe: 'Find a picture that shares the feeling, and say it is that picture.', checks: ['Do you say one thing is another, with no “like” or “as”?', 'Can the audience see the picture?'] },
-  simile: { name: 'Simile', greek: null, def: 'Comparing two things using “like” or “as”.', recipe: 'Finish the line “it was like…” with something concrete and surprising.', checks: ['Do you use “like” or “as”?', 'Is the comparison concrete and fresh?'] },
-  alliteration: { name: 'Alliteration', greek: null, def: 'Starting nearby words with the same sound.', recipe: 'Choose a sound and find three strong words that begin with it.', checks: ['Do three nearby words start with the same sound?', 'Does it still sound natural out loud?'] },
-  climax: { name: 'Climax', greek: 'κλῖμαξ', def: 'Arranging ideas in order of rising importance, step by step.', recipe: 'List your steps from small to big, and let the last one land hardest.', checks: ['Does each step get bigger?', 'Is the last step the strongest?'] },
-  asyndeton: { name: 'Asyndeton', greek: 'ἀσύνδετον', def: 'Leaving out the conjunctions between items to make them fast and urgent.', recipe: 'Cut every “and”, keep the commas, and speed up.', checks: ['Have you removed the “and”s?', 'Does it feel faster?'] },
-  polysyndeton: { name: 'Polysyndeton', greek: 'πολυσύνδετον', def: 'Repeating “and” or “or” between items to build weight.', recipe: 'Join every item with “and” so the list feels endless.', checks: ['Is every item joined by “and” or “or”?', 'Does the list feel heavier?'] },
-  litotes: { name: 'Litotes', greek: 'λιτότης', def: 'Understating something by denying its opposite.', recipe: 'Say it is “no small thing” or “not bad at all” instead of praising it outright.', checks: ['Do you deny the opposite (“no small”, “not bad”)?', 'Does the understatement make it stronger?'] },
+  anaphora: { name: t('Anaphora'), greek: 'ἀναφορά', def: t('Repeating the same opening words at the start of each clause or sentence.'), recipe: t('Pick a strong phrase and start three short sentences with it.'), checks: [t('Do two or more clauses start with the same words?'), t('Do the repeated words carry the main idea?')] },
+  epistrophe: { name: t('Epistrophe'), greek: 'ἐπιστροφή', def: t('Repeating the same word or words at the end of each clause.'), recipe: t('End two or three clauses on the same word so it rings.'), checks: [t('Do your clauses end on the same word?'), t('Is that word the one you want them to remember?')] },
+  antithesis: { name: t('Antithesis'), greek: 'ἀντίθεσις', def: t('Setting opposite ideas side by side in balanced phrases.'), recipe: t('Find the two opposites, then give both halves the same grammar.'), checks: [t('Are the two halves opposites?'), t('Do both halves have the same shape and length?')] },
+  chiasmus: { name: t('Chiasmus'), greek: 'χιασμός', def: t('Repeating ideas in reverse order: A then B, then B then A.'), recipe: t('Write the first half, then swap its two key words in the second half.'), checks: [t('Do two key words appear twice?'), t('Does their order flip in the second half?')] },
+  tricolon: { name: t('Tricolon'), greek: 'τρίκωλον', def: t('A series of three parallel words, phrases or clauses.'), recipe: t('Say it in three beats with the same shape, and put the strongest last.'), checks: [t('Are there exactly three items?'), t('Do they share the same grammatical shape?')] },
+  question: { name: t('Rhetorical question'), greek: 'ἐρώτημα', def: t('A question asked for effect, where the answer is already clear.'), recipe: t('Turn your claim into a question the audience can only answer one way.'), checks: [t('Is it a question?'), t('Is there only one sensible answer?')] },
+  hypophora: { name: t('Hypophora'), greek: 'ὑποφορά', def: t('Asking a question and then answering it yourself.'), recipe: t('Ask the question your audience is thinking, then answer it in one line.'), checks: [t('Do you ask a real question?'), t('Do you answer it straight away?')] },
+  metaphor: { name: t('Metaphor'), greek: 'μεταφορά', def: t('Describing one thing as if it were another, to make it vivid.'), recipe: t('Find a picture that shares the feeling, and say it is that picture.'), checks: [t('Do you say one thing is another, with no “like” or “as”?'), t('Can the audience see the picture?')] },
+  simile: { name: t('Simile'), greek: null, def: t('Comparing two things using “like” or “as”.'), recipe: t('Finish the line “it was like…” with something concrete and surprising.'), checks: [t('Do you use “like” or “as”?'), t('Is the comparison concrete and fresh?')] },
+  alliteration: { name: t('Alliteration'), greek: null, def: t('Starting nearby words with the same sound.'), recipe: t('Choose a sound and find three strong words that begin with it.'), checks: [t('Do three nearby words start with the same sound?'), t('Does it still sound natural out loud?')] },
+  climax: { name: t('Climax'), greek: 'κλῖμαξ', def: t('Arranging ideas in order of rising importance, step by step.'), recipe: t('List your steps from small to big, and let the last one land hardest.'), checks: [t('Does each step get bigger?'), t('Is the last step the strongest?')] },
+  asyndeton: { name: t('Asyndeton'), greek: 'ἀσύνδετον', def: t('Leaving out the conjunctions between items to make them fast and urgent.'), recipe: t('Cut every “and”, keep the commas, and speed up.'), checks: [t('Have you removed the “and”s?'), t('Does it feel faster?')] },
+  polysyndeton: { name: t('Polysyndeton'), greek: 'πολυσύνδετον', def: t('Repeating “and” or “or” between items to build weight.'), recipe: t('Join every item with “and” so the list feels endless.'), checks: [t('Is every item joined by “and” or “or”?'), t('Does the list feel heavier?')] },
+  litotes: { name: t('Litotes'), greek: 'λιτότης', def: t('Understating something by denying its opposite.'), recipe: t('Say it is “no small thing” or “not bad at all” instead of praising it outright.'), checks: [t('Do you deny the opposite (“no small”, “not bad”)?'), t('Does the understatement make it stronger?')] },
 };
 const GYM_LAB = [
   { id: 'l01', device: 'anaphora', plain: 'We need to fix the roads, the schools and the hospitals.', model: 'We will fix the roads. We will fix the schools. We will fix the hospitals.', marks: ['We will fix'] },
@@ -416,12 +416,12 @@ function gymSpeakCue(left, total, struct) {
   const s = struct || GYM_STRUCTS.prep;
   const frac = clamp(1 - left / total, 0, 1);
   const closeAt = Math.max(10, Math.round(total * 0.2));
-  if (left <= 0) return { key: 'time', text: 'Time. Finish your sentence and land it.' };
-  if (left <= closeAt) return { key: 'close', text: 'Start your close. Bring it back to your point.' };
-  if (frac >= 0.5 && frac < 0.62) return { key: 'half', text: 'Halfway. Move to your next part.' };
-  if (frac < 0.1) return { key: 'open', text: `Open with your ${s.parts[0].n.toLowerCase()}. ${s.parts[0].h}` };
+  if (left <= 0) return { key: 'time', text: t('Time. Finish your sentence and land it.') };
+  if (left <= closeAt) return { key: 'close', text: t('Start your close. Bring it back to your point.') };
+  if (frac >= 0.5 && frac < 0.62) return { key: 'half', text: t('Halfway. Move to your next part.') };
+  if (frac < 0.1) return { key: 'open', text: t`Open with your ${s.parts[0].n.toLowerCase()}. ${s.parts[0].h}` };
   const pi = Math.min(s.parts.length - 1, Math.floor(frac * s.parts.length));
-  return { key: 'part' + pi, text: `${s.parts[pi].n}: ${s.parts[pi].h}` };
+  return { key: 'part' + pi, text: t`${s.parts[pi].n}: ${s.parts[pi].h}` };
 }
 /* Offline coach notes, built from the speaker's own self-ratings. */
 function gymReviewFallback(ratings, notes, struct) {
@@ -433,16 +433,16 @@ function gymReviewFallback(ratings, notes, struct) {
   const avg = mean(dims.map(v));
   const s = struct || GYM_STRUCTS.prep;
   const nWords = wordsOf(notes).length;
-  const verdict = avg >= 4.25 ? 'You rated this a strong round. Bank it and spin again.' : avg >= 3 ? 'You rated this a solid round, with one clear thing to sharpen.' : 'A brave round. Pick one thing below and try it on the next spin.';
+  const verdict = avg >= 4.25 ? t('You rated this a strong round. Bank it and spin again.') : avg >= 3 ? t('You rated this a solid round, with one clear thing to sharpen.') : t('A brave round. Pick one thing below and try it on the next spin.');
   const shape = s.parts.map((p) => p.n).join(', ');
   const structure = nWords >= 4
-    ? `Check your notes against ${s.name}: ${shape}. Mark which line did each job. A missing part is your first fix.`
-    : `Your scaffold was ${s.name}: ${shape}. Next time, jot one line per part straight after you finish.`;
+    ? t`Check your notes against ${s.name}: ${shape}. Mark which line did each job. A missing part is your first fix.`
+    : t`Your scaffold was ${s.name}: ${shape}. Next time, jot one line per part straight after you finish.`;
   return {
     offline: true,
     verdict,
     structure,
-    worked: v(high) >= 4 ? GYM_REVIEW_TIPS[high].praise : 'You finished the round. The next one gets easier.',
+    worked: v(high) >= 4 ? GYM_REVIEW_TIPS[high].praise : t('You finished the round. The next one gets easier.'),
     next: GYM_REVIEW_TIPS[low].tip(s),
     opener: '',
   };
@@ -524,37 +524,37 @@ function gymClauses(t) {
   return String(t).split(/[.;:!?]+|,\s*(?:and|or|but)?\s*|\s+(?:and|but)\s+/i).map((s) => s.trim()).filter((s) => wordsOf(s).length > 0);
 }
 function gymDeviceCheck(dev, text, plain) {
-  const t = String(text || '').trim();
-  const words = wordsOf(t);
+  const txt = String(text || '').trim();
+  const words = wordsOf(txt);
   const lw = words.map((w) => w.toLowerCase().replace(/[’']/g, ''));
-  if (words.length < 3) return { ok: null, note: 'Write a full line first, then check it.' };
+  if (words.length < 3) return { ok: null, note: t('Write a full line first, then check it.') };
   const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  if (plain && norm(t) === norm(plain)) return { ok: false, note: 'That matches the original. Change the shape of the sentence.' };
-  const clauses = gymClauses(t);
-  const commas = (t.match(/,/g) || []).length;
-  const count = (re) => (t.match(re) || []).length;
+  if (plain && norm(txt) === norm(plain)) return { ok: false, note: t('That matches the original. Change the shape of the sentence.') };
+  const clauses = gymClauses(txt);
+  const commas = (txt.match(/,/g) || []).length;
+  const count = (re) => (txt.match(re) || []).length;
   const repeated = (arr) => { const c = Object.create(null); let best = null; arr.forEach((x) => { if (!x) return; c[x] = (c[x] || 0) + 1; if (!best || c[x] > c[best]) best = x; }); return best ? { w: best, n: c[best] } : { w: '', n: 0 }; };
   switch (dev) {
     case 'anaphora': {
       const heads = repeated(clauses.map((c) => wordsOf(c).slice(0, wordsOf(c).length > 2 ? 2 : 1).join(' ').toLowerCase()));
       const firsts = repeated(clauses.map((c) => (wordsOf(c)[0] || '').toLowerCase()));
-      if (heads.n >= 2) return { ok: true, note: `${heads.n} clauses open with “${heads.w}”.` };
-      if (firsts.n >= 2 && !GYM_SMALL.has(firsts.w)) return { ok: true, note: `${firsts.n} clauses open with “${firsts.w}”.` };
-      return { ok: false, note: 'Start at least two clauses with the same words.' };
+      if (heads.n >= 2) return { ok: true, note: t`${heads.n} clauses open with “${heads.w}”.` };
+      if (firsts.n >= 2 && !GYM_SMALL.has(firsts.w)) return { ok: true, note: t`${firsts.n} clauses open with “${firsts.w}”.` };
+      return { ok: false, note: t('Start at least two clauses with the same words.') };
     }
     case 'epistrophe': {
       const tails = repeated(clauses.map((c) => { const w = wordsOf(c); return (w[w.length - 1] || '').toLowerCase(); }));
-      if (tails.n >= 2) return { ok: true, note: `${tails.n} clauses end on “${tails.w}”.` };
-      return { ok: false, note: 'End at least two clauses on the same word.' };
+      if (tails.n >= 2) return { ok: true, note: t`${tails.n} clauses end on “${tails.w}”.` };
+      return { ok: false, note: t('End at least two clauses on the same word.') };
     }
     case 'tricolon': {
-      if (clauses.length === 3 || commas >= 2) return { ok: true, note: 'Three beats. Check that they share a shape.' };
-      return { ok: false, note: 'Look for three items or clauses in a row.' };
+      if (clauses.length === 3 || commas >= 2) return { ok: true, note: t('Three beats. Check that they share a shape.') };
+      return { ok: false, note: t('Look for three items or clauses in a row.') };
     }
     case 'question':
-      return /\?/.test(t) ? { ok: true, note: 'It’s a question. Make sure the answer is obvious.' } : { ok: false, note: 'Turn the claim into a question.' };
+      return /\?/.test(txt) ? { ok: true, note: t('It’s a question. Make sure the answer is obvious.') } : { ok: false, note: t('Turn the claim into a question.') };
     case 'hypophora':
-      return /\?\s*\S/.test(t) ? { ok: true, note: 'You ask, then you answer.' } : /\?/.test(t) ? { ok: false, note: 'Now answer your own question in the next line.' } : { ok: false, note: 'Ask the question first, then answer it.' };
+      return /\?\s*\S/.test(txt) ? { ok: true, note: t('You ask, then you answer.') } : /\?/.test(txt) ? { ok: false, note: t('Now answer your own question in the next line.') } : { ok: false, note: t('Ask the question first, then answer it.') };
     case 'alliteration': {
       const content = lw.filter((w) => !GYM_SMALL.has(w));
       let best = { ch: '', n: 0 };
@@ -563,14 +563,14 @@ function gymDeviceCheck(dev, text, plain) {
         const n = content.slice(i, i + 5).filter((w) => w[0] === ch).length;
         if (n > best.n) best = { ch, n };
       }
-      return best.n >= 3 ? { ok: true, note: `${best.n} nearby words start with “${best.ch}”.` } : { ok: false, note: 'Find three nearby words that start with the same sound.' };
+      return best.n >= 3 ? { ok: true, note: t`${best.n} nearby words start with “${best.ch}”.` } : { ok: false, note: t('Find three nearby words that start with the same sound.') };
     }
     case 'asyndeton':
-      if (/\b(and|or)\b/i.test(t)) return { ok: false, note: 'Cut the “and” and keep the commas.' };
-      return commas >= 2 ? { ok: true, note: 'No conjunctions, just commas. Fast and urgent.' } : { ok: false, note: 'List at least three items with commas only.' };
+      if (/\b(and|or)\b/i.test(txt)) return { ok: false, note: t('Cut the “and” and keep the commas.') };
+      return commas >= 2 ? { ok: true, note: t('No conjunctions, just commas. Fast and urgent.') } : { ok: false, note: t('List at least three items with commas only.') };
     case 'polysyndeton': {
       const n = count(/\b(and|or|nor)\b/gi);
-      return n >= 3 ? { ok: true, note: `“And” ${n} times. The list piles up.` } : { ok: false, note: 'Join each item with “and”, at least three times.' };
+      return n >= 3 ? { ok: true, note: t`“And” ${n} times. The list piles up.` } : { ok: false, note: t('Join each item with “and”, at least three times.') };
     }
     case 'chiasmus': {
       const pos = Object.create(null);
@@ -579,25 +579,25 @@ function gymDeviceCheck(dev, text, plain) {
       for (const a of twice) for (const b of twice) {
         if (a === b) continue;
         const [a1, a2] = [pos[a][0], pos[a][pos[a].length - 1]], [b1, b2] = [pos[b][0], pos[b][pos[b].length - 1]];
-        if (a1 < b1 && b2 < a2 && b1 < b2) return { ok: true, note: `“${a} … ${b}” flips to “${b} … ${a}”.` };
+        if (a1 < b1 && b2 < a2 && b1 < b2) return { ok: true, note: t`“${a} … ${b}” flips to “${b} … ${a}”.` };
       }
-      return { ok: false, note: 'Use two key words twice, and flip their order the second time.' };
+      return { ok: false, note: t('Use two key words twice, and flip their order the second time.') };
     }
     case 'simile':
-      return /\blike\b|\bas\s+\w+\s+as\b/i.test(t) ? { ok: true, note: 'There’s your “like” or “as”.' } : { ok: false, note: 'Add a comparison with “like” or “as”.' };
+      return /\blike\b|\bas\s+\w+\s+as\b/i.test(txt) ? { ok: true, note: t('There’s your “like” or “as”.') } : { ok: false, note: t('Add a comparison with “like” or “as”.') };
     case 'metaphor':
-      if (/\blike\b|\bas\s+\w+\s+as\b/i.test(t)) return { ok: false, note: 'That reads like a simile. Drop “like” and say it is the thing.' };
-      return { ok: null, note: 'No “like” or “as”, good. Now ask: can they see the picture?' };
+      if (/\blike\b|\bas\s+\w+\s+as\b/i.test(txt)) return { ok: false, note: t('That reads like a simile. Drop “like” and say it is the thing.') };
+      return { ok: null, note: t('No “like” or “as”, good. Now ask: can they see the picture?') };
     case 'litotes':
-      return /\b(no|not|never|hardly|nothing)\s+(\w+\s+)?(small|bad|easy|minor|little|short|unusual|un\w+|less|shabby|trivial)\b/i.test(t) ? { ok: true, note: 'You deny the opposite. Understated and strong.' } : { ok: false, note: 'Try “no small…” or “not bad…”.' };
+      return /\b(no|not|never|hardly|nothing)\s+(\w+\s+)?(small|bad|easy|minor|little|short|unusual|un\w+|less|shabby|trivial)\b/i.test(txt) ? { ok: true, note: t('You deny the opposite. Understated and strong.') } : { ok: false, note: t('Try “no small…” or “not bad…”.') };
     case 'antithesis':
-      if (/;|\bnot\b|\bbut\b|\byet\b|\bnever\b|\binstead\b|\bwhile\b/i.test(t) && clauses.length >= 2) return { ok: null, note: 'Two halves in tension. Check they mirror each other.' };
-      return { ok: false, note: 'Put two opposite ideas side by side.' };
+      if (/;|\bnot\b|\bbut\b|\byet\b|\bnever\b|\binstead\b|\bwhile\b/i.test(txt) && clauses.length >= 2) return { ok: null, note: t('Two halves in tension. Check they mirror each other.') };
+      return { ok: false, note: t('Put two opposite ideas side by side.') };
     case 'climax':
-      if (count(/\bthen\b/gi) >= 2 || clauses.length >= 3) return { ok: null, note: 'Three or more steps. Check that each one is bigger.' };
-      return { ok: false, note: 'Build at least three steps, small to large.' };
+      if (count(/\bthen\b/gi) >= 2 || clauses.length >= 3) return { ok: null, note: t('Three or more steps. Check that each one is bigger.') };
+      return { ok: false, note: t('Build at least three steps, small to large.') };
     default:
-      return { ok: null, note: 'Judge it against the recipe.' };
+      return { ok: null, note: t('Judge it against the recipe.') };
   }
 }
 
@@ -681,11 +681,11 @@ const gymBurstAt = (el, count = 40, power = 0.6) => {
 function GymHead({ id, title, lead, children }) {
   const st = gymStation(id);
   return html`<header className=${'gym-head gym-head-' + id} style=${{ '--sc': st.color }}>
-    <button className="btn btn-sm gym-back" onClick=${() => go('gym')}><${Icon} name="arrowL" size=${16} />Gym</button>
+    <button className="btn btn-sm gym-back" onClick=${() => go('gym')}><${Icon} name="arrowL" size=${16} />${t('Gym')}</button>
     <div className="gym-head-row">
       <span className="gym-head-num" aria-hidden="true">${st.roman}</span>
       <div className="gym-head-text">
-        <div className="eyebrow">Station ${st.roman} · ${st.short}</div>
+        <div className="eyebrow">${t`Station ${st.roman} · ${st.short}`}</div>
         <h1>${title}</h1>
         ${lead ? html`<p className="lead">${lead}</p>` : null}
       </div>
@@ -700,7 +700,7 @@ function GymLaurel({ size = 92 }) {
     <circle cx="36" cy="22" r="3" style=${{ fill: 'var(--ethos)' }} /><circle cx="25" cy="41" r="3" style=${{ fill: 'var(--pathos)' }} /><circle cx="47" cy="41" r="3" style=${{ fill: 'var(--logos)' }} />
   </svg>`;
 }
-function GymFinish({ id, xp, title, children, onAgain, again = 'Go again' }) {
+function GymFinish({ id, xp, title, children, onAgain, again = t('Go again') }) {
   const nx = gymNextStation(id);
   return html`<div className="gym-finish" role="status">
     <${GymLaurel} />
@@ -709,7 +709,7 @@ function GymFinish({ id, xp, title, children, onAgain, again = 'Go again' }) {
     ${xp ? html`<span className="xp-earned"><${Icon} name="bolt" size=${16} />+${xp} XP</span>` : null}
     <div className="gym-finish-actions">
       ${onAgain ? html`<button className="btn" onClick=${onAgain}><${Icon} name="refresh" size=${16} />${again}</button>` : null}
-      <button className="btn-cta" onClick=${() => go('gym', nx.id)}>Next: ${nx.short}<${Icon} name="arrowR" size=${18} /></button>
+      <button className="btn-cta" onClick=${() => go('gym', nx.id)}>${t`Next: ${nx.short}`}<${Icon} name="arrowR" size=${18} /></button>
     </div>
   </div>`;
 }
@@ -792,12 +792,12 @@ function GymTile({ st, tally, quest, done }) {
   return html`<button className=${'gym-tile gym-tile-' + st.id + (done ? ' is-done' : '')} style=${{ '--sc': st.color }} onClick=${() => go('gym', st.id)}>
     <div className="gym-tile-art"><${Art} /></div>
     <div className="gym-tile-body">
-      <div className="gym-tile-top"><span className="gym-tile-num">${st.roman}</span><span className="gym-tile-mins">${st.mins}</span>${quest ? html`<span className="gym-quest"><${Icon} name="bolt" size=${12} />Quest +${quest}</span>` : null}</div>
+      <div className="gym-tile-top"><span className="gym-tile-num">${st.roman}</span><span className="gym-tile-mins">${st.mins}</span>${quest ? html`<span className="gym-quest"><${Icon} name="bolt" size=${12} />${t`Quest +${quest}`}</span>` : null}</div>
       <h3>${st.name}</h3>
       <p>${st.blurb}</p>
       <div className="gym-tile-foot">
         <span className="gym-tile-tally"><b className="num">${tally}</b> ${st.stat}</span>
-        ${done ? html`<span className="gym-done-tick"><${Icon} name="check" size=${14} stroke=${3} />Done today</span>` : html`<span className="gym-go">Enter<${Icon} name="arrowR" size=${16} /></span>`}
+        ${done ? html`<span className="gym-done-tick"><${Icon} name="check" size=${14} stroke=${3} />${t('Done today')}</span>` : html`<span className="gym-go">${t('Enter')}<${Icon} name="arrowR" size=${16} /></span>`}
       </div>
     </div>
   </button>`;
@@ -813,16 +813,16 @@ function GymHome() {
   const tally = { breath: s.breaths || 0, warmup: g.warmups, twisters: s.twisters || 0, impromptu: s.impromptus || 0, lab: g.crafted };
   const doneN = GYM_STATIONS.filter((st) => g.done[st.id]).length;
   const honours = [
-    { id: 'zen', v: s.breaths || 0, max: 10, unit: 'rounds' },
-    { id: 'improviser', v: s.impromptus || 0, max: 5, unit: 'impromptus' },
+    { id: 'zen', v: s.breaths || 0, max: 10, unit: t('rounds') },
+    { id: 'improviser', v: s.impromptus || 0, max: 5, unit: t('impromptus') },
   ].map((h) => ({ ...h, b: BADGES.find((b) => b.id === h.id) })).filter((h) => h.b);
   return html`<div className="gym gym-home">
     <section className="stage gym-hero">
       <div className="gym-hero-text">
-        <p className="page-whisper"><span className="page-label">Gym</span><span className="greek" lang="grc">γυμνάσιον</span></p>
-        <h1>Warm up the voice before it has to work</h1>
-        <p className="lead">Five short stations for breath, voice, diction, quick thinking and craft. Ten minutes here makes the real speech feel lighter.</p>
-        <${Scholion} note="Πλούταρχος" sub="Plutarch" def="The pebbles are in Plutarch, Life of Demosthenes 11. The sea is in Cicero, On Ends 5.5." className="page-line">Demosthenes practiced with pebbles in his mouth and spoke over the roar of the sea.<//>
+        <p className="page-whisper"><span className="page-label">${t('Gym')}</span><span className="greek" lang="grc">γυμνάσιον</span></p>
+        <h1>${t('Warm up the voice before it has to work')}</h1>
+        <p className="lead">${t('Five short stations for breath, voice, diction, quick thinking and craft. Ten minutes here makes the real speech feel lighter.')}</p>
+        <${Scholion} note="Πλούταρχος" sub="Plutarch" def=${t('The pebbles are in Plutarch, Life of Demosthenes 11. The sea is in Cicero, On Ends 5.5.')} className="page-line">${t('Demosthenes practiced with pebbles in his mouth and spoke over the roar of the sea.')}<//>
       </div>
       <div className="gym-plinths">
         ${GYM_STATIONS.map((st) => html`<div key=${st.id} className="gym-plinth" style=${{ '--sc': st.color }}>
@@ -838,25 +838,25 @@ function GymHome() {
     <div className="gym-lower">
       <section className="card gym-callsheet">
         <div className="row-between">
-          <div><div className="eyebrow">Today’s call sheet</div><h2>${doneN >= GYM_STATIONS.length ? 'All five done' : 'Do all five stations'}</h2></div>
-          <span className="gym-cs-count num" aria-label=${`${doneN} of ${GYM_STATIONS.length} stations done today`}>${doneN}<small>/${GYM_STATIONS.length}</small></span>
+          <div><div className="eyebrow">${t('Today’s call sheet')}</div><h2>${doneN >= GYM_STATIONS.length ? t('All five done') : t('Do all five stations')}</h2></div>
+          <span className="gym-cs-count num" aria-label=${t`${doneN} of ${GYM_STATIONS.length} stations done today`}>${doneN}<small>/${GYM_STATIONS.length}</small></span>
         </div>
         <ol className="gym-cs-list">
           ${GYM_STATIONS.map((st) => html`<li key=${st.id}><button className=${'gym-cs-row' + (g.done[st.id] ? ' is-done' : '')} style=${{ '--sc': st.color }} onClick=${() => go('gym', st.id)}>
             <span className="gym-cs-n">${st.roman}</span><span className="gym-cs-name">${st.name}</span><span className="gym-cs-dots" aria-hidden="true"></span>
-            <span className="gym-cs-state">${g.done[st.id] ? html`<${Fragment}><${Icon} name="check" size=${15} stroke=${3} />Done<//>` : st.mins}</span>
+            <span className="gym-cs-state">${g.done[st.id] ? html`<${Fragment}><${Icon} name="check" size=${15} stroke=${3} />${t('Done')}<//>` : st.mins}</span>
           </button></li>`)}
         </ol>
-        <p className="small muted">${doneN >= GYM_STATIONS.length ? 'Every station today. Take a bow.' : 'Go top to bottom before a big talk. The sheet resets at midnight.'}</p>
+        <p className="small muted">${doneN >= GYM_STATIONS.length ? t('Every station today. Take a bow.') : t('Go top to bottom before a big talk. The sheet resets at midnight.')}</p>
       </section>
       <section className="card gym-honours">
-        <div><div className="eyebrow">Gym honours</div><h2>Badges in reach</h2></div>
+        <div><div className="eyebrow">${t('Gym honours')}</div><h2>${t('Badges in reach')}</h2></div>
         ${honours.map((h) => html`<div key=${h.id} className=${'gym-honour' + (p.badges[h.id] ? ' is-earned' : '')}>
           <${BadgeMedal} badge=${h.b} earned=${!!p.badges[h.id]} size=${58} />
           <div className="gym-honour-body">
             <b>${h.b.name}</b><span className="small muted">${h.b.desc}</span>
-            <${MeanderBar} value=${(Math.min(h.v, h.max) / h.max) * 100} color="var(--gold)" height=${12} label=${h.b.name + ' progress'} />
-            <span className="tiny muted num">${p.badges[h.id] ? 'Earned' : `${Math.min(h.v, h.max)} / ${h.max} ${h.unit}`}</span>
+            <${MeanderBar} value=${(Math.min(h.v, h.max) / h.max) * 100} color="var(--gold)" height=${12} label=${t`${h.b.name} progress`} />
+            <span className="tiny muted num">${p.badges[h.id] ? t('Earned') : t`${Math.min(h.v, h.max)} / ${h.max} ${h.unit}`}</span>
           </div>
         </div>`)}
       </section>
@@ -894,12 +894,12 @@ function GymBreathStage({ status, ph, level, lights, sides, rounds, cueWord, cue
     </div>
     <div className="gym-dust" aria-hidden="true">${GYM_DUST.map((d, i) => html`<i key=${i} style=${{ left: d.x + '%', top: d.y + '%', width: d.s, height: d.s, animationDuration: d.d + 's', animationDelay: d.delay + 's' }}></i>`)}</div>
     <div className="gym-breath-top">
-      <div className="gym-pips" role="img" aria-label=${status === 'done' ? `All ${rounds} rounds complete` : `Round ${ph.round + 1} of ${rounds}`}>
+      <div className="gym-pips" role="img" aria-label=${status === 'done' ? t`All ${rounds} rounds complete` : t`Round ${ph.round + 1} of ${rounds}`}>
         ${Array.from({ length: rounds }).map((_, r) => html`<i key=${r} className=${status === 'done' || (status !== 'idle' && r < ph.round) ? 'is-done' : status !== 'idle' && r === ph.round ? 'is-now' : ''}></i>`)}
       </div>
-      <span className="gym-breath-round num">${status === 'done' ? 'Complete' : status === 'idle' ? `${rounds} rounds` : `Round ${ph.round + 1} of ${rounds}`}</span>
+      <span className="gym-breath-round num">${status === 'done' ? t('Complete') : status === 'idle' ? t`${rounds} rounds` : t`Round ${ph.round + 1} of ${rounds}`}</span>
     </div>
-    <svg className="gym-breath-svg" viewBox="0 0 400 360" role="img" aria-label="Breathing triangle">
+    <svg className="gym-breath-svg" viewBox="0 0 400 360" role="img" aria-label=${t('Breathing triangle')}>
       <defs>
         ${sideCol.map((c, i) => html`<radialGradient key=${i} id=${'gbl' + i + rid}><stop offset="0" style=${{ stopColor: c, stopOpacity: 0.95 }} /><stop offset="0.55" style=${{ stopColor: c, stopOpacity: 0.35 }} /><stop offset="1" style=${{ stopColor: c, stopOpacity: 0 }} /></radialGradient>`)}
         <radialGradient id=${'gbo' + rid}><stop offset="0" style=${{ stopColor: 'var(--stage-ink)', stopOpacity: 1 }} /><stop offset="0.35" style=${{ stopColor: orbCol, stopOpacity: 0.85 }} /><stop offset="1" style=${{ stopColor: orbCol, stopOpacity: 0 }} /></radialGradient>
@@ -955,10 +955,10 @@ function GymBreath({ init }) {
   const sides = status === 'done' || status === 'idle' ? [1, 1, 1] : lead ? [0, 0, 0] : [0, 1, 2].map((i) => (i < ph.idx ? 1 : i === ph.idx ? ph.frac : 0));
   const cue = GYM_BREATH_CUES[ph.idx];
   let cueWord, cueSub, count = null, cueColor = null;
-  if (status === 'idle') { cueWord = 'Ready when you are'; cueSub = `${P.name} · ${P.phases.join(' · ')} seconds · ${fmtTime(total)}`; }
-  else if (status === 'done') { cueWord = 'Steady.'; cueSub = 'Three lights, one breath. Your voice is ready.'; }
-  else if (lead) { cueWord = 'Settle in'; cueSub = 'Sit tall. Soften your shoulders.'; count = Math.max(1, Math.ceil(-elapsed)); }
-  else { cueWord = status === 'paused' ? 'Paused' : cue.word; cueSub = status === 'paused' ? 'Resume when you’re ready.' : cue.sub; count = status === 'paused' ? null : Math.max(1, Math.ceil(ph.left - 1e-6)); cueColor = status === 'paused' ? null : cue.color; }
+  if (status === 'idle') { cueWord = t('Ready when you are'); cueSub = t`${P.name} · ${P.phases.join(' · ')} seconds · ${fmtTime(total)}`; }
+  else if (status === 'done') { cueWord = t('Steady.'); cueSub = t('Three lights, one breath. Your voice is ready.'); }
+  else if (lead) { cueWord = t('Settle in'); cueSub = t('Sit tall. Soften your shoulders.'); count = Math.max(1, Math.ceil(-elapsed)); }
+  else { cueWord = status === 'paused' ? t('Paused') : cue.word; cueSub = status === 'paused' ? t('Resume when you’re ready.') : cue.sub; count = status === 'paused' ? null : Math.max(1, Math.ceil(ph.left - 1e-6)); cueColor = status === 'paused' ? null : cue.color; }
 
   function complete() {
     setStatus('done');
@@ -966,7 +966,7 @@ function GymBreath({ init }) {
     GymSfx.bowl();
     const xp = Math.min(30, 5 * rounds);
     setEarned(xp);
-    Store.act((pp, ctx) => { pp.stats.breaths = (pp.stats.breaths || 0) + rounds; gymMark(pp, 'breath'); ctx.xp(xp, 'Breathing'); ctx.quest('warmup'); });
+    Store.act((pp, ctx) => { pp.stats.breaths = (pp.stats.breaths || 0) + rounds; gymMark(pp, 'breath'); ctx.xp(xp, t('Breathing')); ctx.quest('warmup'); });
   }
   useEffect(() => {
     if (status !== 'run') return undefined;
@@ -1003,14 +1003,14 @@ function GymBreath({ init }) {
   const stop = () => { setStatus('idle'); elRef.current = -GYM_BREATH_LEAD; setElapsed(-GYM_BREATH_LEAD); Voice.stop(); };
   const busy = status === 'run' || status === 'paused';
   return html`<div className="gym gym-breath">
-    <${GymHead} id="breath" title="Triangle breathing" lead="Follow the light. Breathe in up the blue side, hold across the green, and breathe out down the red." />
+    <${GymHead} id="breath" title=${t('Triangle breathing')} lead=${t('Follow the light. Breathe in up the blue side, hold across the green, and breathe out down the red.')} />
     <div className="gym-breath-layout">
       <${GymBreathStage} status=${status} ph=${ph} level=${level} lights=${lights} sides=${sides} rounds=${rounds} cueWord=${cueWord} cueSub=${cueSub} count=${count} cueColor=${cueColor} />
       <aside className="card gym-panel">
-        ${status === 'done' ? html`<${GymFinish} id="breath" xp=${earned} title=${`${rounds} rounds, steady`} onAgain=${stop} again="Breathe again"><p className="muted small">${rounds * cycle} seconds of slow breathing. Speak while the calm lasts.</p><//>` : html`<${Fragment}>
+        ${status === 'done' ? html`<${GymFinish} id="breath" xp=${earned} title=${t`${rounds} rounds, steady`} onAgain=${stop} again=${t('Breathe again')}><p className="muted small">${t`${rounds * cycle} seconds of slow breathing. Speak while the calm lasts.`}</p><//>` : html`<${Fragment}>
           <div className="field">
-            <span className="label">Pattern</span>
-            <div className="gym-presets" role="radiogroup" aria-label="Breathing pattern">
+            <span className="label">${t('Pattern')}</span>
+            <div className="gym-presets" role="radiogroup" aria-label=${t('Breathing pattern')}>
               ${GYM_BREATH_PRESETS.map((x) => html`<button key=${x.id} role="radio" aria-checked=${x.id === preset} className=${'gym-preset' + (x.id === preset ? ' is-on' : '')} disabled=${busy} onClick=${() => setPreset(x.id)}>
                 <${GymTriGlyph} phases=${x.phases} /><b>${x.name}</b><span className="num">${x.phases.join(' · ')}</span>
               </button>`)}
@@ -1018,32 +1018,32 @@ function GymBreath({ init }) {
             <p className="hint">${P.note}</p>
           </div>
           <div className="field">
-            <span className="label">Rounds</span>
+            <span className="label">${t('Rounds')}</span>
             <div className="row" style=${{ gap: 10 }}>
               <div className="seg">${[3, 5, 8].map((n) => html`<button key=${n} aria-pressed=${rounds === n} disabled=${busy} onClick=${() => setRounds(n)}>${n}</button>`)}</div>
-              <span className="hint num">${fmtTime(total)} in all</span>
+              <span className="hint num">${t`${fmtTime(total)} in all`}</span>
             </div>
           </div>
           <div className="field">
-            <span className="label">Sound</span>
+            <span className="label">${t('Sound')}</span>
             <div className="row" style=${{ gap: 6 }}>
-              <${GymToggle} on=${chimes} icon="gymBell" onClick=${() => setChimes(!chimes)}>Chimes<//>
-              <${GymToggle} on=${ocean} icon="wave" onClick=${() => setOcean(!ocean)}>Surf<//>
-              ${Voice.ok ? html`<${GymToggle} on=${voice} icon="volume" onClick=${() => setVoice(!voice)}>Spoken cues<//>` : null}
+              <${GymToggle} on=${chimes} icon="gymBell" onClick=${() => setChimes(!chimes)}>${t('Chimes')}<//>
+              <${GymToggle} on=${ocean} icon="wave" onClick=${() => setOcean(!ocean)}>${t('Surf')}<//>
+              ${Voice.ok ? html`<${GymToggle} on=${voice} icon="volume" onClick=${() => setVoice(!voice)}>${t('Spoken cues')}<//>` : null}
             </div>
-            ${!Sound.enabled ? html`<span className="hint row" style=${{ gap: 8 }}>Sounds are muted.<button type="button" className="btn btn-sm" onClick=${gymSoundOn}><${Icon} name="volume" size=${14} />Turn sounds on</button></span>` : null}
+            ${!Sound.enabled ? html`<span className="hint row" style=${{ gap: 8 }}>${t('Sounds are muted.')}<button type="button" className="btn btn-sm" onClick=${gymSoundOn}><${Icon} name="volume" size=${14} />${t('Turn sounds on')}</button></span>` : null}
           </div>
-          ${status === 'idle' ? html`<button className="btn-cta wide" onClick=${start}><${Icon} name="play" size=${18} />Begin ${rounds} rounds</button>`
+          ${status === 'idle' ? html`<button className="btn-cta wide" onClick=${start}><${Icon} name="play" size=${18} />${t`Begin ${rounds} rounds`}</button>`
             : html`<div className="gym-ctl">
-              ${status === 'run' ? html`<button className="btn-cta wide" onClick=${() => setStatus('paused')}><${Icon} name="pause" size=${18} />Pause</button>` : html`<button className="btn-cta wide" onClick=${() => setStatus('run')}><${Icon} name="play" size=${18} />Resume</button>`}
-              <button className="btn" onClick=${stop}><${Icon} name="stop" size=${16} />Stop</button>
+              ${status === 'run' ? html`<button className="btn-cta wide" onClick=${() => setStatus('paused')}><${Icon} name="pause" size=${18} />${t('Pause')}</button>` : html`<button className="btn-cta wide" onClick=${() => setStatus('run')}><${Icon} name="play" size=${18} />${t('Resume')}</button>`}
+              <button className="btn" onClick=${stop}><${Icon} name="stop" size=${16} />${t('Stop')}</button>
             </div>`}
         <//>`}
       </aside>
     </div>
     <section className="gym-why">
       <${Icon} name="info" size=${18} />
-      <div><b>Why it works</b><p>A slow breath with a long exhale switches on your body’s calming system and can lower your heart rate. A calmer body gives you a steadier voice for your first sentence.</p></div>
+      <div><b>${t('Why it works')}</b><p>${t('A slow breath with a long exhale switches on your body’s calming system and can lower your heart rate. A calmer body gives you a steadier voice for your first sentence.')}</p></div>
     </section>
   </div>`;
 }
@@ -1073,7 +1073,7 @@ function GymWarmArt({ kind }) {
     </svg>`;
     case 'siren': return html`<svg viewBox="0 0 200 200" className="gym-wa gym-wa-siren" aria-hidden="true">
       <path d="M22 40h156M22 100h156M22 160h156" className="gym-wa-staff" />
-      <text x="24" y="34" className="gym-wa-tag">HIGH</text><text x="24" y="176" className="gym-wa-tag">LOW</text>
+      <text x="24" y="34" className="gym-wa-tag">${t('HIGH')}</text><text x="24" y="176" className="gym-wa-tag">${t('LOW')}</text>
       <path d="M22 160C62 160 70 40 100 40S138 160 178 160" className="gym-wa-curve-bg" />
       <path d="M22 160C62 160 70 40 100 40S138 160 178 160" className="gym-wa-curve" pathLength="100" />
       <text x="100" y="128" textAnchor="middle" className="gym-wa-say">mmmmm</text>
@@ -1120,9 +1120,9 @@ function gymWarmupXp(spentSecs, secsPerStep, doneToday) {
   return doneToday ? { xp: 0, why: 'repeat' } : { xp: GYM_WARMUP_XP, why: 'full' };
 }
 const GYM_WARMUP_NOTES = {
-  full: 'Your voice is warmed up. Go speak.',
-  repeat: 'Your voice is warmed up. Go speak. You already earned today’s warm-up XP, so this one is practice.',
-  short: 'You skipped most of it, so this one earned no XP. Run at least half the time to earn it.',
+  full: t('Your voice is warmed up. Go speak.'),
+  repeat: t('Your voice is warmed up. Go speak. You already earned today’s warm-up XP, so this one is practice.'),
+  short: t('You skipped most of it, so this one earned no XP. Run at least half the time to earn it.'),
 };
 function GymWarmup({ init }) {
   useStore();
@@ -1153,7 +1153,7 @@ function GymWarmup({ init }) {
     const out = gymWarmupXp(total, secs, !!gymRead(Store.state.profile).done.warmup);
     setOutcome(out);
     if (out.why === 'short') return;
-    Store.act((pp, ctx) => { const g = gymMark(pp, 'warmup'); g.warmups += 1; ctx.xp(out.xp, 'Vocal warm-up'); ctx.quest('warmup'); });
+    Store.act((pp, ctx) => { const g = gymMark(pp, 'warmup'); g.warmups += 1; ctx.xp(out.xp, t('Vocal warm-up')); ctx.quest('warmup'); });
   }
   function stepEnd() {
     GymSfx.step();
@@ -1176,37 +1176,37 @@ function GymWarmup({ init }) {
   const begin = () => { setStarted(true); setRunning(true); setDone(false); awarded.current = false; try { Sound.ensure(); } catch (e) { /* optional */ } };
   const again = () => { setDone(false); setStarted(false); setRunning(false); setIdx(0); setRunKey((k) => k + 1); awarded.current = false; spent.current = 0; };
   return html`<div className="gym gym-warm">
-    <${GymHead} id="warmup" title="Vocal warm-up" lead="Six exercises, about thirty seconds each. Do them out loud, standing if you can." />
+    <${GymHead} id="warmup" title=${t('Vocal warm-up')} lead=${t('Six exercises, about thirty seconds each. Do them out loud, standing if you can.')} />
     <div className="gym-warm-layout">
-      <${GymMirror} kind=${done ? 'project' : step.id} progress=${progress} flash=${done} title=${done ? 'Curtain up' : `${idx + 1} · ${step.title}`} />
+      <${GymMirror} kind=${done ? 'project' : step.id} progress=${progress} flash=${done} title=${done ? t('Curtain up') : `${idx + 1} · ${step.title}`} />
       <section className="card gym-panel gym-warm-panel">
-        ${done ? html`<${GymFinish} id="warmup" xp=${outcome.xp} title=${outcome.why === 'short' ? 'Warm-up ended early' : 'Warm, loose and ready'} onAgain=${again} again="Warm up again"><p className="muted small">${GYM_WARMUP_NOTES[outcome.why] || GYM_WARMUP_NOTES.full}</p><//>` : html`<${Fragment}>
+        ${done ? html`<${GymFinish} id="warmup" xp=${outcome.xp} title=${outcome.why === 'short' ? t('Warm-up ended early') : t('Warm, loose and ready')} onAgain=${again} again=${t('Warm up again')}><p className="muted small">${GYM_WARMUP_NOTES[outcome.why] || GYM_WARMUP_NOTES.full}</p><//>` : html`<${Fragment}>
           <div className="gym-warm-step">
             <div className="row-between">
-              <div><div className="eyebrow">Exercise ${idx + 1} of ${GYM_WARMUP.length}</div><h2>${step.title}</h2></div>
+              <div><div className="eyebrow">${t`Exercise ${idx + 1} of ${GYM_WARMUP.length}`}</div><h2>${step.title}</h2></div>
               <${Klepsydra} total=${secs} remaining=${started ? shown : secs} size=${78} running=${running} />
             </div>
             <ol className="gym-how">${step.how.map((h, i) => html`<li key=${i}><span className="gym-how-n num">${i + 1}</span><span>${h}</span></li>`)}</ol>
             <p className="gym-feel"><${Icon} name="sparkles" size=${16} />${step.feel}</p>
           </div>
           <div className="gym-ctl">
-            ${!started ? html`<button className="btn-cta wide gold" onClick=${begin}><${Icon} name="play" size=${18} />Start the warm-up</button>`
+            ${!started ? html`<button className="btn-cta wide gold" onClick=${begin}><${Icon} name="play" size=${18} />${t('Start the warm-up')}</button>`
               : html`<${Fragment}>
-                <button className="btn btn-icon" onClick=${() => go2(idx - 1)} disabled=${idx === 0} aria-label="Previous exercise"><${Icon} name="chevL" /></button>
-                ${running ? html`<button className="btn-cta gold wide" onClick=${() => setRunning(false)}><${Icon} name="pause" size=${18} />Pause</button>` : html`<button className="btn-cta gold wide" onClick=${() => { if (shown <= 0) { if (idx >= last) { finish(); return; } go2(idx + 1); } setRunning(true); }}><${Icon} name="play" size=${18} />${shown <= 0 ? (idx >= last ? 'Finish' : 'Next exercise') : 'Resume'}</button>`}
-                <button className="btn btn-icon" onClick=${() => (idx >= last ? finish() : go2(idx + 1))} aria-label=${idx >= last ? 'Finish the warm-up' : 'Next exercise'}><${Icon} name=${idx >= last ? 'check' : 'chevR'} /></button>
+                <button className="btn btn-icon" onClick=${() => go2(idx - 1)} disabled=${idx === 0} aria-label=${t('Previous exercise')}><${Icon} name="chevL" /></button>
+                ${running ? html`<button className="btn-cta gold wide" onClick=${() => setRunning(false)}><${Icon} name="pause" size=${18} />${t('Pause')}</button>` : html`<button className="btn-cta gold wide" onClick=${() => { if (shown <= 0) { if (idx >= last) { finish(); return; } go2(idx + 1); } setRunning(true); }}><${Icon} name="play" size=${18} />${shown <= 0 ? (idx >= last ? t('Finish') : t('Next exercise')) : t('Resume')}</button>`}
+                <button className="btn btn-icon" onClick=${() => (idx >= last ? finish() : go2(idx + 1))} aria-label=${idx >= last ? t('Finish the warm-up') : t('Next exercise')}><${Icon} name=${idx >= last ? 'check' : 'chevR'} /></button>
               <//>`}
           </div>
           <div className="row" style=${{ gap: 6 }}>
-            <div className="seg" aria-label="Length">
-              <button aria-pressed=${short} onClick=${() => { setShort(true); setRunKey((k) => k + 1); }}>Short · 1½ min</button>
-              <button aria-pressed=${!short} onClick=${() => { setShort(false); setRunKey((k) => k + 1); }}>Full · 3 min</button>
+            <div className="seg" aria-label=${t('Length')}>
+              <button aria-pressed=${short} onClick=${() => { setShort(true); setRunKey((k) => k + 1); }}>${t('Short · 1½ min')}</button>
+              <button aria-pressed=${!short} onClick=${() => { setShort(false); setRunKey((k) => k + 1); }}>${t('Full · 3 min')}</button>
             </div>
-            <${GymToggle} on=${auto} icon="repeat" onClick=${() => setAuto(!auto)}>Auto-advance<//>
-            ${Voice.ok ? html`<${GymToggle} on=${voice} icon="volume" onClick=${() => setVoice(!voice)}>Read aloud<//>` : null}
+            <${GymToggle} on=${auto} icon="repeat" onClick=${() => setAuto(!auto)}>${t('Auto-advance')}<//>
+            ${Voice.ok ? html`<${GymToggle} on=${voice} icon="volume" onClick=${() => setVoice(!voice)}>${t('Read aloud')}<//>` : null}
           </div>
         <//>`}
-        <ol className="gym-steps" aria-label="Exercises">
+        <ol className="gym-steps" aria-label=${t('Exercises')}>
           ${GYM_WARMUP.map((s, i) => html`<li key=${s.id}><button className=${'gym-steps-b' + (done || i < idx ? ' is-done' : i === idx ? ' is-now' : '')} onClick=${() => { if (done) again(); go2(i); }} aria-current=${i === idx && !done ? 'step' : undefined}>
             <span className="gym-steps-n">${done || i < idx ? html`<${Icon} name="check" size=${13} stroke=${3} />` : i + 1}</span><span>${s.title}</span>
           </button></li>`)}
@@ -1334,7 +1334,7 @@ function GymTwisters({ init }) {
         pp.stats.twisters = (pp.stats.twisters || 0) + 1;
         let xp = 4;
         if (willUnlock) { r.best = Math.max(r.best, pc); xp += 10; }
-        ctx.xp(xp, 'Tongue twister');
+        ctx.xp(xp, t('Tongue twister'));
       }
       ctx.quest('warmup');
     });
@@ -1345,32 +1345,32 @@ function GymTwisters({ init }) {
         const nxt = GYM_PACES[pc + 1];
         GymSfx.unlock();
         gymBurstAt(cleanRef.current, 70, 0.8);
-        setFlash({ kind: 'unlock', text: nxt ? `${GYM_PACES[pc].name} cleared. ${nxt.name} unlocked.` : `${GYM_PACES[pc].name} cleared. You have mastered this one.` });
+        setFlash({ kind: 'unlock', text: nxt ? t`${GYM_PACES[pc].name} cleared. ${nxt.name} unlocked.` : t`${GYM_PACES[pc].name} cleared. You have mastered this one.` });
         if (nxt) setPace(pc + 1);
       } else {
         Sound.play('correct');
         gymBurstAt(cleanRef.current, 26, 0.5);
         const need = GYM_TW_STREAK - ns;
-        const goal = GYM_PACES[pc + 1] ? `unlock ${GYM_PACES[pc + 1].name}` : 'master this twister';
-        setFlash({ kind: 'clean', text: pc <= best ? 'Clean. Nicely done.' : `Clean. ${need} more clean ${need === 1 ? 'round' : 'rounds'} in a row to ${goal}.` });
+        const goal = GYM_PACES[pc + 1] ? t`unlock ${GYM_PACES[pc + 1].name}` : t('master this twister');
+        setFlash({ kind: 'clean', text: pc <= best ? t('Clean. Nicely done.') : t`Clean. ${tn(need, 'more clean round', 'more clean rounds')} in a row to ${goal}.` });
       }
     } else {
       GymSfx.stumble();
-      setFlash({ kind: 'stumble', text: pc > 0 ? 'Stumbles are the workout. Exaggerate the consonants, or drop one pace and build back up.' : 'Stumbles are the workout. Exaggerate every consonant and try again.' });
+      setFlash({ kind: 'stumble', text: pc > 0 ? t('Stumbles are the workout. Exaggerate the consonants, or drop one pace and build back up.') : t('Stumbles are the workout. Exaggerate every consonant and try again.') });
     }
   }
   const mastered = best >= GYM_PACES.length - 1;
   const tierItems = GYM_TWISTERS.filter((x) => x.tier === tier);
   const tierClean = tierItems.filter((x) => g.tw[x.id] && g.tw[x.id].best >= 0).length;
   return html`<div className="gym gym-tw">
-    <${GymHead} id="twisters" title="Tongue twisters" lead="Say each word out loud as it lights up. Three times through, then tell us honestly how it went." />
+    <${GymHead} id="twisters" title=${t('Tongue twisters')} lead=${t('Say each word out loud as it lights up. Three times through, then tell us honestly how it went.')} />
     <section className=${'stage gym-sing is-' + phase}>
       <div className="gym-sing-top">
         <div className="gym-sing-meta">
           <span className="inscr">${GYM_TIERS[tw.tier].name} · ${tw.focus}</span>
-          <span className="gym-reps" aria-label=${`Repetition ${Math.min(rep + 1, GYM_TW_REPS)} of ${GYM_TW_REPS}`}>${Array.from({ length: GYM_TW_REPS }).map((_, r) => html`<i key=${r} className=${r < rep ? 'is-done' : r === rep && phase === 'run' ? 'is-now' : ''}></i>`)}</span>
+          <span className="gym-reps" aria-label=${t`Repetition ${Math.min(rep + 1, GYM_TW_REPS)} of ${GYM_TW_REPS}`}>${Array.from({ length: GYM_TW_REPS }).map((_, r) => html`<i key=${r} className=${r < rep ? 'is-done' : r === rep && phase === 'run' ? 'is-now' : ''}></i>`)}</span>
         </div>
-        <div className="gym-sing-tempo"><span className="num">${GYM_PACES[pc].name} · ${sps} syl/s · ≈${gymWpm(sps)} wpm</span><${GymMetronome} sps=${sps} on=${busy} /></div>
+        <div className="gym-sing-tempo"><span className="num">${t`${GYM_PACES[pc].name} · ${sps} syl/s · ≈${gymWpm(sps)} wpm`}</span><${GymMetronome} sps=${sps} on=${busy} /></div>
       </div>
       <p className="gym-sr">${tw.text}</p>
       <div className="gym-lyric" aria-hidden="true">
@@ -1380,41 +1380,41 @@ function GymTwisters({ init }) {
       </div>
       <div className="gym-sing-foot" aria-live="polite">
         ${phase === 'mark' ? html`<div className="gym-mark">
-          <span className="gym-mark-q">How did that go?</span>
-          <button className="btn-cta logos" ref=${cleanRef} onClick=${() => mark(true)}><${Icon} name="check" size=${18} stroke=${3} />Clean</button>
-          <button className="btn-cta gym-stumble" onClick=${() => mark(false)}><${Icon} name="refresh" size=${18} />Stumbled</button>
+          <span className="gym-mark-q">${t('How did that go?')}</span>
+          <button className="btn-cta logos" ref=${cleanRef} onClick=${() => mark(true)}><${Icon} name="check" size=${18} stroke=${3} />${t('Clean')}</button>
+          <button className="btn-cta gym-stumble" onClick=${() => mark(false)}><${Icon} name="refresh" size=${18} />${t('Stumbled')}</button>
         </div>` : phase === 'ready' ? html`<div className="gym-ready">
-          ${flash ? html`<span className=${'gym-flash is-' + flash.kind}>${flash.text}</span>` : html`<span className="muted">Press start, then speak with the light. Three repetitions without a pause.</span>`}
-        </div>` : html`<div className="gym-ready"><span className="muted">${phase === 'count' ? 'Get ready…' : `Repetition ${rep + 1} of ${GYM_TW_REPS}`}</span><button className="btn btn-sm" onClick=${cancel}>Stop</button></div>`}
+          ${flash ? html`<span className=${'gym-flash is-' + flash.kind}>${flash.text}</span>` : html`<span className="muted">${t('Press start, then speak with the light. Three repetitions without a pause.')}</span>`}
+        </div>` : html`<div className="gym-ready"><span className="muted">${phase === 'count' ? t('Get ready…') : t`Repetition ${rep + 1} of ${GYM_TW_REPS}`}</span><button className="btn btn-sm" onClick=${cancel}>${t('Stop')}</button></div>`}
       </div>
     </section>
     <div className="gym-tw-layout">
       <section className="card gym-panel">
         <div className="field">
-          <span className="label">Pace</span>
-          <div className="gym-paces" role="radiogroup" aria-label="Pace">
+          <span className="label">${t('Pace')}</span>
+          <div className="gym-paces" role="radiogroup" aria-label=${t('Pace')}>
             ${GYM_PACES.map((x, i) => { const locked = i > maxPace; return html`<button key=${x.id} role="radio" aria-checked=${i === pc} className=${'gym-pace' + (i === pc ? ' is-on' : '') + (i <= best ? ' is-cleared' : '') + (locked ? ' is-locked' : '')} disabled=${locked || busy || phase === 'mark'} onClick=${() => { setPace(i); setStreak(0); setFlash(null); }}>
               <span className="gym-pace-gauge" style=${{ '--n': i }}>${locked ? html`<${Icon} name="lock" size=${14} />` : i <= best ? html`<${Icon} name="check" size=${14} stroke=${3} />` : html`<b className="num">${x.sps}</b>`}</span>
               <span className="gym-pace-name">${x.name}</span>
             </button>`; })}
           </div>
-          <span className="hint">${mastered ? 'Mastered at every pace. Try a fiercer twister.' : `${GYM_TW_STREAK} clean rounds in a row unlock the next pace.`} Streak: <b className="num">${streak}</b>/${GYM_TW_STREAK}</span>
+          <span className="hint">${mastered ? t('Mastered at every pace. Try a fiercer twister.') : t`${GYM_TW_STREAK} clean rounds in a row unlock the next pace.`} ${t('Streak:')} <b className="num">${streak}</b>/${GYM_TW_STREAK}</span>
         </div>
         <div className="gym-ctl">
-          ${busy ? html`<button className="btn-cta logos wide" onClick=${cancel}><${Icon} name="stop" size=${18} />Stop</button>` : html`<button className="btn-cta logos wide" onClick=${start} disabled=${phase === 'mark'}><${Icon} name="play" size=${18} />${phase === 'mark' ? 'Mark your round first' : 'Start'}</button>`}
-          ${Voice.ok ? html`<button className="btn" onClick=${() => Voice.speak(tw.text, { rate: gymVoiceRate(sps) })} disabled=${busy}><${Icon} name="volume" size=${16} />Hear it</button>` : null}
-          <button className="btn btn-icon" onClick=${shuffleTw} disabled=${busy} aria-label="Another twister from this tier"><${Icon} name="refresh" size=${16} /></button>
+          ${busy ? html`<button className="btn-cta logos wide" onClick=${cancel}><${Icon} name="stop" size=${18} />${t('Stop')}</button>` : html`<button className="btn-cta logos wide" onClick=${start} disabled=${phase === 'mark'}><${Icon} name="play" size=${18} />${phase === 'mark' ? t('Mark your round first') : t('Start')}</button>`}
+          ${Voice.ok ? html`<button className="btn" onClick=${() => Voice.speak(tw.text, { rate: gymVoiceRate(sps) })} disabled=${busy}><${Icon} name="volume" size=${16} />${t('Hear it')}</button>` : null}
+          <button className="btn btn-icon" onClick=${shuffleTw} disabled=${busy} aria-label=${t('Another twister from this tier')}><${Icon} name="refresh" size=${16} /></button>
         </div>
       </section>
       <section className="card gym-shelf">
         <div className="row-between">
-          <div className="seg" role="tablist" aria-label="Difficulty">${GYM_TIERS.map((t) => html`<button key=${t.id} role="tab" aria-selected=${tier === t.id} aria-pressed=${tier === t.id} onClick=${() => setTier(t.id)}>${t.name}</button>`)}</div>
-          <span className="tiny muted num">${tierClean}/${tierItems.length} cleared</span>
+          <div className="seg" role="tablist" aria-label=${t('Difficulty')}>${GYM_TIERS.map((t) => html`<button key=${t.id} role="tab" aria-selected=${tier === t.id} aria-pressed=${tier === t.id} onClick=${() => setTier(t.id)}>${t.name}</button>`)}</div>
+          <span className="tiny muted num">${t`${tierClean}/${tierItems.length} cleared`}</span>
         </div>
         <div className="gym-shelf-grid">
           ${tierItems.map((x) => { const r = g.tw[x.id]; const b = r && typeof r.best === 'number' ? r.best : -1; return html`<button key=${x.id} className=${'gym-shelf-item' + (x.id === tw.id ? ' is-on' : '')} onClick=${() => choose(x.id)} aria-pressed=${x.id === tw.id}>
             <span className="gym-shelf-text">${x.text}</span>
-            <span className="gym-shelf-foot"><span className="tiny muted">${x.focus}</span><span className="gym-shelf-pips" aria-label=${b >= 0 ? `Cleared up to ${GYM_PACES[b].name}` : 'Not cleared yet'}>${GYM_PACES.map((_, i) => html`<i key=${i} className=${i <= b ? 'on' : ''}></i>`)}</span></span>
+            <span className="gym-shelf-foot"><span className="tiny muted">${x.focus}</span><span className="gym-shelf-pips" aria-label=${b >= 0 ? t`Cleared up to ${GYM_PACES[b].name}` : t('Not cleared yet')}>${GYM_PACES.map((_, i) => html`<i key=${i} className=${i <= b ? 'on' : ''}></i>`)}</span></span>
           </button>`; })}
         </div>
       </section>
@@ -1432,7 +1432,7 @@ function GymWheel({ angleRef, gRef, pointerRef, spinning, landed, flash, onSpin 
     <div className="gym-pointer" ref=${pointerRef} aria-hidden="true">
       <svg viewBox="0 0 44 58"><path d="M22 56 6 18a17 17 0 1 1 32 0z" className="gym-pointer-body" /><circle cx="22" cy="17" r="6" className="gym-pointer-pin" /></svg>
     </div>
-    <button className="gym-wheel-btn" onClick=${onSpin} disabled=${spinning} aria-label="Spin the wheel">
+    <button className="gym-wheel-btn" onClick=${onSpin} disabled=${spinning} aria-label=${t('Spin the wheel')}>
       <svg viewBox="-212 -212 424 424" aria-hidden="true">
         <circle r="210" className="gym-rim" />
         <circle r="192" className="gym-rim-inner" />
@@ -1452,7 +1452,7 @@ function GymWheel({ angleRef, gRef, pointerRef, spinning, landed, flash, onSpin 
   </div>`;
 }
 function GymScaffold({ struct, active = -1 }) {
-  return html`<ol className="gym-scaffold" aria-label=${'Structure: ' + struct.name}>
+  return html`<ol className="gym-scaffold" aria-label=${t`Structure: ${struct.name}`}>
     ${struct.parts.map((pt, i) => html`<li key=${i} className=${i === active ? 'is-now' : active > i ? 'is-done' : ''}>
       <span className="gym-scaffold-n num">${i + 1}</span>
       <span className="gym-scaffold-body"><b>${pt.n}</b><span>${pt.h}</span></span>
@@ -1461,9 +1461,9 @@ function GymScaffold({ struct, active = -1 }) {
 }
 function GymFeedback({ fb }) {
   if (!fb) return null;
-  const rows = [['Structure', fb.structure], ['What worked', fb.worked], ['Try next', fb.next], ['A sharper opener', fb.opener]].filter((r) => r[1]);
+  const rows = [[t('Structure'), fb.structure], [t('What worked'), fb.worked], [t('Try next'), fb.next], [t('A sharper opener'), fb.opener]].filter((r) => r[1]);
   return html`<div className="gym-fb">
-    <div className="gym-fb-head"><span className="coach-avatar"><${Icon} name=${fb.offline ? 'scale' : 'sparkles'} size=${20} /></span><div><span className="eyebrow">${fb.offline ? 'Coach notes from your self-review' : 'Coach feedback'}</span><p className="gym-fb-verdict">${fb.verdict}</p></div></div>
+    <div className="gym-fb-head"><span className="coach-avatar"><${Icon} name=${fb.offline ? 'scale' : 'sparkles'} size=${20} /></span><div><span className="eyebrow">${fb.offline ? t('Coach notes from your self-review') : t('Coach feedback')}</span><p className="gym-fb-verdict">${fb.verdict}</p></div></div>
     <dl className="gym-fb-rows">${rows.map(([k, v]) => html`<div key=${k}><dt>${k}</dt><dd>${v}</dd></div>`)}</dl>
   </div>`;
 }
@@ -1564,7 +1564,7 @@ function GymRoulette({ init }) {
     setSpoke(secs); setFb(null);
     if (!gymImpCounts(secs, speakSecs)) {
       setTooShort(secs); setPhase('landed');
-      toast('Speak for at least 20 seconds to count this round.', 'warn');
+      toast(t('Speak for at least 20 seconds to count this round.'), 'warn');
       return;
     }
     setTooShort(null); setPhase('review');
@@ -1574,7 +1574,7 @@ function GymRoulette({ init }) {
       pp.stats.impromptus = (pp.stats.impromptus || 0) + 1;
       const gg = gymMark(pp, 'impromptu');
       gg.imps = [...gg.imps, { t: Date.now(), cat: cat ? cat.id : '', prompt, secs, r: null }].slice(-12);
-      ctx.xp(GYM_IMP_XP, 'Impromptu');
+      ctx.xp(GYM_IMP_XP, t('Impromptu'));
       ctx.quest('impromptu');
     });
   }
@@ -1588,7 +1588,7 @@ function GymRoulette({ init }) {
     const run = ++coachRun.current;
     setBusy(true);
     try {
-      const raw = await AI.json(gymImpPrompt({ prompt, cat: cat ? cat.name : 'Impromptu', struct, secs: speakSecs, ratings, notes }), { cache: false, modelTier: 'default' });
+      const raw = await AI.json(gymImpPrompt({ prompt, cat: cat ? cat.name : t('Impromptu'), struct, secs: speakSecs, ratings, notes }), { cache: false, modelTier: 'default' });
       if (run !== coachRun.current) return;
       setFb(gymNormFeedback(raw));
     } catch (e) {
@@ -1602,38 +1602,38 @@ function GymRoulette({ init }) {
   const wheelish = phase === 'wheel' || phase === 'spinning' || phase === 'landed';
   const recent = g.imps.slice(-4).reverse();
   return html`<div className="gym gym-imp">
-    <${GymHead} id="impromptu" title="Impromptu roulette" lead="Spin the wheel. You get a topic and a structure, a short think, and then the floor is yours. Speak out loud." />
+    <${GymHead} id="impromptu" title=${t('Impromptu roulette')} lead=${t('Spin the wheel. You get a topic and a structure, a short think, and then the floor is yours. Speak out loud.')} />
     <section className=${'stage gym-show is-' + phase}>
       <div className="gym-show-lights" aria-hidden="true"><i></i><i></i><i></i></div>
       ${wheelish ? html`<div className="gym-show-grid">
         <div className="gym-wheel-col">
           <div className="gym-rays" aria-hidden="true"></div>
           <${GymWheel} angleRef=${angleRef} gRef=${gRef} pointerRef=${pointerRef} spinning=${phase === 'spinning'} landed=${phase === 'landed' ? catIdx : -1} flash=${flash} onSpin=${spin} />
-          <button className="btn-cta gold gym-spin-btn" onClick=${spin} disabled=${phase === 'spinning'}><${Icon} name="gymWheel" size=${20} />${phase === 'spinning' ? 'Spinning…' : phase === 'landed' ? 'Spin again' : 'Spin the wheel'}</button>
+          <button className="btn-cta gold gym-spin-btn" onClick=${spin} disabled=${phase === 'spinning'}><${Icon} name="gymWheel" size=${20} />${phase === 'spinning' ? t('Spinning…') : phase === 'landed' ? t('Spin again') : t('Spin the wheel')}</button>
         </div>
         <div className="gym-card-col" ref=${cardRef} aria-live="polite">
           ${phase === 'landed' && cat ? html`<div className="gym-prompt" key=${prompt}>
             <span className="gym-cat-tag" style=${{ '--c': cat.c }}>${cat.name}</span>
             <p className="gym-prompt-text">${prompt}</p>
-            ${tooShort != null ? html`<p className="gym-too-short" role="status"><b>Too short to count.</b> That round lasted ${fmtTime(tooShort)}, so it earned no XP. Speak for at least 20 seconds.</p>` : null}
-            <div className="gym-struct-head"><span className="inscr">Structure · ${struct.name}</span></div>
+            ${tooShort != null ? html`<p className="gym-too-short" role="status"><b>${t('Too short to count.')}</b> ${t`That round lasted ${fmtTime(tooShort)}, so it earned no XP. Speak for at least 20 seconds.`}</p>` : null}
+            <div className="gym-struct-head"><span className="inscr">${t`Structure · ${struct.name}`}</span></div>
             <${GymScaffold} struct=${struct} />
             <div className="row" style=${{ gap: 6 }}>
-              <button className="btn btn-sm" onClick=${redraw}><${Icon} name="refresh" size=${14} />New topic</button>
-              <button className="btn btn-sm" onClick=${reshape}><${Icon} name="columns" size=${14} />Other structure</button>
+              <button className="btn btn-sm" onClick=${redraw}><${Icon} name="refresh" size=${14} />${t('New topic')}</button>
+              <button className="btn btn-sm" onClick=${reshape}><${Icon} name="columns" size=${14} />${t('Other structure')}</button>
             </div>
             <div className="gym-times">
-              <span className="gym-times-l">Think</span><div className="seg gym-seg-stage">${[15, 30, 60].map((s) => html`<button key=${s} aria-pressed=${prepSecs === s} onClick=${() => setPrepSecs(s)}>${s}s</button>`)}</div>
-              <span className="gym-times-l">Speak</span><div className="seg gym-seg-stage">${[60, 90, 120].map((s) => html`<button key=${s} aria-pressed=${speakSecs === s} onClick=${() => setSpeakSecs(s)}>${fmtTime(s)}</button>`)}</div>
+              <span className="gym-times-l">${t('Think')}</span><div className="seg gym-seg-stage">${[15, 30, 60].map((s) => html`<button key=${s} aria-pressed=${prepSecs === s} onClick=${() => setPrepSecs(s)}>${t`${s}s`}</button>`)}</div>
+              <span className="gym-times-l">${t('Speak')}</span><div className="seg gym-seg-stage">${[60, 90, 120].map((s) => html`<button key=${s} aria-pressed=${speakSecs === s} onClick=${() => setSpeakSecs(s)}>${fmtTime(s)}</button>`)}</div>
             </div>
-            <button className="btn-cta wide gym-go-btn" onClick=${beginPrep}><${Icon} name="hourglass" size=${18} />Start ${prepSecs}-second think</button>
+            <button className="btn-cta wide gym-go-btn" onClick=${beginPrep}><${Icon} name="hourglass" size=${18} />${t`Start ${prepSecs}-second think`}</button>
           </div>` : html`<div className="gym-rules">
-            <span className="inscr gym-rules-kicker">How it works</span>
-            <h2 className="gym-rules-title"><span>Spin.</span> <span>Think.</span> <span>Speak.</span></h2>
+            <span className="inscr gym-rules-kicker">${t('How it works')}</span>
+            <h2 className="gym-rules-title"><span>${t('Spin.')}</span> <span>${t('Think.')}</span> <span>${t('Speak.')}</span></h2>
             <ol className="gym-rules-list">
-              <li><b>Spin</b><span>Ten categories, ninety topics.</span></li>
-              <li><b>Think</b><span>${prepSecs} seconds with a ready-made structure.</span></li>
-              <li><b>Speak</b><span>${fmtTime(speakSecs)} out loud, with cues to keep you on track.</span></li>
+              <li><b>${t('Spin')}</b><span>${t('Ten categories, ninety topics.')}</span></li>
+              <li><b>${t('Think')}</b><span>${t`${prepSecs} seconds with a ready-made structure.`}</span></li>
+              <li><b>${t('Speak')}</b><span>${t`${fmtTime(speakSecs)} out loud, with cues to keep you on track.`}</span></li>
             </ol>
             <div className="gym-legend">${GYM_CATS.map((c) => html`<span key=${c.id}><i style=${{ background: c.c }}></i>${c.name}</span>`)}</div>
           </div>`}
@@ -1641,26 +1641,26 @@ function GymRoulette({ init }) {
       </div>` : timed ? html`<div className="gym-spot">
         <div className="gym-spot-clock">
           <${Klepsydra} total=${phase === 'prep' ? prepSecs : speakSecs} remaining=${left} size=${132} running=${true} />
-          <span className="inscr">${phase === 'prep' ? 'Thinking time' : 'Speaking time'}</span>
+          <span className="inscr">${phase === 'prep' ? t('Thinking time') : t('Speaking time')}</span>
         </div>
         <div className="gym-spot-body">
           ${cat ? html`<span className="gym-cat-tag" style=${{ '--c': cat.c }}>${cat.name}</span>` : null}
           <p className="gym-prompt-text">${prompt}</p>
           <${GymScaffold} struct=${struct} active=${partIdx} />
-          ${phase === 'speak' && cue ? html`<p className=${'gym-cue-banner is-' + cue.key} key=${cue.key}>${cue.text}</p>` : html`<p className="gym-cue-banner">Pick your point first. Then find one example. That’s enough.</p>`}
+          ${phase === 'speak' && cue ? html`<p className=${'gym-cue-banner is-' + cue.key} key=${cue.key}>${cue.text}</p>` : html`<p className="gym-cue-banner">${t('Pick your point first. Then find one example. That’s enough.')}</p>`}
           <div className="gym-ctl" ref=${ctlRef}>
-            ${phase === 'prep' ? html`<button className="btn-cta gold wide" onClick=${beginSpeak}><${Icon} name="mic" size=${18} />I’m ready, start speaking</button>` : html`<button className="btn-cta pathos wide" onClick=${endSpeak}><${Icon} name="check" size=${18} stroke=${3} />I’m done</button>`}
-            <button className="btn" onClick=${() => setPhase('landed')}>Cancel</button>
+            ${phase === 'prep' ? html`<button className="btn-cta gold wide" onClick=${beginSpeak}><${Icon} name="mic" size=${18} />${t('I’m ready, start speaking')}</button>` : html`<button className="btn-cta pathos wide" onClick=${endSpeak}><${Icon} name="check" size=${18} stroke=${3} />${t('I’m done')}</button>`}
+            <button className="btn" onClick=${() => setPhase('landed')}>${t('Cancel')}</button>
           </div>
         </div>
       </div>` : html`<div className="gym-bravo">
         <${GymLaurel} size=${74} />
-        <div><span className="inscr">Applause</span><h2>You held the floor for ${fmtTime(spoke)}</h2><p className="gym-bravo-prompt">${cat ? cat.name + ' · ' : ''}${prompt}</p></div>
+        <div><span className="inscr">${t('Applause')}</span><h2>${t`You held the floor for ${fmtTime(spoke)}`}</h2><p className="gym-bravo-prompt">${cat ? cat.name + ' · ' : ''}${prompt}</p></div>
         <span className="xp-earned"><${Icon} name="bolt" size=${16} />+${GYM_IMP_XP} XP</span>
       </div>`}
     </section>
     ${phase === 'review' ? html`<section className="card gym-review">
-      <div><div className="eyebrow">Self-review</div><h2>How did that round feel?</h2><p className="small muted">Be honest. The coach works from what you tell it.</p></div>
+      <div><div className="eyebrow">${t('Self-review')}</div><h2>${t('How did that round feel?')}</h2><p className="small muted">${t('Be honest. The coach works from what you tell it.')}</p></div>
       <div className="gym-sliders">
         ${GYM_REVIEW_DIMS.map((d) => html`<label key=${d.id} className="gym-slider" style=${{ '--c': d.c }}>
           <span className="gym-slider-top"><b>${d.name}</b><span className="gym-slider-val">${GYM_RATE_WORDS[ratings[d.id]]}</span></span>
@@ -1669,21 +1669,21 @@ function GymRoulette({ init }) {
         </label>`)}
       </div>
       <div className="field">
-        <label htmlFor=${notesId}>What did you say? <span className="muted" style=${{ fontWeight: 500 }}>Optional, a few lines is plenty</span></label>
-        <textarea id=${notesId} className="textarea" rows="4" value=${notes} onInput=${(e) => setNotes(e.target.value)} placeholder="My point was… My example was… I closed with…"></textarea>
+        <label htmlFor=${notesId}>${t('What did you say?')} <span className="muted" style=${{ fontWeight: 500 }}>${t('Optional, a few lines is plenty')}</span></label>
+        <textarea id=${notesId} className="textarea" rows="4" value=${notes} onInput=${(e) => setNotes(e.target.value)} placeholder=${t('My point was… My example was… I closed with…')}></textarea>
       </div>
       <div className="gym-ctl">
-        <button className="btn-cta" onClick=${coach} disabled=${busy}>${busy ? html`<span className="spin"></span>Reading your notes…` : html`<${Icon} name="sparkles" size=${18} />${ai === 'off' ? 'See coach notes' : 'Get coach feedback'}`}</button>
-        <button className="btn" onClick=${again}><${Icon} name="gymWheel" size=${16} />Spin again</button>
+        <button className="btn-cta" onClick=${coach} disabled=${busy}>${busy ? html`<span className="spin"></span>${t('Reading your notes…')}` : html`<${Icon} name="sparkles" size=${18} />${ai === 'off' ? t('See coach notes') : t('Get coach feedback')}`}</button>
+        <button className="btn" onClick=${again}><${Icon} name="gymWheel" size=${16} />${t('Spin again')}</button>
       </div>
-      ${fb && fb.hint ? html`<p className="hint">Jot at least a sentence or two about what you said to get feedback on your content. Here are notes from your ratings.</p>` : null}
+      ${fb && fb.hint ? html`<p className="hint">${t('Jot at least a sentence or two about what you said to get feedback on your content. Here are notes from your ratings.')}</p>` : null}
       <${GymFeedback} fb=${fb} />
     </section>` : null}
     ${wheelish && recent.length ? html`<section className="card gym-recent">
-      <div className="eyebrow">Your last spins</div>
+      <div className="eyebrow">${t('Your last spins')}</div>
       <ul>${recent.map((r, i) => { const c = GYM_CATS.find((x) => x.id === r.cat); const avg = r.r ? mean(GYM_REVIEW_DIMS.map((d) => r.r[d.id] || 3)) : null; return html`<li key=${r.t + ':' + i}>
         <i className="gym-recent-dot" style=${{ background: c ? c.c : 'var(--line-2)' }}></i>
-        <span className="gym-recent-text"><b>${c ? c.name : 'Topic'}</b> ${r.prompt}</span>
+        <span className="gym-recent-text"><b>${c ? c.name : t('Topic')}</b> ${r.prompt}</span>
         <span className="tiny muted num">${avg != null ? avg.toFixed(1) + ' / 5 · ' : ''}${fmtDate(r.t)}</span>
       </li>`; })}</ul>
     </section>` : null}
@@ -1735,11 +1735,11 @@ function GymLab({ init }) {
   function award(bonus) {
     if (!awarded.current[item.id]) {
       awarded.current[item.id] = true;
-      Store.act((pp, ctx) => { const gg = gymMark(pp, 'lab'); gg.crafted += 1; ctx.xp(6, 'Device Lab'); ctx.quest('drill'); });
+      Store.act((pp, ctx) => { const gg = gymMark(pp, 'lab'); gg.crafted += 1; ctx.xp(6, t('Device Lab')); ctx.quest('drill'); });
     }
     if (bonus && !awarded.current[item.id + ':bonus']) {
       awarded.current[item.id + ':bonus'] = true;
-      Store.act((pp, ctx) => ctx.xp(6, 'Sharp device'));
+      Store.act((pp, ctx) => ctx.xp(6, t('Sharp device')));
     }
   }
   function load(id) { coachRun.current += 1; setBusy(false); setItemId(id); setText(''); setRevealed(false); setFb(null); setSelfOk(null); }
@@ -1785,56 +1785,56 @@ function GymLab({ init }) {
   }
   const meter = check.ok === true ? 3 : check.ok === null && attempted ? 2 : attempted ? 1 : 0;
   return html`<div className="gym gym-lab">
-    <${GymHead} id="lab" title="Device lab" lead="Rewrite a plain sentence using one rhetorical device, then compare it with ours." />
-    <div className="gym-chiprail" role="toolbar" aria-label="Choose a device">
-      <button className="chip" aria-pressed=${filter === 'all'} onClick=${() => pickFilter('all')}>Any device</button>
+    <${GymHead} id="lab" title=${t('Device lab')} lead=${t('Rewrite a plain sentence using one rhetorical device, then compare it with ours.')} />
+    <div className="gym-chiprail" role="toolbar" aria-label=${t('Choose a device')}>
+      <button className="chip" aria-pressed=${filter === 'all'} onClick=${() => pickFilter('all')}>${t('Any device')}</button>
       ${devIds.map((d) => html`<button key=${d} className="chip" aria-pressed=${filter === d} onClick=${() => pickFilter(d)}>${GYM_DEVICES[d].name}</button>`)}
     </div>
     <section className="gym-bench">
       <div className="gym-label-card">
-        <div className="gym-label-top"><span className="inscr">Specimen · ${dev.name}</span>${dev.greek ? html`<span className="greek">${dev.greek}</span>` : null}</div>
+        <div className="gym-label-top"><span className="inscr">${t`Specimen · ${dev.name}`}</span>${dev.greek ? html`<span className="greek">${dev.greek}</span>` : null}</div>
         <p className="gym-label-def">${dev.def}</p>
-        <p className="gym-label-recipe"><b>Recipe</b> ${dev.recipe}</p>
+        <p className="gym-label-recipe"><b>${t('Recipe')}</b> ${dev.recipe}</p>
       </div>
       <div className="gym-plain">
-        <span className="gym-tag">Plain</span>
+        <span className="gym-tag">${t('Plain')}</span>
         <p className="gym-plain-text">${item.plain}</p>
       </div>
       <${GymPrism} key=${'p' + play} lit=${revealed} />
       <div className="gym-rewrite">
-        <label className="gym-tag" htmlFor=${textId}>Your rewrite · ${dev.name}</label>
-        <textarea id=${textId} ref=${taRef} className="textarea gym-rewrite-ta" rows="3" value=${text} onInput=${(e) => { coachRun.current += 1; setBusy(false); setText(e.target.value); if (fb) setFb(null); setSelfOk(null); }} placeholder=${'Rewrite the plain sentence using ' + dev.name.toLowerCase() + '…'}></textarea>
+        <label className="gym-tag" htmlFor=${textId}>${t`Your rewrite · ${dev.name}`}</label>
+        <textarea id=${textId} ref=${taRef} className="textarea gym-rewrite-ta" rows="3" value=${text} onInput=${(e) => { coachRun.current += 1; setBusy(false); setText(e.target.value); if (fb) setFb(null); setSelfOk(null); }} placeholder=${t`Rewrite the plain sentence using ${dev.name.toLowerCase()}…`}></textarea>
         <div className="gym-meter" aria-live="polite">
           <span className="gym-meter-lights" aria-hidden="true">${[0, 1, 2].map((i) => html`<i key=${i} className=${'k' + i + (i < meter ? ' on' : '')}></i>`)}</span>
-          <span className="small">${attempted ? (check.ok === true ? 'Quick check: ' : check.ok === false ? 'Not yet: ' : 'Your call: ') + check.note : 'Write your version first. The quick check reads it as you type.'}</span>
+          <span className="small">${attempted ? (check.ok === true ? t('Quick check:') : check.ok === false ? t('Not yet:') : t('Your call:')) + ' ' + check.note : t('Write your version first. The quick check reads it as you type.')}</span>
         </div>
       </div>
       <div className="gym-ctl">
-        <button className="btn-cta" onClick=${reveal} disabled=${!attempted && !revealed}><${Icon} name="gymPrism" size=${18} />${revealed ? 'Replay the reveal' : 'Reveal our version'}</button>
-        <button className="btn btn-ink" onClick=${coach} disabled=${!attempted || busy}>${busy ? html`<span className="spin"></span>Judging…` : html`<${Icon} name="sparkles" size=${16} />${ai === 'off' ? 'Check it myself' : 'Get coach feedback'}`}</button>
-        <button className="btn" onClick=${() => nextItem()}><${Icon} name="refresh" size=${16} />New sentence</button>
+        <button className="btn-cta" onClick=${reveal} disabled=${!attempted && !revealed}><${Icon} name="gymPrism" size=${18} />${revealed ? t('Replay the reveal') : t('Reveal our version')}</button>
+        <button className="btn btn-ink" onClick=${coach} disabled=${!attempted || busy}>${busy ? html`<span className="spin"></span>${t('Judging…')}` : html`<${Icon} name="sparkles" size=${16} />${ai === 'off' ? t('Check it myself') : t('Get coach feedback')}`}</button>
+        <button className="btn" onClick=${() => nextItem()}><${Icon} name="refresh" size=${16} />${t('New sentence')}</button>
       </div>
-      ${!attempted && !revealed ? html`<button className="btn btn-ghost btn-sm gym-peek" onClick=${reveal}>Show me an example first</button>` : null}
+      ${!attempted && !revealed ? html`<button className="btn btn-ghost btn-sm gym-peek" onClick=${reveal}>${t('Show me an example first')}</button>` : null}
       ${revealed ? html`<div className="gym-model" ref=${modelRef} key=${'m' + play}>
-        <div className="row-between"><span className="gym-tag lit">Crafted · ${dev.name}</span>${Voice.ok ? html`<button className="btn btn-sm btn-ghost" onClick=${() => Voice.speak(item.model, { rate: 0.95 })}><${Icon} name="volume" size=${14} />Hear it</button>` : null}</div>
+        <div className="row-between"><span className="gym-tag lit">${t`Crafted · ${dev.name}`}</span>${Voice.ok ? html`<button className="btn btn-sm btn-ghost" onClick=${() => Voice.speak(item.model, { rate: 0.95 })}><${Icon} name="volume" size=${14} />${t('Hear it')}</button>` : null}</div>
         <${GymModelLine} item=${item} />
         <p className="small muted">${dev.recipe}</p>
       </div>` : null}
       ${fb && !fb.offline ? html`<div className="gym-fb gym-lab-fb">
         <div className="gym-fb-head">
           <span className=${'gym-score num' + (fb.score >= 80 ? ' hi' : fb.score >= 60 ? ' mid' : '')}>${fb.score}</span>
-          <div><span className="eyebrow">${fb.uses ? `Uses ${dev.name.toLowerCase()}` : `Not quite ${dev.name.toLowerCase()} yet`}</span><p className="gym-fb-verdict">${fb.verdict}</p></div>
+          <div><span className="eyebrow">${fb.uses ? t`Uses ${dev.name.toLowerCase()}` : t`Not quite ${dev.name.toLowerCase()} yet`}</span><p className="gym-fb-verdict">${fb.verdict}</p></div>
         </div>
-        <dl className="gym-fb-rows">${[['What works', fb.worked], ['Try next', fb.next], ['One sharper version', fb.example]].filter((r) => r[1]).map(([k, v]) => html`<div key=${k}><dt>${k}</dt><dd>${v}</dd></div>`)}</dl>
+        <dl className="gym-fb-rows">${[[t('What works'), fb.worked], [t('Try next'), fb.next], [t('One sharper version'), fb.example]].filter((r) => r[1]).map(([k, v]) => html`<div key=${k}><dt>${k}</dt><dd>${v}</dd></div>`)}</dl>
       </div>` : null}
       ${fb && fb.offline ? html`<div className="gym-fb gym-selfcheck">
-        <div className="gym-fb-head"><span className="coach-avatar"><${Icon} name="scale" size=${20} /></span><div><span className="eyebrow">Self-check</span><p className="gym-fb-verdict">Read your line out loud, then answer honestly.</p></div></div>
+        <div className="gym-fb-head"><span className="coach-avatar"><${Icon} name="scale" size=${20} /></span><div><span className="eyebrow">${t('Self-check')}</span><p className="gym-fb-verdict">${t('Read your line out loud, then answer honestly.')}</p></div></div>
         <ul className="gym-checks">${dev.checks.map((c, i) => html`<li key=${i}><${Icon} name="help" size=${16} />${c}</li>`)}</ul>
         ${selfOk == null ? html`<div className="row" style=${{ gap: 8 }}>
-          <button className="btn-cta logos" onClick=${() => selfMark(true)}><${Icon} name="check" size=${16} stroke=${3} />Yes, it lands</button>
-          <button className="btn" onClick=${() => selfMark(false)}>Not yet, let me revise</button>
-          ${!revealed ? html`<button className="btn btn-ghost" onClick=${reveal}>Compare with ours</button>` : null}
-        </div>` : html`<p className="small">${selfOk ? 'Logged. Try another device while you’re warm.' : 'Good call. Change one thing and check again.'}</p>`}
+          <button className="btn-cta logos" onClick=${() => selfMark(true)}><${Icon} name="check" size=${16} stroke=${3} />${t('Yes, it lands')}</button>
+          <button className="btn" onClick=${() => selfMark(false)}>${t('Not yet, let me revise')}</button>
+          ${!revealed ? html`<button className="btn btn-ghost" onClick=${reveal}>${t('Compare with ours')}</button>` : null}
+        </div>` : html`<p className="small">${selfOk ? t('Logged. Try another device while you’re warm.') : t('Good call. Change one thing and check again.')}</p>`}
       </div>` : null}
     </section>
   </div>`;

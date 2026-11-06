@@ -198,7 +198,7 @@ const Persist = {
     if (jsonBytes(body) > SYNC_LIMIT) {
       if (!this.flagGet('localOnly')[id]) {
         this.flagSet('localOnly', id, true);
-        toast('This item is too large to sync to your account, so it stays in this browser.', 'warn');
+        toast(t('This item is too large to sync to your account, so it stays in this browser.'), 'warn');
       }
       this.flagSet('dirty', id, false);
       return;
@@ -236,17 +236,17 @@ const Persist = {
   warnLocal() {
     if (this.warned || this.mode === 'db') return;
     this.warned = true;
-    toast('Browser storage is full or blocked, so your latest work may not survive a reload.', 'bad');
+    toast(t('Browser storage is full or blocked, so your latest work may not survive a reload.'), 'bad');
     Store.set({ storageOk: false });
   },
   fail(e) {
     const code = e && e.code;
-    if (code === 'quota_exceeded') { toast('Your Rostra storage is full. Delete a few old speeches to keep saving.', 'bad'); return; }
+    if (code === 'quota_exceeded') { toast(t('Your Rostra storage is full. Delete a few old speeches to keep saving.'), 'bad'); return; }
     if (code === 'unavailable' || code === 'resource_exhausted') return; // stays dirty; the next boot uploads it
     if (this.mode === 'db') {
       this.mode = 'local';
       Store.set({ backend: 'local' });
-      toast('Account sync is off in this view, so progress is saved in this browser.', 'warn');
+      toast(t('Account sync is off in this view, so progress is saved in this browser.'), 'warn');
     }
   },
 };
@@ -287,11 +287,11 @@ function levelInfo(xp) {
 function toRoman(n) { const m = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let s = ''; for (const [v, r] of m) while (n >= v) { s += r; n -= v; } return s; }
 
 function tierOf(score) {
-  if (score == null) return { name: 'Unranked', color: 'var(--line-2)' };
-  if (score >= 80) return { name: 'Laurel', color: 'var(--logos)' };
-  if (score >= 65) return { name: 'Gold', color: 'var(--gold)' };
-  if (score >= 50) return { name: 'Silver', color: 'var(--silver)' };
-  return { name: 'Bronze', color: 'var(--bronze)' };
+  if (score == null) return { name: t('Unranked'), color: 'var(--line-2)' };
+  if (score >= 80) return { name: t('Laurel'), color: 'var(--logos)' };
+  if (score >= 65) return { name: t('Gold'), color: 'var(--gold)' };
+  if (score >= 50) return { name: t('Silver'), color: 'var(--silver)' };
+  return { name: t('Bronze'), color: 'var(--bronze)' };
 }
 
 function archetypeOf(sc) {
@@ -470,7 +470,7 @@ const Store = {
       const vals = POLE_KEYS.map((k) => sp.scores && sp.scores[k]).filter((v) => v != null);
       Platform.recordSubmission(sp.assignmentId, sp.id, { kind: 'speech', title: sp.title, percent: vals.length ? Math.round(mean(vals)) : null, scores: sp.scores, words: sp.words, finished: sp.date });
     }
-    if (sp.dup) { toast('You already analyzed this exact speech, so it earns no XP. Change it and try again.', 'warn'); return; }
+    if (sp.dup) { toast(t('You already analyzed this exact speech, so it earns no XP. Change it and try again.'), 'warn'); return; }
     this.act((p, ctx) => {
       const sc = sp.scores;
       const fold = foldSkills(this.state.speeches);
@@ -643,20 +643,20 @@ const AI = {
 function aiErrorText(e) {
   const c = e && e.code;
   switch (c) {
-    case 'not_granted': return typeof Platform !== 'undefined' && Platform.accountsRequired ? 'Sign in to use the coach.' : 'The AI coach isn’t enabled for this page.';
+    case 'not_granted': return typeof Platform !== 'undefined' && Platform.accountsRequired ? t('Sign in to use the coach.') : t('The AI coach isn’t enabled for this page.');
     case 'sampling_disabled': case 'not_declared': case 'capability_disabled': case 'capability_removed': case 'unavailable':
-      return 'The AI coach isn’t available on this server right now.';
-    case 'rate_limited': return 'You’ve reached today’s limit for the coach. It resets tomorrow.';
-    case 'timeout': return 'The coach took too long to answer. Try again.';
-    case 'network': return 'The coach couldn’t be reached. Check your connection and try again.';
-    case 'server_misconfigured': return 'The AI key on the server isn’t valid. Tell your teacher or the Rostra team.';
-    case 'session_expired': return 'Your session expired. Sign in to Claude again, then retry.';
-    case 'prompt_too_large': return 'That text is too long for one pass. Trim it to the part you most want coached.';
-    case 'refused': return 'The coach couldn’t work with this text. Try different content.';
-    case 'invalid_json': return 'The coach’s reply came back incomplete. Try again.';
-    case 'image_rejected': case 'images_unavailable': return 'Video frames couldn’t be sent, so presence wasn’t scored.';
-    case 'cancelled': return 'Stopped.';
-    default: return 'The coach couldn’t be reached. Check your connection and try again.';
+      return t('The AI coach isn’t available on this server right now.');
+    case 'rate_limited': return t('You’ve reached today’s limit for the coach. It resets tomorrow.');
+    case 'timeout': return t('The coach took too long to answer. Try again.');
+    case 'network': return t('The coach couldn’t be reached. Check your connection and try again.');
+    case 'server_misconfigured': return t('The AI key on the server isn’t valid. Tell your teacher or the Rostra team.');
+    case 'session_expired': return t('Your session expired. Sign in to Claude again, then retry.');
+    case 'prompt_too_large': return t('That text is too long for one pass. Trim it to the part you most want coached.');
+    case 'refused': return t('The coach couldn’t work with this text. Try different content.');
+    case 'invalid_json': return t('The coach’s reply came back incomplete. Try again.');
+    case 'image_rejected': case 'images_unavailable': return t('Video frames couldn’t be sent, so presence wasn’t scored.');
+    case 'cancelled': return t('Stopped.');
+    default: return t('The coach couldn’t be reached. Check your connection and try again.');
   }
 }
 
@@ -823,7 +823,7 @@ async function analyzeAudio(file, onProgress = () => {}, signal) {
   onProgress(0.03, 'decode');
   let audio;
   try { audio = await decodeAudio(file); }
-  catch (e) { throw { code: 'decode', message: 'This file’s audio couldn’t be decoded here. Try exporting it as MP3, M4A or WAV.' }; }
+  catch (e) { throw { code: 'decode', message: t('This file’s audio couldn’t be decoded here. Try exporting it as MP3, M4A or WAV.') }; }
   const sr0 = audio.sampleRate, chs = audio.numberOfChannels;
   const factor = Math.max(1, Math.round(sr0 / 8000));
   const sr = sr0 / factor;
@@ -834,7 +834,7 @@ async function analyzeAudio(file, onProgress = () => {}, signal) {
     for (let i = 0, j = 0; i < n; i++) { let s = 0; for (let k = 0; k < factor; k++) s += d[j++]; x[i] += s / (factor * chs); }
   }
   const duration = n / sr;
-  if (duration < 8) throw { code: 'short', message: 'That recording is under 8 seconds. Upload at least 20 seconds of speech.' };
+  if (duration < 8) throw { code: 'short', message: t('That recording is under 8 seconds. Upload at least 20 seconds of speech.') };
   onProgress(0.12, 'energy');
   await tick();
 
@@ -854,7 +854,7 @@ async function analyzeAudio(file, onProgress = () => {}, signal) {
   fillShortRuns(voiced, 0, 16, true);
   fillShortRuns(voiced, 1, 6, false);
   const first = voiced.indexOf(1), last = voiced.lastIndexOf(1);
-  if (first < 0 || last - first < 300) throw { code: 'silent', message: 'We couldn’t hear enough speech in this recording. Check that the voice is audible.' };
+  if (first < 0 || last - first < 300) throw { code: 'silent', message: t('We couldn’t hear enough speech in this recording. Check that the voice is audible.') };
 
   const pausesRaw = [];
   let run = 0;
@@ -1030,30 +1030,30 @@ function scoreDelivery(m, words, occasionId, fillerCount) {
   const conf = [paceScore, pauseScore, fillerScore].filter((v) => v != null);
   const expr = [pitchScore, volumeScore].filter((v) => v != null);
   const notes = [];
-  const est = wpmSource === 'estimate' ? ' (estimated from syllables)' : '';
+  const est = wpmSource === 'estimate' ? t(' (estimated from syllables)') : '';
   if (wpm) {
-    if (wpm > hi + 6) notes.push({ tone: 'warn', title: 'Ease off the gas', text: `You averaged ${wpm} words per minute${est}. For a ${occ.label.toLowerCase()}, ${lo}–${hi} lets ideas land. Slow down on your key lines and let the pauses do the work.` });
-    else if (wpm < lo - 6) notes.push({ tone: 'warn', title: 'Pick up the pace', text: `At ${wpm} words per minute${est} you’re below the ${lo}–${hi} range that suits a ${occ.label.toLowerCase()}. Energy can sag; tighten sentences and move briskly through transitions.` });
-    else notes.push({ tone: 'good', title: 'Pace in the sweet spot', text: `${wpm} words per minute${est} sits inside the ${lo}–${hi} range for a ${occ.label.toLowerCase()}.` });
+    if (wpm > hi + 6) notes.push({ tone: 'warn', title: t('Ease off the gas'), text: t`You averaged ${wpm} words per minute${est}. For a ${occ.label.toLowerCase()}, ${lo}–${hi} lets ideas land. Slow down on your key lines and let the pauses do the work.` });
+    else if (wpm < lo - 6) notes.push({ tone: 'warn', title: t('Pick up the pace'), text: t`At ${wpm} words per minute${est} you’re below the ${lo}–${hi} range that suits a ${occ.label.toLowerCase()}. Energy can sag; tighten sentences and move briskly through transitions.` });
+    else notes.push({ tone: 'good', title: t('Pace in the sweet spot'), text: t`${wpm} words per minute${est} sits inside the ${lo}–${hi} range for a ${occ.label.toLowerCase()}.` });
   }
   if (pausesOk) {
-    if (m.pauses.long > 0 && m.pauses.longest) notes.push({ tone: 'warn', title: m.pauses.long === 1 ? 'One frozen silence' : `${m.pauses.long} frozen silences`, text: `${plural(m.pauses.long, 'pause')} ran past two seconds (the longest was ${m.pauses.longest.d.toFixed(1)} s at ${fmtTime(m.pauses.longest.t)}). If those weren’t planned beats, keep a one-line roadmap in your notes.` });
-    if (dpm < 1) notes.push({ tone: 'warn', title: 'Few deliberate pauses', text: 'You rarely stopped for more than a breath. Add a one-to-two second pause before each key point and after each question.' });
-    else notes.push({ tone: 'good', title: 'You use the pause', text: `${plural(m.pauses.deliberate, 'deliberate pause')} (0.7–2 s). That gives the audience time to absorb what you said.` });
+    if (m.pauses.long > 0 && m.pauses.longest) notes.push({ tone: 'warn', title: m.pauses.long === 1 ? t('One frozen silence') : t`${m.pauses.long} frozen silences`, text: t`${tn(m.pauses.long, 'pause', 'pauses')} ran past two seconds (the longest was ${m.pauses.longest.d.toFixed(1)} s at ${fmtTime(m.pauses.longest.t)}). If those weren’t planned beats, keep a one-line roadmap in your notes.` });
+    if (dpm < 1) notes.push({ tone: 'warn', title: t('Few deliberate pauses'), text: t('You rarely stopped for more than a breath. Add a one-to-two second pause before each key point and after each question.') });
+    else notes.push({ tone: 'good', title: t('You use the pause'), text: t`${tn(m.pauses.deliberate, 'deliberate pause', 'deliberate pauses')} (0.7–2 s). That gives the audience time to absorb what you said.` });
   }
   if (m.pitch) {
-    if (m.pitch.std < 2) notes.push({ tone: 'warn', title: 'Flat pitch', text: `Your pitch varied about ${m.pitch.std.toFixed(1)} semitones, which reads as monotone. Let your voice rise on questions and fall at the end of statements.` });
-    else if (m.pitch.std > 6) notes.push({ tone: 'warn', title: 'Very sing-song', text: `Your pitch swung about ${m.pitch.std.toFixed(1)} semitones. Expressive is good; settle it on key lines so they sound certain.` });
-    else notes.push({ tone: 'good', title: 'Expressive voice', text: `Your pitch moved about ${m.pitch.std.toFixed(1)} semitones, in the lively range that keeps listeners engaged.` });
+    if (m.pitch.std < 2) notes.push({ tone: 'warn', title: t('Flat pitch'), text: t`Your pitch varied about ${m.pitch.std.toFixed(1)} semitones, which reads as monotone. Let your voice rise on questions and fall at the end of statements.` });
+    else if (m.pitch.std > 6) notes.push({ tone: 'warn', title: t('Very sing-song'), text: t`Your pitch swung about ${m.pitch.std.toFixed(1)} semitones. Expressive is good; settle it on key lines so they sound certain.` });
+    else notes.push({ tone: 'good', title: t('Expressive voice'), text: t`Your pitch moved about ${m.pitch.std.toFixed(1)} semitones, in the lively range that keeps listeners engaged.` });
   }
   if (m.loudness) {
-    if (m.loudness.std < 2) notes.push({ tone: 'warn', title: 'Steady volume', text: 'Your volume barely changed. Drop it to pull people in on a personal moment; lift it on your call to action.' });
-    else notes.push({ tone: 'good', title: 'Dynamic volume', text: `Your volume moved across a ${m.loudness.range.toFixed(0)} dB range. You’re using power as an instrument.` });
+    if (m.loudness.std < 2) notes.push({ tone: 'warn', title: t('Steady volume'), text: t('Your volume barely changed. Drop it to pull people in on a personal moment; lift it on your call to action.') });
+    else notes.push({ tone: 'good', title: t('Dynamic volume'), text: t`Your volume moved across a ${m.loudness.range.toFixed(0)} dB range. You’re using power as an instrument.` });
   }
   if (fillersPerMin != null) {
-    if (fillersPerMin >= 3) notes.push({ tone: 'warn', title: 'Filler words', text: `${plural(fillerCount, 'filler')}, about ${fillersPerMin.toFixed(1)} per minute. Replace each one with a silent breath.` });
-    else if (fillerCount > 0) notes.push({ tone: 'good', title: 'Few fillers', text: `${plural(fillerCount, 'filler')} (${fillersPerMin.toFixed(1)} per minute). Auto-transcripts often drop “um”, so check the recording too.` });
-    else notes.push({ tone: 'good', title: 'No fillers detected', text: 'Clean. Note that some auto-transcripts remove “um” and “uh”.' });
+    if (fillersPerMin >= 3) notes.push({ tone: 'warn', title: t('Filler words'), text: t`${tn(fillerCount, 'filler', 'fillers')}, about ${fillersPerMin.toFixed(1)} per minute. Replace each one with a silent breath.` });
+    else if (fillerCount > 0) notes.push({ tone: 'good', title: t('Few fillers'), text: t`${tn(fillerCount, 'filler', 'fillers')} (${fillersPerMin.toFixed(1)} per minute). Auto-transcripts often drop “um”, so check the recording too.` });
+    else notes.push({ tone: 'good', title: t('No fillers detected'), text: t('Clean. Note that some auto-transcripts remove “um” and “uh”.') });
   }
   return {
     wpm, wpmSource, pace: [lo, hi], paceScore, pauseScore, pitchScore, volumeScore, fillersPerMin, fillerScore, fillerCount,
@@ -1091,33 +1091,33 @@ function heuristicContent(text) {
     re.lastIndex = 0; let m, n = 0;
     while ((m = re.exec(text)) && n < limit) { marks.push({ start: m.index, end: m.index + m[0].length, quote: text.slice(m.index, m.index + m[0].length).trim(), kind, label, note, fix, pole }); n++; }
   };
-  scan(/\b(everyone knows|everybody knows|always|never|nobody|no one|obviously|clearly)\b/gi, 'vague', 'Sweeping claim', 'Absolute words invite the skeptic to find the exception.', 'Swap it for a specific, checkable claim.', 'logos');
-  scan(/\beither\b[^.?!]{3,90}?\bor\b[^.?!]*/gi, 'fallacy', 'Possible false dilemma', '“Either… or…” can hide the options in between. Make sure there really are only two.', 'Acknowledge the middle options, then explain why yours is best.', 'logos', 2);
-  scan(/\b(i think|maybe|perhaps|probably|i guess|hopefully)\b/gi, 'weak', 'Hedge', 'Hedges soften your authority. Use them only where you are genuinely unsure.', 'Cut the hedge or replace it with evidence.', 'ethos', 3);
-  scan(/[^.!?\n]*\?/g, 'device', 'Question to the audience', 'Questions pull listeners into active thinking.', null, 'pathos', 2);
-  scan(/\b\d[\d,.]*\s*(%|percent|kilos?|tonnes?|million|thousand|people|years|months|minutes)?/gi, 'strength', 'Concrete number', 'Specific figures make claims credible and memorable.', null, 'logos', 3);
+  scan(/\b(everyone knows|everybody knows|always|never|nobody|no one|obviously|clearly)\b/gi, 'vague', t('Sweeping claim'), t('Absolute words invite the skeptic to find the exception.'), t('Swap it for a specific, checkable claim.'), 'logos');
+  scan(/\beither\b[^.?!]{3,90}?\bor\b[^.?!]*/gi, 'fallacy', t('Possible false dilemma'), t('“Either… or…” can hide the options in between. Make sure there really are only two.'), t('Acknowledge the middle options, then explain why yours is best.'), 'logos', 2);
+  scan(/\b(i think|maybe|perhaps|probably|i guess|hopefully)\b/gi, 'weak', t('Hedge'), t('Hedges soften your authority. Use them only where you are genuinely unsure.'), t('Cut the hedge or replace it with evidence.'), 'ethos', 3);
+  scan(/[^.!?\n]*\?/g, 'device', t('Question to the audience'), t('Questions pull listeners into active thinking.'), null, 'pathos', 2);
+  scan(/\b\d[\d,.]*\s*(%|percent|kilos?|tonnes?|million|thousand|people|years|months|minutes)?/gi, 'strength', t('Concrete number'), t('Specific figures make claims credible and memorable.'), null, 'logos', 3);
   // anaphora: consecutive sentences sharing their first two words
   const sentRe = /[^.!?\n]+[.!?]/g; const sents = []; let sm;
   while ((sm = sentRe.exec(text))) sents.push({ s: sm[0], i: sm.index });
   for (let i = 1; i < sents.length; i++) {
     const a = sents[i - 1].s.trim().toLowerCase().split(/\s+/).slice(0, 2).join(' '), b = sents[i].s.trim().toLowerCase().split(/\s+/).slice(0, 2).join(' ');
-    if (a && a === b && a.length > 3) { const st = sents[i - 1].i + sents[i - 1].s.search(/\S/); marks.push({ start: st, end: sents[i].i + sents[i].s.length, kind: 'device', label: 'Anaphora', note: 'Repeating the opening words of consecutive sentences builds rhythm and emphasis.', pole: 'pathos' }); break; }
+    if (a && a === b && a.length > 3) { const st = sents[i - 1].i + sents[i - 1].s.search(/\S/); marks.push({ start: st, end: sents[i].i + sents[i].s.length, kind: 'device', label: t('Anaphora'), note: t('Repeating the opening words of consecutive sentences builds rhythm and emphasis.'), pole: 'pathos' }); break; }
   }
   const strengths = [], growth = [];
   const best = strongestPole(scores), worst = weakestPole(scores);
-  if (story > 0) strengths.push('You use personal story moments, which make the talk memorable.'); else growth.push('Add one specific story moment (a time, a place, a person) to make it memorable.');
-  if (nums >= 2) strengths.push('Concrete numbers give your claims weight.'); else growth.push('Support your main claim with at least one specific number or example.');
-  if (per(you + we) > 3) strengths.push('You speak to the audience directly with “you” and “we”.'); else growth.push('Use “you” and “we” more to make the talk about the audience.');
-  if (absolutes > 1) growth.push('Replace sweeping words like “always”, “never” and “everyone” with specific claims.');
-  if (hedges > 1) growth.push('Cut hedges like “I think” and “maybe” where you are actually sure.');
-  if (signposts > 1) strengths.push('Signposts help listeners follow your structure.');
-  const POLE_TIPS = { ethos: 'Open with one specific detail that shows why you are worth listening to.', pathos: 'Add one concrete moment: a time, a place and a person.', logos: 'Back your main claim with one specific fact and say where it comes from.' };
+  if (story > 0) strengths.push(t('You use personal story moments, which make the talk memorable.')); else growth.push(t('Add one specific story moment (a time, a place, a person) to make it memorable.'));
+  if (nums >= 2) strengths.push(t('Concrete numbers give your claims weight.')); else growth.push(t('Support your main claim with at least one specific number or example.'));
+  if (per(you + we) > 3) strengths.push(t('You speak to the audience directly with “you” and “we”.')); else growth.push(t('Use “you” and “we” more to make the talk about the audience.'));
+  if (absolutes > 1) growth.push(t('Replace sweeping words like “always”, “never” and “everyone” with specific claims.'));
+  if (hedges > 1) growth.push(t('Cut hedges like “I think” and “maybe” where you are actually sure.'));
+  if (signposts > 1) strengths.push(t('Signposts help listeners follow your structure.'));
+  const POLE_TIPS = { ethos: t('Open with one specific detail that shows why you are worth listening to.'), pathos: t('Add one concrete moment: a time, a place and a person.'), logos: t('Back your main claim with one specific fact and say where it comes from.') };
   POLE_KEYS.slice().sort((a, b) => scores[a] - scores[b]).forEach((k) => { if (growth.length < 3 && !growth.includes(POLE_TIPS[k])) growth.push(POLE_TIPS[k]); });
-  if (!strengths.length) strengths.push('You finished a full draft, which gives you something real to improve.');
+  if (!strengths.length) strengths.push(t('You finished a full draft, which gives you something real to improve.'));
   return {
     scores, subscores: subs, marks: marks.slice(0, 16),
     strengths: strengths.slice(0, 3), growth: growth.slice(0, 3),
-    summary: `On-device read: strongest appeal ${best ? POLES[best].name : 'unclear'}, weakest ${worst ? POLES[worst].name : 'unclear'}. This is a word-pattern estimate. Allow Claude for this artifact to get fallacy checks, a structure map and personal lessons.`,
+    summary: t`On-device read: strongest appeal ${best ? POLES[best].name : t('unclear')}, weakest ${worst ? POLES[worst].name : t('unclear')}. This is a word-pattern estimate. Allow Claude for this artifact to get fallacy checks, a structure map and personal lessons.`,
   };
 }
 
@@ -1158,7 +1158,7 @@ function normalizeAnalysis(raw) {
     summary: str(raw.summary),
     scores, subscores,
     structure: arr(raw.structure).slice(0, 8).map((s) => ({ part: str(s.part), verdict: ['strong', 'solid', 'weak', 'missing'].includes(s.verdict) ? s.verdict : 'solid', quote: str(s.quote), note: str(s.note) })),
-    highlights: arr(raw.highlights).slice(0, 18).map((h) => ({ quote: str(h.quote), kind: kinds.includes(h.kind) ? h.kind : 'weak', label: str(h.label) || 'Note', pole: POLE_KEYS.includes(h.pole) ? h.pole : 'logos', note: str(h.note), fix: h.fix ? str(h.fix) : '' })).filter((h) => h.quote),
+    highlights: arr(raw.highlights).slice(0, 18).map((h) => ({ quote: str(h.quote), kind: kinds.includes(h.kind) ? h.kind : 'weak', label: str(h.label) || t('Note'), pole: POLE_KEYS.includes(h.pole) ? h.pole : 'logos', note: str(h.note), fix: h.fix ? str(h.fix) : '' })).filter((h) => h.quote),
     strengths: arr(raw.strengths).map(str).filter(Boolean).slice(0, 4),
     growth: arr(raw.growth).map(str).filter(Boolean).slice(0, 4),
     lessons: arr(raw.lessons).slice(0, 3).map((l) => ({ title: str(l.title) || 'Lesson', pole: POLE_KEYS.includes(l.pole) ? l.pole : 'logos', why: str(l.why), concept: str(l.concept), example: str(l.example), drill: str(l.drill) })).filter((l) => l.drill),
@@ -1388,7 +1388,7 @@ async function runSpeechAnalysis(input, stage, signal) {
   if (dup) xp = 0;
   const doc = {
     type: 'speech', id: uid('s_'), date: Date.now(), fp, dup,
-    title: (title || (ai && ai.title) || (file && file.name.replace(/\.[^.]+$/, '')) || (words ? wordsOf(transcript).slice(0, 6).join(' ') + '…' : 'Untitled speech')).slice(0, 80),
+    title: (title || (ai && ai.title) || (file && file.name.replace(/\.[^.]+$/, '')) || (words ? wordsOf(transcript).slice(0, 6).join(' ') + '…' : t('Untitled speech'))).slice(0, 80),
     occasion, focus: focus || [],
     source: { file: file ? file.name : null, kind: file ? (isVideo ? 'video' : 'audio') : null, captions: !!(cues && cues.length) },
     transcript, words, durationSec: metrics ? metrics.duration : Math.round((words / 140) * 60),
@@ -1454,7 +1454,7 @@ function prepMarkdown(prep) {
 async function offerDownload(filename, text) {
   try {
     const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
-    if (dl) { await dl.save({ filename, data: text }); toast('Saved ' + filename); return; }
+    if (dl) { await dl.save({ filename, data: text }); toast(t`Saved ${filename}`); return; }
   } catch (e) {
     if (e && e.code === 'declined') return;
   }
@@ -1463,9 +1463,9 @@ async function offerDownload(filename, text) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('Saved ' + filename);
+    toast(t`Saved ${filename}`);
     return;
   } catch (e) { /* fall through */ }
-  try { await navigator.clipboard.writeText(text); toast('Downloads aren’t available here, so the Markdown was copied to your clipboard.'); }
-  catch (e) { toast('Downloads aren’t available in this view.', 'warn'); }
+  try { await navigator.clipboard.writeText(text); toast(t('Downloads aren’t available here, so the Markdown was copied to your clipboard.')); }
+  catch (e) { toast(t('Downloads aren’t available in this view.'), 'warn'); }
 }
