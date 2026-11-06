@@ -18,7 +18,7 @@ Browser (one page, React + htm, self-hosted)  →  Netlify Functions (/api/*, Fr
 
 ## Run it on your computer
 
-Needs Node 20 or newer.
+Needs Node 22 or newer.
 
 ```bash
 npm install

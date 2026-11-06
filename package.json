@@ -5,7 +5,7 @@
   "description": "Rostra: an AI coach for speaking. Oral exam rehearsal and speech feedback for schools.",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
