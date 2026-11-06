@@ -14,6 +14,8 @@ const Teach = {
   classes() { return this.q(this.sb().from('classes').select('*').eq('teacher_id', this.me().id).order('created_at', { ascending: true })); },
   createClass(name) { return this.q(this.sb().from('classes').insert({ name, teacher_id: this.me().id, school_id: this.me().schoolId }).select('*').single()); },
   archiveClass(id, archived) { return this.q(this.sb().from('classes').update({ archived }).eq('id', id)); },
+  newCode(id) { return this.q(this.sb().from('classes').update({ code: teachCode() }).eq('id', id).select('code').single()); },
+  removeStudent(classId, studentId) { return this.q(this.sb().from('class_members').delete().eq('class_id', classId).eq('student_id', studentId)); },
   students(classId) { return this.q(this.sb().from('teacher_students').select('*').eq('class_id', classId)); },
   assignments(classId) { return this.q(this.sb().from('assignments').select('*').eq('class_id', classId).order('created_at', { ascending: false })); },
   createAssignment(a) { return this.q(this.sb().from('assignments').insert({ ...a, teacher_id: this.me().id }).select('*').single()); },
@@ -25,13 +27,15 @@ const Teach = {
   myAssignments() { return this.q(this.sb().from('assignments').select('*, classes(name)').order('created_at', { ascending: false })); },
   mySubmissions() { return this.q(this.sb().from('submissions').select('*').eq('student_id', this.me().id)); },
 };
+/* Six upper-case letters or digits, made in the browser. The column is unique, so a clash fails loudly and the teacher presses again. */
+function teachCode() { const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => A[b % A.length]).join(''); }
 
 /* What a finished piece of work tells the teacher. */
 function teachSummaryOf(doc) {
   if (!doc) return null;
   if (doc.type === 'viva') {
     const r = doc.report || {};
-    return { kind: 'viva', title: doc.subject || t('Oral exam'), percent: r.percent != null ? r.percent : null, grade: r.grade || null, source: r.source || null, finished: doc.finished || doc.updated || null, mode: doc.mode || null };
+    return { kind: 'viva', title: doc.subject || t('Oral exam'), percent: r.percent != null ? r.percent : null, grade: r.grade || null, source: r.source || null, finished: doc.finished || doc.updated || null, mode: doc.mode || null, micFallback: !!doc.micFallback };
   }
   if (doc.type === 'speech') {
     const sc = doc.scores || {};
@@ -40,7 +44,9 @@ function teachSummaryOf(doc) {
   }
   return null;
 }
-function TeachPct({ value, grade }) {
+function TeachPct({ value, grade, source }) {
+  /* A self-assessed exam (the AI marking failed, so the student marked themselves) is practice, not a mark. */
+  if (source === 'self') return html`<span className="teach-pct g-self" title=${t('The examiner could not mark this exam, so the student marked themselves. Practice only.')}>${t('Self-assessed')}${value != null ? html` <span className="num">${value}%</span>` : null}</span>`;
   const g = grade ? String(grade).toLowerCase().replace(/\s+/g, '-') : value == null ? 'none' : value >= 85 ? 'distinction' : value >= 70 ? 'merit' : value >= 55 ? 'pass' : 'not-yet';
   return html`<span className=${'teach-pct g-' + g} title=${grade || ''}>${value == null ? '–' : value + '%'}</span>`;
 }
@@ -139,9 +145,23 @@ function ClassPage({ id }) {
     finally { setBusy(''); }
   }
   async function remove(a) {
-    if (busy) return;
+    if (busy || !window.confirm(t`Remove the assignment “${a.title}”? Its results list goes with it; students keep their own work.`)) return;
     setBusy('del' + a.id);
     try { await Teach.deleteAssignment(a.id); setAssignments((as) => as.filter((x) => x.id !== a.id)); }
+    catch (ex) { toast(ex.message, 'bad'); }
+    finally { setBusy(''); }
+  }
+  async function newCode() {
+    if (busy || !window.confirm(t('Make a new class code? The old code stops working. Students already in the class stay.'))) return;
+    setBusy('code');
+    try { const r = await Teach.newCode(cls.id); setCls((c) => ({ ...c, code: r.code })); toast(t`New class code: ${r.code}`, 'gold'); }
+    catch (ex) { toast(ex.message, 'bad'); }
+    finally { setBusy(''); }
+  }
+  async function removeStudent(s) {
+    if (busy || !window.confirm(t`Remove ${s.display_name} from this class? Their account and work stay; they can rejoin with the class code.`)) return;
+    setBusy('rm' + s.student_id);
+    try { await Teach.removeStudent(id, s.student_id); setStudents((st) => (st || []).filter((x) => x.student_id !== s.student_id)); }
     catch (ex) { toast(ex.message, 'bad'); }
     finally { setBusy(''); }
   }
@@ -159,7 +179,7 @@ function ClassPage({ id }) {
   const setC = (k, v) => setDraft((d) => ({ ...d, config: { ...d.config, [k]: v } }));
   const subsOf = (aid) => subs.filter((s) => s.assignment_id === aid);
   return html`<div className="stack" style=${{ gap: 22 }}>
-    <${PageHead} label=${t('Class')} greek="τάξις" title=${cls.name} line=${t`Students join with the code ${cls.code} from the sign-in page.`} end=${html`<div className="row" style=${{ gap: 8 }}><span className="chip auth-code">${cls.code}</span><button className="btn btn-sm" onClick=${async () => { await Teach.archiveClass(cls.id, true); go('teacher'); }}>${t('Archive class')}</button></div>`} />
+    <${PageHead} label=${t('Class')} greek="τάξις" title=${cls.name} line=${t`Students join with the code ${cls.code} from the sign-in page.`} end=${html`<div className="row" style=${{ gap: 8 }}><span className="chip auth-code">${cls.code}</span><button className="btn btn-sm" onClick=${newCode} disabled=${busy === 'code'}>${t('New class code')}</button><button className="btn btn-sm" onClick=${async () => { await Teach.archiveClass(cls.id, true); go('teacher'); }}>${t('Archive class')}</button></div>`} />
     ${err ? html`<p className="notice notice-warn"><${Icon} name="alert" size=${18} /><span>${err}</span></p>` : null}
 
     <section className="stack" style=${{ gap: 12 }}>
@@ -192,9 +212,9 @@ function ClassPage({ id }) {
         const pct = ss.map((s) => s.summary && s.summary.percent).filter((v) => v != null);
         return html`<div key=${a.id} className="card assign-card">
           <div className="row-between"><div><div className="eyebrow">${a.kind === 'viva' ? t('Oral exam') : t('Speech')}${a.due_at ? t` · due ${fmtDate(a.due_at)}` : ''}</div><h3>${a.title}</h3></div>
-            <div className="row" style=${{ gap: 8 }}><span className="chip chip-sm">${t`${ss.length} of ${(students || []).length} done`}</span>${pct.length ? html`<span className="chip chip-sm">${t`avg ${Math.round(mean(pct))}%`}</span>` : null}<button className="btn btn-sm btn-ghost" onClick=${() => remove(a)} disabled=${busy === 'del' + a.id} aria-label=${t('Remove assignment')}><${Icon} name="trash" size=${14} /></button></div></div>
+            <div className="row" style=${{ gap: 8 }}><span className="chip chip-sm">${t`${new Set(ss.map((s) => s.student_id)).size} of ${(students || []).length} done`}</span>${pct.length ? html`<span className="chip chip-sm">${t`avg ${Math.round(mean(pct))}%`}</span>` : null}<button className="btn btn-sm btn-ghost" onClick=${() => remove(a)} disabled=${busy === 'del' + a.id} aria-label=${t('Remove assignment')}><${Icon} name="trash" size=${14} /></button></div></div>
           ${ss.length ? html`<div className="teach-table-wrap"><table className="teach-table"><thead><tr><th>${t('Student')}</th><th>${t('Result')}</th><th>${t('When')}</th><th></th></tr></thead><tbody>
-            ${ss.map((s) => { const st = (students || []).find((x) => x.student_id === s.student_id); const sm = s.summary || {}; return html`<tr key=${s.id}><td>${st ? st.display_name : t('A student')}</td><td><${TeachPct} value=${sm.percent} grade=${sm.grade} /></td><td className="muted">${fmtDate(s.created_at)}</td><td><button className="btn btn-sm" onClick=${() => go('review', { student: s.student_id, doc: s.doc_id, name: st ? st.display_name : '' })}>${t('Open report')}</button></td></tr>`; })}
+            ${ss.map((s) => { const st = (students || []).find((x) => x.student_id === s.student_id); const sm = s.summary || {}; return html`<tr key=${s.id}><td>${st ? st.display_name : t('A student')}</td><td><${TeachPct} value=${sm.percent} grade=${sm.grade} source=${sm.source} />${sm.micFallback || sm.mode === 'write' ? html` <span className="tiny muted" title=${sm.micFallback ? t('The microphone or transcription failed, so the student typed their answers.') : t('Set as a written exam.')}>${t('typed')}</span>` : null}</td><td className="muted">${fmtDate(s.created_at)}</td><td><button className="btn btn-sm" onClick=${() => go('review', { student: s.student_id, doc: s.doc_id, name: st ? st.display_name : '' })}>${t('Open report')}</button></td></tr>`; })}
           </tbody></table></div>` : null}
         </div>`;
       })}
@@ -211,12 +231,12 @@ function ClassPage({ id }) {
             const last = exams[exams.length - 1];
             return html`<tr key=${s.student_id}>
               <td><b>${s.display_name}</b><span className="tiny muted" style=${{ display: 'block' }}>${s.username || ''}</span></td>
-              <td>${last ? html`<button className="btn btn-sm btn-ghost" style=${{ padding: 0 }} onClick=${() => go('review', { student: s.student_id, doc: last.id, name: s.display_name })}><${TeachPct} value=${last.percent} grade=${last.grade} /> <span className="small">${last.title}</span></button>` : html`<${TeachPct} value=${null} />`}</td>
+              <td>${last ? html`<button className="btn btn-sm btn-ghost" style=${{ padding: 0 }} onClick=${() => go('review', { student: s.student_id, doc: last.id, name: s.display_name })}><${TeachPct} value=${last.percent} grade=${last.grade} source=${last.source} /> <span className="small">${last.title}</span></button>` : html`<${TeachPct} value=${null} />`}</td>
               <td><${TeachSpark} values=${exams.map((x) => x.percent)} /></td>
               <td className="num">${s.exams_done != null ? s.exams_done : exams.length}</td>
               <td className="num">${s.speeches != null ? s.speeches : items.filter((x) => x.kind === 'speech').length}</td>
               <td className="muted">${s.last_active ? fmtDate(s.last_active) : '–'}</td>
-              <td><button className="btn btn-sm btn-ghost" onClick=${() => setReset({ username: s.username, name: s.display_name, pw: '' })}>${t('Reset password')}</button></td>
+              <td><div className="row" style=${{ gap: 4, flexWrap: 'nowrap' }}><button className="btn btn-sm btn-ghost" onClick=${() => setReset({ username: s.username, name: s.display_name, pw: '' })}>${t('Reset password')}</button><button className="btn btn-sm btn-ghost" onClick=${() => removeStudent(s)} disabled=${busy === 'rm' + s.student_id}>${t('Remove from class')}</button></div></td>
             </tr>`;
           })}</tbody></table></div>`}
       ${reset ? html`<form className="card row" onSubmit=${doReset} style=${{ gap: 10, alignItems: 'end' }}>
@@ -292,7 +312,7 @@ function AssignmentsCard() {
     } else {
       const c = a.config || {};
       Platform.pendingAssignment = { id: a.id, title: a.title };
-      go('analyze', { title: a.title, occasion: c.occasion || 'presentation', brief: c.brief || '' });
+      go('analyze', { title: a.title, occasion: c.occasion || 'presentation', brief: c.brief || '', minutes: c.minutes || null });
     }
   }
   return html`<section className="card stack assign-list" style=${{ gap: 6 }} aria-labelledby="assign-title">
@@ -301,6 +321,6 @@ function AssignmentsCard() {
       <div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>${a.kind === 'viva' ? t('Oral exam') : t('Speech')}${a.classes && a.classes.name ? ' · ' + a.classes.name : ''}${a.due_at ? ' · ' + t`due ${fmtDate(a.due_at)}` : ''}${a.kind === 'speech' && a.config && a.config.brief ? ' · ' + vivaClip(a.config.brief, 90) : ''}</span></div>
       <button className="btn-cta" onClick=${() => start(a)}><${Icon} name=${a.kind === 'viva' ? 'scroll' : 'mic'} size=${16} />${a.kind === 'viva' ? t('Sit the exam') : t('Start')}</button>
     </div>`)}
-    ${finished.map((a) => { const s = done(a); const sm = (s && s.summary) || {}; return html`<div key=${a.id} className="assign-row"><div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>${t`Done ${fmtDate(s.created_at)}`}</span></div><${TeachPct} value=${sm.percent} grade=${sm.grade} /></div>`; })}
+    ${finished.map((a) => { const s = done(a); const sm = (s && s.summary) || {}; return html`<div key=${a.id} className="assign-row"><div><b>${a.title}</b><span className="small muted" style=${{ display: 'block' }}>${t`Done ${fmtDate(s.created_at)}`}</span></div><${TeachPct} value=${sm.percent} grade=${sm.grade} source=${sm.source} /></div>`; })}
   </section>`;
 }

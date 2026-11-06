@@ -20,7 +20,8 @@ test('a spoken oral exam: three questions, follow-ups, a report with measured de
     const verdict = page.getByRole('button', { name: 'Hear the verdict' });
     const submitTyped = page.getByRole('button', { name: 'Submit answer' });
     const nothing = page.getByRole('button', { name: 'Nothing to add' });
-    await expect(skip.or(start).or(finish).or(verdict).or(submitTyped).or(nothing).first()).toBeVisible({ timeout: 60_000 });
+    const send = page.getByRole('button', { name: 'Send to the examiner' });
+    await expect(skip.or(start).or(finish).or(verdict).or(submitTyped).or(nothing).or(send).first()).toBeVisible({ timeout: 60_000 });
     if (await verdict.isVisible()) break;
     if (await skip.isVisible()) { await skip.click(); continue; }
     if (await start.isVisible()) { await start.click(); continue; }
@@ -30,6 +31,12 @@ test('a spoken oral exam: three questions, follow-ups, a report with measured de
       await page.waitForTimeout(followUp ? 3_000 : 11_000); // a main answer must pass the ten-second "is that your full answer?" threshold
       await finish.click();
       answered++;
+      continue;
+    }
+    if (await send.isVisible()) {
+      // The transcript is shown for correction before it goes to the examiner.
+      await expect(page.locator('.viva-textarea')).not.toHaveValue('');
+      await send.click();
       continue;
     }
     if (await nothing.isVisible()) { await nothing.click(); continue; }

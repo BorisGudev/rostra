@@ -79,6 +79,8 @@ test('teacher creates a class, student joins, exam is set, taken and seen', asyn
   await expect(page.locator('.assign-list')).toContainText('All assignments done');
   await page.goto('/#account');
   await page.getByRole('button', { name: 'Sign out' }).click();
+  // Sign-out first uploads pending work, so wait for the door before signing in as someone else.
+  await expect(page.getByRole('tab', { name: 'Join as a student' })).toBeVisible({ timeout: 20_000 });
 
   // The teacher sees the result and can open the report.
   await signIn(page, teacher.email, teacher.password);

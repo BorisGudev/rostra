@@ -39,6 +39,7 @@
 .teach-pct.g-pass { background: color-mix(in srgb, var(--logos) 16%, transparent); color: var(--logos); }
 .teach-pct.g-not-yet, .teach-pct.g-incomplete { background: color-mix(in srgb, var(--pathos) 14%, transparent); color: var(--pathos); }
 .teach-pct.g-none { background: var(--surface-3); color: var(--muted); }
+.teach-pct.g-self { background: var(--surface-3); color: var(--muted); font-weight: 600; font-size: 12px; }
 .teach-assign { display: grid; gap: 10px; }
 .teach-assign .viva-opts { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
 .teach-review-note { margin-bottom: 14px; }

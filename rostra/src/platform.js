@@ -183,9 +183,13 @@ const Platform = {
     if (!this.sb || !this.user || !assignmentId) return false;
     try {
       const { error } = await this.sb.from('submissions').upsert({ assignment_id: assignmentId, student_id: this.user.id, doc_id: docId, summary }, { onConflict: 'assignment_id,student_id,doc_id' });
-      if (error) { console.error('submission failed', error.message); return false; }
+      if (error) throw error;
       return true;
-    } catch (e) { return false; }
+    } catch (e) {
+      console.error('submission failed', e && e.message);
+      if (typeof toast === 'function') toast(t('Your work is saved, but it could not be handed in to your teacher. Check your connection and open it again later.'), 'warn');
+      return false;
+    }
   },
 
   /* ---------- accounts ---------- */
@@ -202,16 +206,30 @@ const Platform = {
     if (!this.sb) throw platformError('unavailable', 'Accounts are not set up on this server.');
     const email = /@/.test(login) ? login.trim() : null;
     const resolved = email || (await this.account('resolve', { username: login.trim() })).email;
-    const { error } = await this.sb.auth.signInWithPassword({ email: resolved, password });
-    if (error) throw platformError('bad_login', 'That name or password is not right.');
+    let res;
+    try { res = await this.sb.auth.signInWithPassword({ email: resolved, password }); }
+    catch (e) { throw platformError('network', 'The server could not be reached. Check your connection.'); }
+    if (res.error) {
+      const st = res.error.status;
+      if (st === 400 || st === 401 || st === 403 || /invalid login/i.test(res.error.message || '')) throw platformError('bad_login', 'That name or password is not right.');
+      if (!st || st >= 500 || /fetch|network/i.test(res.error.message || '')) throw platformError('network', 'The server could not be reached. Check your connection.');
+      throw platformError('bad_login', res.error.message || 'That name or password is not right.');
+    }
     await this.setSession((await this.sb.auth.getSession()).data.session);
     this.emit('signin');
     return this.user;
   },
+  /* Upload what is still pending first; if some work cannot be uploaded, ask before wiping it from this browser. */
   async signOut() {
+    if (typeof Persist !== 'undefined' && Persist.settle) {
+      await Persist.settle(4000);
+      const stuck = Object.keys({ ...Persist.flagGet('dirty'), ...Persist.flagGet('localOnly') }).length;
+      if (stuck && !window.confirm(stuck === 1 ? t('One item has not been uploaded to your account and will be lost if you sign out now. Sign out anyway?') : t`${stuck} items have not been uploaded to your account and will be lost if you sign out now. Sign out anyway?`)) return false;
+    }
     if (this.sb) await this.sb.auth.signOut();
     this.session = null; this.user = null;
     this.emit('signout');
+    return true;
   },
   /* Students: class code + display name + username + password. Teachers: invite code + email + name + password. */
   async signUp(payload) {

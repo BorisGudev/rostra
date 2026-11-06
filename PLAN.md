@@ -49,6 +49,8 @@ Supabase (Postgres + Auth, EU region eu-central-1 Frankfurt)
 
 - **Confidence and expressiveness scores, and the video "presence" read** are removed. They infer an inner state from voice or face, which is emotion recognition under the EU AI Act in an educational setting (banned since 2 Feb 2025). Pace, pauses, pitch range and volume range stay, shown as plain measurements.
 - **"Say it aloud, then jot" and "speak into dictation"** merge into one **Speak** mode that records and transcribes. Typing stays as the fallback.
+- **Direct joining of a class by id** is gone: students join only through `join_class()` with the class code, and teachers cannot add students by hand (they share the code, or make a new one). Admin accounts are no longer made by email match: the admin joins once with `ROSTRA_ADMIN_SETUP_CODE`.
+- **The spoken answer is no longer sent to the examiner the moment it is transcribed.** The student sees the text first and can fix misheard words; the uncorrected version goes along, so the examiner can tell a correction from an addition.
 
 ## Build order (each stage leaves the app working and is committed)
 

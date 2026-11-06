@@ -17,6 +17,7 @@ The live site currently answers "401 Unauthorized" to visitors. In Netlify: open
    - **Project URL** (like `https://abcdefgh.supabase.co`) → `SUPABASE_URL`
    - **anon public** key → `SUPABASE_ANON_KEY`
    - **service_role** key (click to reveal; keep it secret) → `SUPABASE_SERVICE_ROLE_KEY`
+6. Left menu → **Authentication** → **Sign In / Providers** (or "Providers" → **Email**): turn **off** "Allow new users to sign up". Rostra's own server creates every account (students with a class code, teachers with an invite code), so nobody needs Supabase's public sign-up form, and leaving it on would let strangers make logins. Keep "Enable email provider" on. "Confirm email" can stay off: the server marks accounts confirmed itself.
 
 ## 3. Anthropic: the AI key (unlocks: the examiner, the coach, speech feedback)
 1. https://console.anthropic.com → **API keys** → **Create key**. Name it `rostra-netlify`. Copy it once.
@@ -37,12 +38,17 @@ Netlify → the site → **Project configuration** → **Environment variables**
 | `SUPABASE_ANON_KEY` | from step 2 |
 | `SUPABASE_SERVICE_ROLE_KEY` | from step 2 |
 | `ROSTRA_ADMIN_EMAILS` | your email, e.g. `gudev.boris@gmail.com` (lets you create schools from the Account page) |
+| `ROSTRA_ADMIN_SETUP_CODE` | a private code you invent, letters and digits, e.g. `ROSTRA-ADMIN-2026`. You type it once, in step 6, instead of a school invite code. Keep it to yourself. |
 | `DEEPGRAM_API_KEY` | from step 4 (optional) |
 
 Then **Deploys** → **Trigger deploy** → **Deploy site**, and wait for it to finish.
 
 ## 6. First sign-in
-Open the live site → **Join as a teacher** → invite code `ROSTRA1` (from step 2.4), your email, a password. On your **Account** page, "Create school" gives you the invite code for each real school; send that code to its teachers.
+Open the live site → **Join as a teacher** → in the invite code field type your `ROSTRA_ADMIN_SETUP_CODE` (not a school code), then your email (the one in `ROSTRA_ADMIN_EMAILS`) and a password. That makes you the Rostra admin. On your **Account** page, "Create school" gives you the invite code for each real school; send that code to its teachers. (The `ROSTRA1` school from step 2.4 is only there so a colleague can try the teacher side before any real school exists.)
+
+Nobody else can sign up with your email: the server refuses it unless the set-up code is typed, and the set-up code lives only in Netlify.
+
+Passwords: a teacher resets a student's password from the class page; you (admin) can reset any student in your school. A teacher who forgets their own password: Supabase → **Authentication** → **Users** → the teacher → **⋯** → **Reset password** (or "Send password recovery" once SMTP is configured).
 
 ## 7. Try it as a class would
 Teacher: **Classes** → create a class → note the 6-character code → open it → **Set an oral exam**.

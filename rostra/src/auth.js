@@ -45,7 +45,7 @@ function AuthPage({ onDone }) {
     } catch (ex) { setErr(authErrorText(ex)); }
     finally { setBusy(false); }
   }
-  const pw = html`<div className="field"><label htmlFor="au-pw">${t('Password')}</label><input id="au-pw" className="input" type="password" value=${f.password} onInput=${set('password')} autoComplete=${tab === 'signin' ? 'current-password' : 'new-password'} minLength=${tab === 'signin' ? undefined : AUTH_MIN_PASSWORD} required />${tab !== 'signin' ? html`<span className="hint">${t`At least ${AUTH_MIN_PASSWORD} characters. Pick one you will remember: there is no email to reset it with.`}</span>` : null}</div>`;
+  const pw = html`<div className="field"><label htmlFor="au-pw">${t('Password')}</label><input id="au-pw" className="input" type="password" value=${f.password} onInput=${set('password')} autoComplete=${tab === 'signin' ? 'current-password' : 'new-password'} minLength=${tab === 'signin' ? undefined : AUTH_MIN_PASSWORD} required />${tab !== 'signin' ? html`<span className="hint">${t`At least ${AUTH_MIN_PASSWORD} characters. Pick one you will remember: there is no email to reset it with.`}</span>` : html`<span className="hint">${t('Forgot your password? Ask your teacher to reset it.')} ${t('Teachers: ask your school’s Rostra contact.')}</span>`}</div>`;
   return html`<div className="auth">
     <div className="auth-stage stage" aria-hidden="true">
       <${Stoa} scores=${{ ethos: 72, pathos: 64, logos: 80 }} height=${320} interactive=${false} intensity=${0.9} />
@@ -82,7 +82,7 @@ function AuthPage({ onDone }) {
           ${err ? html`<p className="notice notice-warn auth-err" role="alert"><${Icon} name="alert" size=${18} /><span>${err}</span></p>` : null}
           <button className="btn-cta wide" type="submit" disabled=${busy}>${busy ? html`<span className="spin"></span>${t('One moment…')}` : tab === 'signin' ? t('Sign in') : tab === 'student' ? t('Join my class') : t('Create my teacher account')}</button>
         </form>
-        <p className="tiny muted auth-foot">${t('Rostra stores your name, username and your work, in the EU, for your school. Nothing else.')} <a href="#privacy" onClick=${(e) => { e.preventDefault(); if (onDone) onDone('privacy'); }}>${t('How your data is handled')}</a>.</p>
+        <p className="tiny muted auth-foot">${t('Rostra stores your name, username and your work in the EU, for your school.')} <a href="#privacy" onClick=${(e) => { e.preventDefault(); if (onDone) onDone('privacy'); }}>${t('How your data is handled')}</a>.</p>
       </section>
     </main>
   </div>`;
@@ -190,15 +190,20 @@ function PrivacyPage() {
     <${PageHead} label=${t('Privacy')} greek="ἀπόρρητον" title=${t('How Rostra handles your data')} line=${t('Short, in plain words. Ask your teacher or the Rostra team if anything is unclear.')} />
     <div className="card prose">
       <h2>${t('What we store')}</h2>
-      <p>${t('Your display name, your username and your work: speeches you analyze, drafts you write, oral exams you sit and the reports they produce. Teachers also give an email address. Students do not.')}</p>
-      <h2>${t('What we do not keep')}</h2>
-      <p>${t('The audio of your spoken answers. It is turned into text, measured for pace and pauses on your device, and discarded. Rostra does not read emotions from your voice or face, and does not use cameras.')}</p>
+      <p>${t('Your account: your name, your username, your school and the classes you are in. Students have no email address in Rostra; teachers sign in with their school email.')}</p>
+      <p>${t('Your work: the speeches you analyze, the drafts you write, the oral exams you sit, their transcripts and the feedback they get.')}</p>
+      <p>${t('A usage log of calls to the AI: when, how many tokens and what they cost. It holds no content, so nobody can read your words from it.')}</p>
+      <h2>${t('Your voice')}</h2>
+      <p>${t('Rostra never stores audio. When the server has a transcription key, each recording is sent to Deepgram on servers in the EU, turned into text and not kept there either.')}</p>
+      <p>${t('When the server has no transcription key, your browser’s own speech recognition is used instead. On Chrome that sends the audio to Google, on Safari to Apple, under their own privacy terms. Pace and pauses are measured on your device.')}</p>
+      <h2>${t('The AI examiner and coach')}</h2>
+      <p>${t('The text of your speeches and answers is sent to Anthropic, which runs the Claude models, to produce questions and feedback. It goes under Rostra’s account, without your name. Anthropic processes it outside the EU under the EU’s standard contractual clauses and does not train its models on it.')}</p>
       <h2>${t('Where it lives')}</h2>
-      <p>${t('In a database in Frankfurt, Germany (European Union), run by Supabase for Rostra. The AI examiner and coach run on Anthropic’s Claude; only the text of your answers and speeches is sent, under Rostra’s account, never your name or email. Transcription, when a server service is used, receives only the audio of one answer at a time.')}</p>
+      <p>${t('The database is in Frankfurt, Germany (European Union), run by Supabase for Rostra. The server that talks to the AI runs in Frankfurt too, on Netlify.')}</p>
       <h2>${t('Who can see it')}</h2>
-      <p>${t('You. The teachers of the classes you are in, who see your exams, speeches and progress as part of their teaching. Nobody else, and nothing is sold or used for advertising.')}</p>
-      <h2>${t('Your rights')}</h2>
-      <p>${t('You can delete everything from the Account page at any time. Your school is the data controller; Rostra processes data on its behalf. For questions, write to your school’s Rostra contact.')}</p>
+      <p>${t('You. The teachers of the classes you are in see your speeches, exams and feedback as part of their teaching. Your school’s Rostra contact sees how much the school uses Rostra, not what anyone said. Nothing is sold or used for advertising.')}</p>
+      <h2>${t('Deleting it')}</h2>
+      <p>${t('On the Account page, “Delete my account and data” removes your account, your work and your login from the database at once. Your school is the data controller; Rostra processes data on its behalf. For questions, write to your school’s Rostra contact.')}</p>
       ${user ? html`<p><button className="btn" onClick=${() => go('account')}>${t('Go to my account')}</button></p>` : null}
     </div>
   </div>`;

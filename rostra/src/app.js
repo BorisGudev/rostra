@@ -13,14 +13,14 @@ const NAV = [
   { id: 'trophies', label: t('Progress'), icon: 'trophy', greek: 'τρόπαιον', gloss: 'tropaion: a victory monument, the source of our word trophy', group: 'train' },
 ];
 const TAB_OF = { home: 'home', analyze: 'analyze', report: 'analyze', prepare: 'prepare', learn: 'learn', lesson: 'learn', game: 'learn', library: 'library', speech: 'library', trophies: 'trophies', viva: 'viva', gym: 'gym', teacher: 'teacher', class: 'teacher', review: 'teacher', account: 'account', privacy: 'account' };
-const BACK = { report: ['analyze', t('Analyze')], lesson: ['learn', t('Academy')], game: ['learn', t('Academy')], speech: ['library', t('Library')], class: ['teacher', t('Classes')], review: ['teacher', t('Classes')], privacy: ['account', t('Account')] };
+const BACK = { report: ['analyze', t('Speech feedback')], lesson: ['learn', t('Learn')], game: ['learn', t('Learn')], speech: ['library', t('Library')], class: ['teacher', t('Classes')], review: ['teacher', t('Classes')], privacy: ['account', t('Account')] };
 const PAGES = { home: HomePage, analyze: AnalyzePage, report: ReportPage, prepare: PreparePage, learn: LearnPage, lesson: LessonPage, game: GamePage, library: LibraryPage, speech: SpeechPage, trophies: TrophiesPage, viva: VivaPage, gym: GymPage, teacher: TeacherPage, class: ClassPage, review: ReviewPage, account: AccountPage, privacy: PrivacyPage };
 const NAV_TEACHER = { id: 'teacher', label: t('Classes'), icon: 'users', greek: 'τάξεις', gloss: 'taxeis: classes, ranks', group: 'core' };
 const NAV_GROUPS = { core: '', train: t('Train') };
 /* Teachers get Classes first; everyone gets the same practice pages. */
+const navIsTeacher = () => { const u = typeof Platform !== 'undefined' ? Platform.user : null; return !!u && (u.role === 'teacher' || u.role === 'admin'); };
 function navFor() {
-  const u = typeof Platform !== 'undefined' ? Platform.user : null;
-  return u && (u.role === 'teacher' || u.role === 'admin') ? [NAV.find((n) => n.id === 'home'), NAV_TEACHER, ...NAV.filter((n) => n.id !== 'home')] : NAV;
+  return navIsTeacher() ? [NAV.find((n) => n.id === 'home'), NAV_TEACHER, ...NAV.filter((n) => n.id !== 'home')] : NAV;
 }
 
 function Rail({ tab }) {
@@ -71,7 +71,10 @@ function TopBar({ route }) {
 }
 function setSoundOn(v) { Sound.enabled = v; Store.act((pp) => { pp.settings.sound = v; }); if (v) Sound.play('tap'); }
 const TAB_IDS = ['home', 'viva', 'analyze', 'prepare'];
-const TAB_LABEL = { home: t('Home'), viva: t('Exam'), analyze: t('Speech'), prepare: t('Prepare') };
+const TAB_LABEL = { home: t('Home'), viva: t('Exam'), analyze: t('Speech'), prepare: t('Prepare'), teacher: t('Classes') };
+/* On a phone a teacher reaches Classes in one tap; Prepare moves to the More sheet for them. */
+const tabIds = () => (navIsTeacher() ? TAB_IDS.map((id) => (id === 'prepare' ? 'teacher' : id)) : TAB_IDS);
+const moreIds = () => (navIsTeacher() ? MORE_IDS.concat('prepare') : MORE_IDS);
 const MORE_IDS = ['learn', 'gym', 'library', 'trophies', 'account'];
 const NAV_MORE_EXTRA = { account: { id: 'account', label: t('Account'), icon: 'users', greek: 'πρόσωπον' } };
 function MoreSheet({ tab, onClose }) {
@@ -89,9 +92,10 @@ function MoreSheet({ tab, onClose }) {
     <div className="sheet" role="dialog" aria-modal="true" aria-label=${t('More')}>
       <div className="row-between"><h2 className="sheet-title">${t('More')}</h2><button className="btn btn-ghost btn-sm btn-icon" onClick=${onClose} aria-label=${t('Close')}><${Icon} name="x" size=${18} /></button></div>
       <nav className="stack" style=${{ gap: 4 }} aria-label=${t('More pages')}>
-        ${MORE_IDS.map((id) => NAV.find((n) => n.id === id) || NAV_MORE_EXTRA[id]).concat(typeof Platform !== 'undefined' && Platform.user && Platform.user.role !== 'student' ? [NAV_TEACHER] : []).map((n, i) => html`<button key=${n.id} ref=${i === 0 ? first : null} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => { onClose(); go(n.id); }} aria-current=${tab === n.id ? 'page' : undefined}><${Icon} name=${n.icon} /><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title=${t('New lessons for you')}></span>` : null}</span><span className="greek nav-greek" lang="grc">${n.greek}</span></button>`)}
+        ${moreIds().map((id) => NAV.find((n) => n.id === id) || NAV_MORE_EXTRA[id]).map((n, i) => html`<button key=${n.id} ref=${i === 0 ? first : null} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => { onClose(); go(n.id); }} aria-current=${tab === n.id ? 'page' : undefined}><${Icon} name=${n.icon} /><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title=${t('New lessons for you')}></span>` : null}</span><span className="greek nav-greek" lang="grc">${n.greek}</span></button>`)}
       </nav>
       <button className="nav-item sheet-toggle" role="switch" aria-checked=${soundOn} onClick=${() => setSoundOn(!soundOn)}><${Icon} name=${soundOn ? 'volume' : 'volumeOff'} />${t('Sound')}<span className="chip chip-sm">${soundOn ? t('On') : t('Off')}</span></button>
+      ${typeof Platform !== 'undefined' && Platform.user ? html`<button className="nav-item sheet-toggle" onClick=${async () => { onClose(); await Platform.signOut(); }}><${Icon} name="vivaDoor" />${t('Sign out')}</button>` : null}
       ${storageOk === false ? html`<p className="hint">${t('Browser storage is full or blocked, so your latest work may not survive a reload.')}</p>` : null}
     </div>
   </div>`;
@@ -100,10 +104,10 @@ function TabBar({ tab }) {
   const [more, setMore] = useState(false);
   const moreBtn = useRef(null);
   const closeMore = () => { setMore(false); if (moreBtn.current && moreBtn.current.focus) moreBtn.current.focus(); };
-  const moreOn = MORE_IDS.includes(tab);
+  const moreOn = moreIds().includes(tab);
   return html`<${Fragment}>
     <nav className="tabbar" aria-label=${t('Main')}>
-      ${TAB_IDS.map((id) => NAV.find((n) => n.id === id)).map((n) => html`<button key=${n.id} className=${'tab' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined} aria-label=${n.label}><${Icon} name=${n.icon} size=${22} />${TAB_LABEL[n.id]}</button>`)}
+      ${tabIds().map((id) => NAV.find((n) => n.id === id) || NAV_TEACHER).map((n) => html`<button key=${n.id} className=${'tab' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined} aria-label=${n.label}><${Icon} name=${n.icon} size=${22} />${TAB_LABEL[n.id]}</button>`)}
       <button ref=${moreBtn} className=${'tab' + (moreOn ? ' is-on' : '')} onClick=${() => setMore(true)} aria-haspopup="dialog" aria-expanded=${more} aria-current=${moreOn ? 'page' : undefined}><${Icon} name="more" size=${22} stroke=${3} />${t('More')}</button>
     </nav>
     ${more ? html`<${MoreSheet} tab=${tab} onClose=${closeMore} />` : null}

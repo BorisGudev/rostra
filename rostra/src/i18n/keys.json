@@ -182,6 +182,9 @@
  "{0} is weighing your answer…": [
   "viva.js"
  ],
+ "{0} items have not been uploaded to your account and will be lost if you sign out now. Sign out anyway?": [
+  "platform.js"
+ ],
  "{0} known · {1} to review": [
   "viva.js"
  ],
@@ -552,6 +555,9 @@
  "A tickle on your lips means your breath is doing the work.": [
   "gym.js"
  ],
+ "A usage log of calls to the AI: when, how many tokens and what they cost. It holds no content, so nobody can read your words from it.": [
+  "auth.js"
+ ],
  "A way in": [
   "pages-more.js"
  ],
@@ -562,8 +568,7 @@
   "gym.js"
  ],
  "Academy": [
-  "pages-more.js",
-  "app.js"
+  "pages-more.js"
  ],
  "Account": [
   "auth.js",
@@ -652,9 +657,6 @@
  ],
  "Analysis deleted": [
   "pages-core.js"
- ],
- "Analyze": [
-  "app.js"
  ],
  "Analyze a recording": [
   "viva.js"
@@ -1512,6 +1514,9 @@
  "Delete this draft?": [
   "pages-more.js"
  ],
+ "Deleting it": [
+  "auth.js"
+ ],
  "Deleting…": [
   "auth.js"
  ],
@@ -2074,6 +2079,9 @@
  "For the Rostra team": [
   "auth.js"
  ],
+ "Forgot your password? Ask your teacher to reset it.": [
+  "auth.js"
+ ],
  "Format": [
   "viva.js"
  ],
@@ -2522,9 +2530,6 @@
  "Improviser": [
   "data.js"
  ],
- "In a database in Frankfurt, Germany (European Union), run by Supabase for Rostra. The AI examiner and coach run on Anthropic’s Claude; only the text of your answers and speeches is sent, under Rostra’s account, never your name or email. Transcription, when a server service is used, receives only the audio of one answer at a time.": [
-  "auth.js"
- ],
  "In an oral exam the examiner hears your first sentence most clearly. If it is “So, um, there are a lot of factors…”, they start to doubt you before you have said anything wrong. Put your answer in the first sentence, then spend the rest of your time earning it.": [
   "viva.js"
  ],
@@ -2934,6 +2939,9 @@
  "Main": [
   "app.js"
  ],
+ "Make a new class code? The old code stops working. Students already in the class stay.": [
+  "teacher.js"
+ ],
  "Make my poster": [
   "pages-core.js",
   "pages-more.js"
@@ -3130,6 +3138,12 @@
   "pages-more.js"
  ],
  "New class": [
+  "teacher.js"
+ ],
+ "New class code": [
+  "teacher.js"
+ ],
+ "New class code: {0}": [
   "teacher.js"
  ],
  "New exam": [
@@ -3390,6 +3404,9 @@
  "on the {0} you reached": [
   "viva.js"
  ],
+ "On the Account page, “Delete my account and data” removes your account, your work and your login from the database at once. Your school is the data controller; Rostra processes data on its behalf. For questions, write to your school’s Rostra contact.": [
+  "auth.js"
+ ],
  "on the board. Students pick “Join as a student” on the sign-in page.": [
   "teacher.js"
  ],
@@ -3416,6 +3433,9 @@
  ],
  "One idea per slide. Slides support you; they don’t repeat the script.": [
   "pages-more.js"
+ ],
+ "One item has not been uploaded to your account and will be lost if you sign out now. Sign out anyway?": [
+  "platform.js"
  ],
  "One moment…": [
   "auth.js"
@@ -3974,11 +3994,20 @@
  "Relative to your own range": [
   "ui.js"
  ],
+ "Remove {0} from this class? Their account and work stay; they can rejoin with the class code.": [
+  "teacher.js"
+ ],
  "Remove assignment": [
+  "teacher.js"
+ ],
+ "Remove from class": [
   "teacher.js"
  ],
  "Remove recording": [
   "pages-core.js"
+ ],
+ "Remove the assignment “{0}”? Its results list goes with it; students keep their own work.": [
+  "teacher.js"
  ],
  "Repeat the question": [
   "viva.js"
@@ -4133,10 +4162,13 @@
  "Room rules": [
   "viva.js"
  ],
+ "Rostra never stores audio. When the server has a transcription key, each recording is sent to Deepgram on servers in the EU, turned into text and not kept there either.": [
+  "auth.js"
+ ],
  "Rostra records each answer, writes down what you said, and the examiner replies to your actual words. Pace, pauses and filler words are measured from the recording. The audio is not kept.": [
   "viva.js"
  ],
- "Rostra stores your name, username and your work, in the EU, for your school. Nothing else.": [
+ "Rostra stores your name, username and your work in the EU, for your school.": [
   "auth.js"
  ],
  "Rough": [
@@ -4290,7 +4322,8 @@
   "viva.js"
  ],
  "Self-assessed": [
-  "viva.js"
+  "viva.js",
+  "teacher.js"
  ],
  "Self-assessed:": [
   "viva.js"
@@ -4344,6 +4377,9 @@
   "teacher.js"
  ],
  "Set an oral exam": [
+  "teacher.js"
+ ],
+ "Set as a written exam.": [
   "teacher.js"
  ],
  "Set out the occasion, the audience and what you want them to do.": [
@@ -4466,7 +4502,8 @@
   "engine.js"
  ],
  "Sign out": [
-  "auth.js"
+  "auth.js",
+  "app.js"
  ],
  "Signposting": [
   "viva.js"
@@ -4985,6 +5022,9 @@
   "auth.js",
   "teacher.js"
  ],
+ "Teachers: ask your school’s Rostra contact.": [
+  "auth.js"
+ ],
  "Team update": [
   "data.js"
  ],
@@ -5093,6 +5133,9 @@
  "The AI coach isn’t enabled for this page.": [
   "engine.js"
  ],
+ "The AI examiner and coach": [
+  "auth.js"
+ ],
  "The AI key on the server isn’t valid. Tell your teacher or the Rostra team.": [
   "engine.js"
  ],
@@ -5113,9 +5156,6 @@
  ],
  "The approach named in one sentence": [
   "viva.js"
- ],
- "The audio of your spoken answers. It is turned into text, measured for pace and pauses on your device, and discarded. Rostra does not read emotions from your voice or face, and does not use cameras.": [
-  "auth.js"
  ],
  "The best available defense or repair": [
   "viva.js"
@@ -5162,6 +5202,9 @@
  "The database did not answer": [
   "teacher.js"
  ],
+ "The database is in Frankfurt, Germany (European Union), run by Supabase for Rostra. The server that talks to the AI runs in Frankfurt too, on Netlify.": [
+  "auth.js"
+ ],
  "The direction of the dependency explained": [
   "viva.js"
  ],
@@ -5182,6 +5225,9 @@
  ],
  "The examiner asks: “Is the Carnot efficiency achievable in a real engine?” Which opening is answer-first?": [
   "viva.js"
+ ],
+ "The examiner could not mark this exam, so the student marked themselves. Practice only.": [
+  "teacher.js"
  ],
  "The examiner couldn’t be reached, so mark this one yourself. Be as strict as they would be.": [
   "viva.js"
@@ -5236,6 +5282,9 @@
  ],
  "The microphone is not available, so you type your answers this time.": [
   "viva.js"
+ ],
+ "The microphone or transcription failed, so the student typed their answers.": [
+  "teacher.js"
  ],
  "The microphone was blocked, so this exam is typed. Allow it in the browser’s address bar to speak next time.": [
   "viva.js"
@@ -5314,6 +5363,9 @@
  ],
  "The task, in your words": [
   "teacher.js"
+ ],
+ "The text of your speeches and answers is sent to Anthropic, which runs the Claude models, to produce questions and feedback. It goes under Rostra’s account, without your name. Anthropic processes it outside the EU under the EU’s standard contractual clauses and does not train its models on it.": [
+  "auth.js"
  ],
  "The Theorist": [
   "viva.js"
@@ -5414,6 +5466,9 @@
  ],
  "This file’s audio couldn’t be decoded here. Try exporting it as MP3, M4A or WAV.": [
   "engine.js"
+ ],
+ "This is what Rostra heard. Fix any words it got wrong, then send it. The examiner also sees the original.": [
+  "viva.js"
  ],
  "This item is too large to sync to your account, so it stays in this browser.": [
   "engine.js"
@@ -5605,6 +5660,9 @@
  ],
  "Type what you said, as you said it.": [
   "viva.js"
+ ],
+ "typed": [
+  "teacher.js"
  ],
  "Typed, not spoken": [
   "viva.js"
@@ -5906,9 +5964,6 @@
  "What was measured": [
   "viva.js"
  ],
- "What we do not keep": [
-  "auth.js"
- ],
  "What we should do.": [
   "gym.js"
  ],
@@ -5947,6 +6002,9 @@
  ],
  "When": [
   "teacher.js"
+ ],
+ "When the server has no transcription key, your browser’s own speech recognition is used instead. On Chrome that sends the audio to Google, on Safari to Apple, under their own privacy terms. Pace and pauses are measured on your device.": [
+  "auth.js"
  ],
  "Where it goes next.": [
   "gym.js"
@@ -6202,9 +6260,6 @@
  "You can come back and keep editing.": [
   "pages-more.js"
  ],
- "You can delete everything from the Account page at any time. Your school is the data controller; Rostra processes data on its behalf. For questions, write to your school’s Rostra contact.": [
-  "auth.js"
- ],
  "You can delete everything Rostra holds about you: your profile, speeches, drafts and exams, and your login. This cannot be undone.": [
   "auth.js"
  ],
@@ -6364,7 +6419,7 @@
  "You would pass comfortably": [
   "viva.js"
  ],
- "You. The teachers of the classes you are in, who see your exams, speeches and progress as part of their teaching. Nobody else, and nothing is sold or used for advertising.": [
+ "You. The teachers of the classes you are in see your speeches, exams and feedback as part of their teaching. Your school’s Rostra contact sees how much the school uses Rostra, not what anyone said. Nothing is sold or used for advertising.": [
   "auth.js"
  ],
  "You’re typing, so this checks what you know. It does not rehearse speaking.": [
@@ -6395,6 +6450,9 @@
   "auth.js"
  ],
  "Your account and all your work were deleted.": [
+  "auth.js"
+ ],
+ "Your account: your name, your username, your school and the classes you are in. Students have no email address in Rostra; teachers sign in with their school email.": [
   "auth.js"
  ],
  "Your accuracy capped this mark at Merit.": [
@@ -6496,9 +6554,6 @@
  ],
  "Your dictated words appear here. Lead with your answer.": [
   "viva.js"
- ],
- "Your display name, your username and your work: speeches you analyze, drafts you write, oral exams you sit and the reports they produce. Teachers also give an email address. Students do not.": [
-  "auth.js"
  ],
  "your draft": [
   "pages-core.js"
@@ -6602,9 +6657,6 @@
  "Your rewrite · {0}": [
   "gym.js"
  ],
- "Your rights": [
-  "auth.js"
- ],
  "Your Rostra storage is full. Delete a few old speeches to keep saving.": [
   "engine.js"
  ],
@@ -6641,6 +6693,9 @@
  "Your three lights are still low. Pick the weakest and raise it first.": [
   "data.js"
  ],
+ "Your transcribed answer": [
+  "viva.js"
+ ],
  "Your triangle": [
   "data.js"
  ],
@@ -6649,6 +6704,9 @@
  ],
  "Your two main tools": [
   "pages-core.js"
+ ],
+ "Your voice": [
+  "auth.js"
  ],
  "Your voice is warmed up. Go speak.": [
   "gym.js"
@@ -6668,8 +6726,14 @@
  "Your words": [
   "pages-core.js"
  ],
+ "Your work is saved, but it could not be handed in to your teacher. Check your connection and open it again later.": [
+  "platform.js"
+ ],
  "Your work is saved. Go back Home and try again.": [
   "app.js"
+ ],
+ "Your work: the speeches you analyze, the drafts you write, the oral exams you sit, their transcripts and the feedback they get.": [
+  "auth.js"
  ],
  "Your worked reasoning was easy to follow. More numbers would make it convincing.": [
   "viva.js"

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const runner = path.join(path.dirname(fileURLToPath(import.meta.url)), 'run-legacy.mjs');
-for (const name of ['art', 'content', 'gym', 'persist', 'visual', 'viva']) {
+for (const name of ['art', 'content', 'core', 'gym', 'persist', 'visual', 'viva']) {
   test(`legacy suite: ${name}`, () => {
     const r = spawnSync(process.execPath, [runner, name], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stdout + r.stderr);

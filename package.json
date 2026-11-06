@@ -12,8 +12,7 @@
     "dev": "node scripts/dev.mjs",
     "test": "npm run build && npm run test:unit && npm run test:e2e",
     "test:unit": "node scripts/test-unit.mjs",
-    "test:e2e": "playwright test --trace off",
-    "lint": "node scripts/lint.mjs"
+    "test:e2e": "playwright test --trace off"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

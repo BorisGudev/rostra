@@ -145,18 +145,27 @@ function Meander({ className = '', height = 12 }) {
 const Voice = {
   get ok() { try { return typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance === 'function'; } catch (e) { return false; } },
   enabled: true,
-  voices() {
-    try { const vs = window.speechSynthesis.getVoices(); const en = vs.filter((v) => /^en/i.test(v.lang)); return en.length ? en : vs; } catch (e) { return []; }
+  /* Voices for a language ('en' or 'bg'); falls back to the interface language, then to anything installed. */
+  voices(lang) {
+    try {
+      const vs = window.speechSynthesis.getVoices();
+      const want = (lang || (typeof I18N !== 'undefined' ? I18N.lang : 'en') || 'en').slice(0, 2).toLowerCase();
+      const hit = vs.filter((v) => String(v.lang || '').slice(0, 2).toLowerCase() === want);
+      if (hit.length) return hit;
+      const en = vs.filter((v) => /^en/i.test(v.lang));
+      return en.length ? en : vs;
+    } catch (e) { return []; }
   },
   speak(text, opts = {}) {
-    const { rate = 1, pitch = 1, voiceIndex = 0, onend } = opts;
+    const { rate = 1, pitch = 1, voiceIndex = 0, onend, lang } = opts;
     const done = () => { if (onend) onend(); };
     if (!this.ok || !this.enabled || !text) { done(); return; }
     try {
       window.speechSynthesis.cancel();
       const u = new window.SpeechSynthesisUtterance(text);
-      const vs = this.voices();
-      if (vs.length) u.voice = vs[Math.abs(voiceIndex) % vs.length];
+      const vs = this.voices(lang);
+      if (vs.length) { u.voice = vs[Math.abs(voiceIndex) % vs.length]; u.lang = u.voice.lang; }
+      else u.lang = (lang || (typeof I18N !== 'undefined' ? I18N.lang : 'en')) === 'bg' ? 'bg-BG' : 'en-GB';
       u.rate = rate; u.pitch = pitch;
       u.onend = done; u.onerror = done;
       window.speechSynthesis.speak(u);

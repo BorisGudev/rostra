@@ -481,7 +481,8 @@ function AnalyzePage({ param }) {
   const [idea, setIdea] = useState('');
   const ctl = useRef(null);
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  /* Leaving this page drops the teacher's task, so the next unrelated speech is not handed in for it. */
+  useEffect(() => () => { alive.current = false; if (typeof Platform !== 'undefined' && !ctl.current) Platform.pendingAssignment = null; }, []);
   const words = wordsOf(text).length;
   const isVideo = file && (/^video\//.test(file.type) || /\.(mp4|mov|webm|m4v)$/i.test(file.name));
   const canRun = !!file || words >= 30;
@@ -512,7 +513,7 @@ function AnalyzePage({ param }) {
     const c = new AbortController(); ctl.current = c;
     setRun({ stage: plan[0] ? plan[0].id : 'ai', p: 0, chars: 0 });
     try {
-      const sp = await runSpeechAnalysis({ file, transcript: text, cues, title: title.trim(), occasion, focus }, (stage, v) => setRun((r) => (stage === 'ai' ? { ...r, stage, chars: v || 0 } : { ...r, stage, p: v || 0 })), c.signal);
+      const sp = await runSpeechAnalysis({ file, transcript: text, cues, title: title.trim(), occasion, focus, brief, minutes: pre && pre.minutes ? Number(pre.minutes) : null }, (stage, v) => setRun((r) => (stage === 'ai' ? { ...r, stage, chars: v || 0 } : { ...r, stage, p: v || 0 })), c.signal);
       if (alive.current) {
         Celebrate.pending = sp.id;
         Celebrate.release = FX.hold(9000);

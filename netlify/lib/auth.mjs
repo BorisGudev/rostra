@@ -30,6 +30,9 @@ export async function identify(req, context = {}) {
     if (db) {
       const r = await db.from('profiles').select('role, display_name, school_id, lang').eq('id', u.id).maybeSingle();
       profile = r.data || null;
+      /* A login with no profile row was not made by /api/account (e.g. someone who found the project's public sign-up
+         endpoint). It gets no AI and no account actions. Role and school come from the row, never from user metadata. */
+      if (!profile) return null;
     }
     return { id: u.id, email: u.email || null, role: (profile && profile.role) || meta.role || 'student', displayName: (profile && profile.display_name) || meta.display_name || '', schoolId: profile ? profile.school_id : null, lang: (profile && profile.lang) || 'en', anon: false };
   }
