@@ -81,6 +81,25 @@ test('through the real supabase-js client', async (t) => {
   const joined = await sc.rpc('join_class', { p_code: cls.data.code.toLowerCase() });
   assert.equal(joined.data, cls.data.id);
   assert.equal((await sc.rpc('join_class', { p_code: 'NOPE00' })).data, null);
+  assert.equal((await tc.rpc('join_class', { p_code: cls.data.code })).data, null); // teachers do not join classes
+
+  // the write rules match 0001_init.sql: nobody inserts memberships by hand, work is submitted only for one's own class
+  const otherCls = await admin.from('classes').insert({ school_id: school.data.id, teacher_id: teacher.id, name: 'Other' }).select().single();
+  assert.ifError(otherCls.error);
+  assert.equal((await sc.from('class_members').insert({ class_id: otherCls.data.id, student_id: student.id })).error.code, '42501');
+  assert.equal((await tc.from('class_members').insert({ class_id: cls.data.id, student_id: teacher.id })).error.code, '42501');
+  const mine = await tc.from('assignments').insert({ class_id: cls.data.id, teacher_id: teacher.id, kind: 'viva', title: 'Exam' }).select().single();
+  assert.ifError(mine.error);
+  const theirs = await admin.from('assignments').insert({ class_id: otherCls.data.id, teacher_id: teacher.id, kind: 'viva', title: 'Not mine' }).select().single();
+  assert.ifError(theirs.error);
+  assert.equal((await sc.from('assignments').select('id')).data.length, 1); // only the class the student is in
+  assert.equal((await sc.from('submissions').upsert({ assignment_id: theirs.data.id, student_id: student.id, doc_id: 'b', summary: {} }, { onConflict: 'assignment_id,student_id,doc_id' })).error.code, '42501');
+  assert.ifError((await sc.from('submissions').upsert({ assignment_id: mine.data.id, student_id: student.id, doc_id: 'b', summary: { percent: 70 } }, { onConflict: 'assignment_id,student_id,doc_id' })).error);
+  assert.equal((await tc.from('submissions').select('summary')).data[0].summary.percent, 70);
+  assert.equal((await sc.from('profiles').update({ username: 'teacher' }).eq('id', student.id)).error.code, '42501');
+  assert.ifError((await tc.from('class_members').delete().eq('class_id', cls.data.id).eq('student_id', student.id)).error);
+  assert.equal((await tc.from('teacher_students').select('*')).data.length, 0);
+  assert.equal((await sc.rpc('join_class', { p_code: cls.data.code })).data, cls.data.id); // and back in
 
   const seen = await tc.from('docs').select('user_id, id');
   assert.equal(seen.data.length, 2);

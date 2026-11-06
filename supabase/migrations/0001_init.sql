@@ -102,15 +102,42 @@ create table if not exists public.usage (
 create index if not exists usage_user_day on public.usage(user_id, created_at);
 
 -- ---------- helpers ----------
+-- Every cross-table check used by a policy lives in one of these `security definer` functions. A policy that
+-- queries another protected table directly would run that table's policies too, and two tables that check
+-- each other recurse ("infinite recursion detected in policy"). The functions read as the table owner, so
+-- they see every row and the policies stay one level deep.
 create or replace function public.my_role() returns text language sql stable security definer set search_path = public as
 $$ select role from public.profiles where id = auth.uid() $$;
 
 create or replace function public.my_school() returns uuid language sql stable security definer set search_path = public as
 $$ select school_id from public.profiles where id = auth.uid() $$;
 
+create or replace function public.my_username() returns text language sql stable security definer set search_path = public as
+$$ select username from public.profiles where id = auth.uid() $$;
+
 -- Is the signed-in user a teacher of this student (same class)?
 create or replace function public.teaches(student uuid) returns boolean language sql stable security definer set search_path = public as
 $$ select exists (select 1 from public.class_members cm join public.classes c on c.id = cm.class_id where cm.student_id = student and c.teacher_id = auth.uid()) $$;
+
+-- Is the signed-in user a student in this class?
+create or replace function public.is_member(cls uuid) returns boolean language sql stable security definer set search_path = public as
+$$ select exists (select 1 from public.class_members where class_id = cls and student_id = auth.uid()) $$;
+
+-- Does the signed-in user teach this class?
+create or replace function public.owns_class(cls uuid) returns boolean language sql stable security definer set search_path = public as
+$$ select exists (select 1 from public.classes where id = cls and teacher_id = auth.uid()) $$;
+
+-- Was this assignment set for a class the signed-in user is in?
+create or replace function public.assigned_to_me(assignment uuid) returns boolean language sql stable security definer set search_path = public as
+$$ select exists (select 1 from public.assignments a join public.class_members m on m.class_id = a.class_id where a.id = assignment and m.student_id = auth.uid()) $$;
+
+-- Did the signed-in user set this assignment?
+create or replace function public.owns_assignment(assignment uuid) returns boolean language sql stable security definer set search_path = public as
+$$ select exists (select 1 from public.assignments where id = assignment and teacher_id = auth.uid()) $$;
+
+-- Which school does this user belong to? (for the admin's usage view)
+create or replace function public.school_of(who uuid) returns uuid language sql stable security definer set search_path = public as
+$$ select school_id from public.profiles where id = who $$;
 
 create or replace function public.touch_updated_at() returns trigger language plpgsql as
 $$ begin new.updated_at = now(); return new; end $$;
@@ -132,8 +159,10 @@ create policy "schools: members read" on public.schools for select to authentica
 
 drop policy if exists "profiles: own" on public.profiles;
 create policy "profiles: own" on public.profiles for select to authenticated using (id = (select auth.uid()));
+-- A user may change their display name and language. Role, school and username are set by the server only.
 drop policy if exists "profiles: own update" on public.profiles;
-create policy "profiles: own update" on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()) and role = public.my_role());
+create policy "profiles: own update" on public.profiles for update to authenticated using (id = (select auth.uid()))
+  with check (id = (select auth.uid()) and role = public.my_role() and school_id is not distinct from public.my_school() and username is not distinct from public.my_username());
 drop policy if exists "profiles: teachers read their students" on public.profiles;
 create policy "profiles: teachers read their students" on public.profiles for select to authenticated using (public.teaches(id));
 drop policy if exists "profiles: admins read their school" on public.profiles;
@@ -142,16 +171,21 @@ create policy "profiles: admins read their school" on public.profiles for select
 drop policy if exists "classes: teacher" on public.classes;
 create policy "classes: teacher" on public.classes for all to authenticated using (teacher_id = (select auth.uid())) with check (teacher_id = (select auth.uid()) and school_id = public.my_school() and public.my_role() in ('teacher', 'admin'));
 drop policy if exists "classes: members read" on public.classes;
-create policy "classes: members read" on public.classes for select to authenticated using (exists (select 1 from public.class_members m where m.class_id = id and m.student_id = (select auth.uid())));
+create policy "classes: members read" on public.classes for select to authenticated using (public.is_member(id));
 drop policy if exists "classes: admins read school" on public.classes;
 create policy "classes: admins read school" on public.classes for select to authenticated using (public.my_role() = 'admin' and school_id = public.my_school());
 
+-- Nobody inserts memberships directly: students join through join_class() with the class code.
 drop policy if exists "members: own" on public.class_members;
 create policy "members: own" on public.class_members for select to authenticated using (student_id = (select auth.uid()));
 drop policy if exists "members: teacher" on public.class_members;
-create policy "members: teacher" on public.class_members for all to authenticated using (exists (select 1 from public.classes c where c.id = class_id and c.teacher_id = (select auth.uid())));
 drop policy if exists "members: join by code" on public.class_members;
-create policy "members: join by code" on public.class_members for insert to authenticated with check (student_id = (select auth.uid()));
+drop policy if exists "members: teacher reads" on public.class_members;
+create policy "members: teacher reads" on public.class_members for select to authenticated using (public.owns_class(class_id));
+drop policy if exists "members: teacher removes" on public.class_members;
+create policy "members: teacher removes" on public.class_members for delete to authenticated using (public.owns_class(class_id));
+drop policy if exists "members: student leaves" on public.class_members;
+create policy "members: student leaves" on public.class_members for delete to authenticated using (student_id = (select auth.uid()));
 
 drop policy if exists "docs: own" on public.docs;
 create policy "docs: own" on public.docs for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
@@ -159,26 +193,33 @@ drop policy if exists "docs: teacher reads students" on public.docs;
 create policy "docs: teacher reads students" on public.docs for select to authenticated using (public.teaches(user_id));
 
 drop policy if exists "assignments: teacher" on public.assignments;
-create policy "assignments: teacher" on public.assignments for all to authenticated using (teacher_id = (select auth.uid())) with check (teacher_id = (select auth.uid()));
+create policy "assignments: teacher" on public.assignments for all to authenticated using (teacher_id = (select auth.uid())) with check (teacher_id = (select auth.uid()) and public.owns_class(class_id));
 drop policy if exists "assignments: class members read" on public.assignments;
-create policy "assignments: class members read" on public.assignments for select to authenticated using (exists (select 1 from public.class_members m where m.class_id = class_id and m.student_id = (select auth.uid())));
+create policy "assignments: class members read" on public.assignments for select to authenticated using (public.is_member(class_id));
 
+-- A student writes a submission only for an assignment set to one of their classes, and only as themselves.
 drop policy if exists "submissions: student" on public.submissions;
-create policy "submissions: student" on public.submissions for all to authenticated using (student_id = (select auth.uid())) with check (student_id = (select auth.uid()));
+drop policy if exists "submissions: student reads" on public.submissions;
+create policy "submissions: student reads" on public.submissions for select to authenticated using (student_id = (select auth.uid()));
+drop policy if exists "submissions: student writes" on public.submissions;
+create policy "submissions: student writes" on public.submissions for insert to authenticated with check (student_id = (select auth.uid()) and public.assigned_to_me(assignment_id));
+drop policy if exists "submissions: student updates" on public.submissions;
+create policy "submissions: student updates" on public.submissions for update to authenticated using (student_id = (select auth.uid())) with check (student_id = (select auth.uid()) and public.assigned_to_me(assignment_id));
 drop policy if exists "submissions: teacher reads" on public.submissions;
-create policy "submissions: teacher reads" on public.submissions for select to authenticated using (exists (select 1 from public.assignments a where a.id = assignment_id and a.teacher_id = (select auth.uid())));
+create policy "submissions: teacher reads" on public.submissions for select to authenticated using (public.owns_assignment(assignment_id));
 
 drop policy if exists "usage: own" on public.usage;
 create policy "usage: own" on public.usage for select to authenticated using (user_id = (select auth.uid()));
 drop policy if exists "usage: teacher reads students" on public.usage;
 create policy "usage: teacher reads students" on public.usage for select to authenticated using (public.teaches(user_id));
 drop policy if exists "usage: admin reads school" on public.usage;
-create policy "usage: admin reads school" on public.usage for select to authenticated using (public.my_role() = 'admin' and exists (select 1 from public.profiles p where p.id = user_id and p.school_id = public.my_school()));
+create policy "usage: admin reads school" on public.usage for select to authenticated using (public.my_role() = 'admin' and public.school_of(user_id) = public.my_school());
 
 -- Joining a class with its code, without revealing the class list: returns the class id or null.
 create or replace function public.join_class(p_code text) returns uuid language plpgsql security definer set search_path = public as $$
 declare cid uuid;
 begin
+  if public.my_role() <> 'student' then return null; end if; -- teachers and admins run classes, they do not sit in them
   select id into cid from public.classes where code = upper(trim(p_code)) and archived = false;
   if cid is null then return null; end if;
   insert into public.class_members (class_id, student_id) values (cid, auth.uid()) on conflict do nothing;

@@ -154,16 +154,19 @@ export function createMockSupabase() {
     }
     return false;
   }
-  /* May this row be written (as it is before an update/delete, or as it will be after an insert/update)? */
-  function writable(table, r, c) {
+  const assignedToMe = (c, assignmentId) => { const a = state.assignments.find((x) => x.id === assignmentId); return !!a && isMember(c, a.class_id); };
+  /* May this row be written (as it is before an update/delete, or as it will be after an insert/update)?
+     `op` is 'insert', 'update' or 'delete'. Mirrors the policies in supabase/migrations/0001_init.sql; change both together. */
+  function writable(table, r, c, op) {
     if (c.service) return true;
+    const me = profileOf(c.uid) || {};
     switch (table) {
-      case 'profiles': return r.id === c.uid;
+      case 'profiles': return op !== 'insert' && op !== 'delete' && r.id === c.uid && r.role === me.role && (r.school_id || null) === (me.school_id || null) && (r.username || null) === (me.username || null);
       case 'classes': return r.teacher_id === c.uid && r.school_id === mySchool(c) && ['teacher', 'admin'].includes(myRole(c));
-      case 'class_members': return r.student_id === c.uid || (classOf(r.class_id) || {}).teacher_id === c.uid;
+      case 'class_members': return op === 'delete' && (r.student_id === c.uid || (classOf(r.class_id) || {}).teacher_id === c.uid); // joining only through join_class()
       case 'docs': return r.user_id === c.uid;
-      case 'assignments': return r.teacher_id === c.uid;
-      case 'submissions': return r.student_id === c.uid;
+      case 'assignments': return r.teacher_id === c.uid && (op === 'delete' || (classOf(r.class_id) || {}).teacher_id === c.uid);
+      case 'submissions': return op !== 'delete' && r.student_id === c.uid && assignedToMe(c, r.assignment_id);
     }
     return false; // schools, usage: server only
   }
@@ -295,14 +298,14 @@ export function createMockSupabase() {
       const existing = mode && state[table].find((o) => conflictCols.every((k) => o[k] === row[k] && row[k] != null));
       if (existing) {
         if (mode === 'ignore') continue;
-        if (!writable(table, existing, c) || !writable(table, { ...existing, ...item }, c)) throw rls(table);
+        if (!writable(table, existing, c, 'update') || !writable(table, { ...existing, ...item }, c, 'update')) throw rls(table);
         const merged = { ...existing, ...item };
         validate(table, merged, state[table].filter((o) => o !== existing), c);
         if (table === 'docs') merged.updated_at = now();
         Object.assign(existing, merged); out.push(existing);
         continue;
       }
-      if (!writable(table, row, c)) throw rls(table);
+      if (!writable(table, row, c, 'insert')) throw rls(table);
       validate(table, row, state[table], c);
       state[table].push(row); out.push(row);
     }
@@ -316,6 +319,7 @@ export function createMockSupabase() {
     if (name === 'my_school') return mySchool(c);
     if (name === 'teaches') return teaches(c, args.student);
     if (name === 'join_class') {
+      if (!c.service && myRole(c) !== 'student') return null;
       const cls = state.classes.find((x) => x.code === String(args.p_code || '').trim().toUpperCase() && !x.archived);
       if (!cls) return null;
       if (!state.class_members.some((m) => m.class_id === cls.id && m.student_id === uid)) {
@@ -374,14 +378,14 @@ export function createMockSupabase() {
       return wantRows ? finish(done, 201) : jsonRes(201, undefined);
     }
     /* PATCH and DELETE touch only rows the caller can see AND write, like RLS "using" clauses. */
-    const real = select().filter((r) => writable(table, r, c));
+    const real = select().filter((r) => writable(table, r, c, method === 'DELETE' ? 'delete' : 'update'));
     if (method === 'PATCH') {
       if (!body || typeof body !== 'object' || Array.isArray(body)) throw new PgError(400, 'PGRST102', 'Empty or invalid json');
       for (const k of Object.keys(body)) if (!TABLES[table].cols.includes(k)) throw new PgError(400, 'PGRST204', "Could not find the '" + k + "' column of '" + table + "' in the schema cache");
       for (const r of real) {
         const next = { ...r, ...body };
         if (table === 'docs') next.updated_at = now();
-        if (!writable(table, next, c) || (!c.service && table === 'profiles' && next.role !== r.role)) throw rls(table);
+        if (!writable(table, next, c, 'update')) throw rls(table);
         validate(table, next, state[table].filter((o) => o !== r), c);
         Object.assign(r, next);
       }

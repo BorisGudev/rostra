@@ -7,6 +7,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,6 +25,8 @@ jobs:
       - run: npm test
         env:
           MOCK_AI: '1'
+          # The Row Level Security suite runs against this real Postgres (tests/unit/rls.test.mjs).
+          ROSTRA_TEST_PG: postgres://postgres:postgres@localhost:5432/postgres
       - uses: actions/upload-artifact@v4
         if: always()
         with:
