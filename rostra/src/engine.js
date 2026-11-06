@@ -526,6 +526,9 @@ const Store = {
     this.set({ backend: 'local' });
     await bootStore();
     if (typeof AI !== 'undefined') await AI.refresh();
+    /* An account already knows the name, and in a school the exam is the goal: no onboarding form. */
+    const u = typeof Platform !== 'undefined' ? Platform.user : null;
+    if (u && !this.state.profile.onboarded) this.act((p) => { p.name = p.name || String(u.displayName || '').split(' ')[0].slice(0, 40); p.goal = p.goal || 'exam'; p.onboarded = true; });
   },
   /* After a sign-out on a shared classroom laptop: nothing of this person stays in the browser. */
   signOutLocal() {

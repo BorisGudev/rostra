@@ -249,22 +249,22 @@ function splitLabel(label) { const i = String(label).indexOf(': '); return i > 0
 function splitThe(name) { const m = /^The (.+)$/.exec(name || ''); return m ? ['The', m[1]] : [null, name || '']; }
 const UNLIT_STAGE = { ethos: 30, pathos: 30, logos: 30 }; // a dim house before your first speech
 const HOME_ACTIONS = [
-  { id: 'analyze', label: 'Analyze a speech', icon: 'mic', to: ['analyze'] },
+  { id: 'viva', label: 'Rehearse an oral exam', icon: 'scroll', to: ['viva'] },
+  { id: 'analyze', label: 'Get feedback on a speech', icon: 'mic', to: ['analyze'] },
   { id: 'prepare', label: 'Prepare a speech', icon: 'pen', to: ['prepare'] },
-  { id: 'viva', label: 'Take an oral exam', icon: 'scroll', to: ['viva'] },
   { id: 'gym', label: 'Warm up in the Gym', icon: 'dumbbell', to: ['gym'] },
 ];
 function homeActions(p, preps, vivas, example) {
   const examGoal = p.goal === 'exam';
   const fresh = example && !(vivas || []).some((v) => v && v.id) && !(preps || []).some((x) => !x.done);
   if (fresh) {
-    const first = { id: 'analyze', label: 'Analyze my first speech', icon: 'mic', to: ['analyze'] };
-    const sample = { id: 'sample', label: 'See a sample report', icon: 'file', to: ['report', 'sample'] };
-    return examGoal ? [{ id: 'viva', label: 'Take an oral exam', icon: 'scroll', to: ['viva'] }, first, sample] : [first, sample];
+    const first = { id: 'analyze', label: 'Get feedback on a speech', icon: 'mic', to: ['analyze'] };
+    const exam = { id: 'viva', label: 'Rehearse an oral exam', icon: 'scroll', to: ['viva'] };
+    return examGoal ? [exam, first] : [first, exam];
   }
   const primary = homePrimary(p, preps, vivas);
-  const rest = HOME_ACTIONS.filter((a) => a.id !== primary.id);
-  return [primary, ...(examGoal ? rest.sort((a, b) => (b.id === 'viva') - (a.id === 'viva')) : rest)];
+  const rest = HOME_ACTIONS.filter((a) => a.id !== primary.id && (a.id === 'viva' || a.id === 'analyze'));
+  return [primary, ...rest].slice(0, 2);
 }
 function HomeStage({ scores, example, trail, ghost, triLine, onPoster }) {
   const { profile: p, preps, vivas } = useStore();
@@ -275,7 +275,7 @@ function HomeStage({ scores, example, trail, ghost, triLine, onPoster }) {
   const [the, rest] = splitThe(arch.name);
   const greet = p.onboarded ? greeting() + (p.name ? ', ' + p.name : '') + '.' : 'Welcome to the Rostra.';
   const examGoal = p.goal === 'exam';
-  const line = !example ? arch.blurb : examGoal ? 'Pick a subject and answer the questions one by one. You get a grade and a list of what to revise.' : 'Paste a speech or upload a recording. In about a minute you see how it scores on trust, emotion and logic.';
+  const line = !example ? arch.blurb : examGoal ? 'An examiner asks, listens, follows up and grades. You leave with a mark, your gaps and what to revise.' : 'Record a speech or paste the words. In about a minute you see how it scores on trust, emotion and logic.';
   const canPoster = p.stats.speeches > 0 || p.stats.vivas > 0;
   const actions = homeActions(p, preps, vivas, example).slice(0, 3);
   return html`<section className="home-stage" aria-labelledby="hs-title">
@@ -284,8 +284,7 @@ function HomeStage({ scores, example, trail, ghost, triLine, onPoster }) {
         <div className="hs-top">
           <p className="hs-greet">${greet}</p>
           <span className="hs-tools">
-            ${example ? html`<span className="chip chip-sm chip-example">Example data</span>` : null}
-            <span className="seg" role="group" aria-label="Triangle view"><button aria-pressed=${mode === 'now'} onClick=${() => setMode('now')}>Now</button><button aria-pressed=${mode === 'journey'} onClick=${() => setMode('journey')}>Journey</button></span>
+            ${example ? null : html`<span className="seg" role="group" aria-label="Triangle view"><button aria-pressed=${mode === 'now'} onClick=${() => setMode('now')}>Now</button><button aria-pressed=${mode === 'journey'} onClick=${() => setMode('journey')}>Journey</button></span>`}
             ${canPoster ? html`<button type="button" className="btn btn-sm btn-icon hs-poster" onClick=${onPoster} aria-label="Make my poster" title="Make my poster"><${Icon} name="image" size=${15} /></button>` : null}
           </span>
         </div>
@@ -302,7 +301,7 @@ function HomeStage({ scores, example, trail, ghost, triLine, onPoster }) {
         <div className="hs-actions">
           ${actions.map((a, i) => { const [main, rest] = splitLabel(a.label); return html`<button key=${a.id + i} type="button" className=${i ? 'btn hs-gym' : 'btn-cta hs-cta'} onClick=${() => go(...a.to)}><${Icon} name=${a.icon} size=${18} /><span className="hs-cta-text"><span>${main}</span>${!i && rest ? html`<small>${rest}</small>` : null}</span></button>`; })}
         </div>
-        <p className="hs-note">${mode === 'journey' ? 'Each dot is one speech’s center of gravity, oldest to newest.' : html`${triLine}${ghost ? ` Dashed: ${example ? 'where this speaker started' : 'your first speech'}. Dot: ${example ? 'their' : 'your'} center of gravity.` : ''}${sel ? '' : ' Tap a corner for detail.'}`}</p>
+        <p className="hs-note">${mode === 'journey' ? 'Each dot is one speech’s center of gravity, oldest to newest.' : html`${triLine}${ghost ? ` Dashed: your first speech. Dot: your center of gravity.` : ''}${sel || example ? '' : ' Tap a corner for detail.'}`}</p>
       </div>
     <//>
   </section>`;
@@ -341,9 +340,10 @@ function ExamEmpty() {
 function HomePage() {
   const { profile: p, speeches, preps, vivas } = useStore();
   const hasData = speeches.length > 0;
-  const scores = hasData ? p.skills : SAMPLE_PROFILE.scores;
-  const trail = hasData ? p.trail : SAMPLE_PROFILE.trail;
-  const ghost = hasData ? (p.trail.length > 1 ? { ethos: p.trail[0].e, pathos: p.trail[0].p, logos: p.trail[0].l } : null) : SAMPLE_PROFILE.first;
+  /* Until there is real data the stage stays unlit: a student should never read a sample speaker's numbers as their own. */
+  const scores = hasData ? p.skills : { ethos: null, pathos: null, logos: null };
+  const trail = hasData ? p.trail : [];
+  const ghost = hasData ? (p.trail.length > 1 ? { ethos: p.trail[0].e, pathos: p.trail[0].p, logos: p.trail[0].l } : null) : null;
   const [poster, setPoster] = useState(false);
   const lesson = nextLesson(p);
   const openPrep = preps.find((x) => !x.done);
@@ -353,35 +353,51 @@ function HomePage() {
   const lastPct = examPercent(lastExam);
   const weak = weakestPole(p.skills);
   const strong = strongestPole(p.skills);
-  const triLine = !hasData ? 'A sample speaker’s triangle. Analyze your first speech and this becomes yours.'
+  const triLine = !hasData ? 'Your triangle lights up after your first speech feedback: trust, emotion and logic, each as bright as your score.'
     : weak && strong && weak !== strong ? `${POLES[strong].name} leads. ${POLES[weak].name} is your fastest way up.`
       : 'Every speech you analyze moves this triangle.';
   return html`<${Fragment}>
     ${!p.onboarded ? html`<${Onboarding} />` : null}
     <${HomeStage} scores=${scores} example=${!hasData} trail=${trail} ghost=${ghost} triLine=${triLine} onPoster=${() => setPoster(true)} />
     ${poster ? html`<${PosterModal} onClose=${() => setPoster(false)} />` : null}
-    ${p.onboarded && (hasData || exams.length || openPrep) ? html`<${TodayStrip} p=${p} preps=${preps} vivas=${vivas} />` : null}
     <${AssignmentsCard} />
-    <section className="home-cards">
-      <${LevelCard} />
-      <${QuestsCard} />
-      <${StreakCard} />
+    <section className="home-core" aria-label="Your two main tools">
+      <button className="core-card core-exam" onClick=${() => (openExam ? go('viva', openExam.id) : go('viva'))}>
+        <span className="core-ic"><${Icon} name="scroll" size=${22} /></span>
+        <span className="core-text">
+          <span className="eyebrow">Oral exam <span className="greek" lang="grc">ἐξέτασις</span></span>
+          <h2>${openExam ? 'Continue: ' + (openExam.subject || 'your oral exam') : 'Rehearse an oral exam'}</h2>
+          <span className="small">${openExam ? (openExam.status === 'live' ? 'Your examiner is waiting for your next answer.' : 'Your exam is set up. Start when you’re ready.') : lastExam && lastPct != null ? `Last result: ${lastPct}% in ${lastExam.subject || 'your last exam'}. Retake it, or pick a new subject.` : 'Speak your answers. The examiner follows up on what you actually said, then grades you.'}</span>
+        </span>
+        <span className="core-go"><${Icon} name="arrowR" size=${18} /></span>
+      </button>
+      <button className="core-card core-speech" onClick=${() => go('analyze')}>
+        <span className="core-ic"><${Icon} name="mic" size=${22} /></span>
+        <span className="core-text">
+          <span className="eyebrow">Speech feedback <span className="greek" lang="grc">ἀνάλυσις</span></span>
+          <h2>Get feedback on a speech</h2>
+          <span className="small">${hasData ? `${plural(speeches.length, 'speech')} so far. Record the next one here, or bring a recording.` : 'Record it here or bring a recording. You get scores on trust, emotion and logic, and three things to fix.'}</span>
+        </span>
+        <span className="core-go"><${Icon} name="arrowR" size=${18} /></span>
+      </button>
+    </section>
+    ${p.onboarded && (hasData || exams.length || openPrep) ? html`<${TodayStrip} p=${p} preps=${preps} vivas=${vivas} />` : null}
+    <section className="home-recent">
+      <div className="slab">
+        <div className="card-head"><div><div className="eyebrow">Oral exams <span className="greek" lang="grc">ἐξετάσεις</span></div><h2>Recent oral exams</h2></div><button className="btn btn-sm" onClick=${() => go('viva')}><${Icon} name="plus" size=${16} />New exam</button></div>
+        ${exams.length ? exams.slice(0, 5).map((v) => html`<${ExamRow} key=${v.id} v=${v} />`) : html`<${ExamEmpty} />`}
+      </div>
+      <div className="slab">
+        <div className="card-head"><div><div className="eyebrow">Speeches <span className="greek" lang="grc">λόγοι</span></div><h2>Recent speeches</h2></div><button className="btn btn-sm" onClick=${() => go('analyze')}><${Icon} name="plus" size=${16} />New feedback</button></div>
+        ${hasData ? speeches.slice(0, 5).map((s) => html`<${SpeechRow} key=${s.id} s=${s} />`) : html`<${SpeechRow} s=${getSample()} example=${true} />`}
+      </div>
     </section>
     <section className="stack resume">
-      <div className="sec-head"><div><div className="eyebrow">Keep moving <span className="greek" lang="grc">ἄσκησις</span></div><h2>${speeches.length || openPrep || openExam ? 'Pick up where you left off' : 'More ways to practice'}</h2></div></div>
+      <div className="sec-head"><div><div className="eyebrow">Train between the big moments <span className="greek" lang="grc">ἄσκησις</span></div><h2>${openPrep ? 'Pick up where you left off' : 'Five minutes a day'}</h2></div></div>
       <div className="tile-grid">
-        <button className="tile-btn" onClick=${() => go('analyze')}>
-          <span className="tile-ic"><${Icon} name="mic" /></span>
-          <h3>Analyze a speech</h3><span className="small muted">Upload a recording, a transcript, or both. Get delivery and content feedback.</span>
-        </button>
         <button className="tile-btn" onClick=${() => (openPrep ? go('prepare', openPrep.id) : go('prepare'))}>
           <span className="tile-ic"><${Icon} name="pen" /></span>
           <h3>${openPrep ? 'Continue: ' + (openPrep.brief.title || 'your draft') : 'Prepare a speech'}</h3><span className="small muted">${openPrep ? 'Your coach is waiting on the next section.' : 'Find your angle, then write it with a coach at your side.'}</span>
-        </button>
-        <button className="tile-btn" onClick=${() => (openExam ? go('viva', openExam.id) : go('viva'))}>
-          <span className="tile-ic"><${Icon} name="scroll" /></span>
-          <h3>${openExam ? 'Continue: ' + (openExam.subject || 'your oral exam') : 'Take an oral exam'}</h3>
-          <span className="small muted">${openExam ? (openExam.status === 'live' ? 'Your examiner is waiting for your next answer.' : 'Your exam is set up. Start when you’re ready.') : lastExam && lastPct != null ? `Last result: ${lastPct}% in ${lastExam.subject || 'your last exam'}. Go again.` : 'Explain what you know out loud, to an examiner who follows up.'}</span>
         </button>
         <button className="tile-btn" onClick=${() => go('gym')}>
           <span className="tile-ic"><${Icon} name="dumbbell" /></span>
@@ -397,15 +413,10 @@ function HomePage() {
         </button>
       </div>
     </section>
-    <section className="home-recent">
-      <div className="slab">
-        <div className="card-head"><div><div className="eyebrow">History <span className="greek" lang="grc">λόγοι</span></div><h2>Recent speeches</h2></div><button className="btn btn-sm" onClick=${() => go('analyze')}><${Icon} name="plus" size=${16} />New analysis</button></div>
-        ${hasData ? speeches.slice(0, 5).map((s) => html`<${SpeechRow} key=${s.id} s=${s} />`) : html`<${SpeechRow} s=${getSample()} example=${true} />`}
-      </div>
-      <div className="slab">
-        <div className="card-head"><div><div className="eyebrow">Oral exams <span className="greek" lang="grc">ἐξετάσεις</span></div><h2>Recent oral exams</h2></div><button className="btn btn-sm" onClick=${() => go('viva')}><${Icon} name="plus" size=${16} />New exam</button></div>
-        ${exams.length ? exams.slice(0, 5).map((v) => html`<${ExamRow} key=${v.id} v=${v} />`) : html`<${ExamEmpty} />`}
-      </div>
+    <section className="home-cards">
+      <${LevelCard} />
+      <${QuestsCard} />
+      <${StreakCard} />
     </section>
   <//>`;
 }
@@ -523,14 +534,15 @@ function AnalyzePage({ param }) {
   }
   if (run) return html`<${RunTheater} run=${run} plan=${plan} onStop=${() => ctl.current && ctl.current.abort()} />`;
   return html`<${Fragment}>
-    <${PageHead} label="Analyze" greek="ἀνάλυσις" title="Bring a speech to the coach" fig="anaphora" mark=${['Bring']} line="Bring the recording for delivery. Bring the words for content. Bring both for the full picture." />
+    <${PageHead} label="Speech feedback" greek="ἀνάλυσις" title="Bring a speech to the coach" fig="anaphora" mark=${['Bring']} line="Bring the recording for delivery. Bring the words for content. Bring both for the full picture." />
     ${brief ? html`<div className="notice notice-gold"><${Icon} name="users" size=${18} /><span><b>Your teacher’s task${pre.title ? ': ' + pre.title : ''}.</b> ${brief}</span></div>` : null}
     <div className="analyze-grid">
       <div className="card">
         <div className="step">
           <span className=${'step-n' + (file ? ' ok' : '')}>${file ? html`<${Icon} name="check" size=${16} stroke=${3} />` : '1'}</span>
           <div className="stack" style=${{ gap: 10 }}>
-            <div><h3>Recording</h3><p className="small muted">Pace, pauses, pitch and volume are measured on your device. Video also gets a body-language read.</p></div>
+            <div><h3>Recording</h3><p className="small muted">Record here, or bring a file. Pace, pauses, pitch range and volume range are measured on your device.</p></div>
+            ${!file ? html`<${RecordPanel} onDone=${({ file: f, text: t }) => { pickMedia(f); if (t && wordsOf(t).length > wordsOf(text).length) { setText(t); setTMode('paste'); } }} />` : null}
             ${file ? html`<div className="file-pill">
               <span className="tile-ic" style=${{ background: 'var(--ethos-soft)', color: 'var(--ethos)' }}><${Icon} name=${isVideo ? 'video' : 'wave'} /></span>
               <span style=${{ minWidth: 0 }}><span className="file-name" style=${{ display: 'block' }}>${file.name}</span><span className="small muted">${isVideo ? 'Video' : 'Audio'} · ${fmtBytes(file.size)}</span></span>

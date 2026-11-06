@@ -1,20 +1,22 @@
 /* ================================================================
    App shell, routing and boot
    ================================================================ */
+/* The two things schools buy sit first: the oral exam and speech feedback. Everything else supports them. */
 const NAV = [
-  { id: 'home', label: 'Home', icon: 'home', greek: 'ἑστία', gloss: 'hestia: the hearth at the center of a Greek house' },
-  { id: 'analyze', label: 'Analyze', icon: 'mic', greek: 'ἀνάλυσις', gloss: 'analysis: a loosening up, the source of our word' },
-  { id: 'prepare', label: 'Prepare', icon: 'pen', greek: 'παρασκευή', gloss: 'paraskeuē: preparation' },
-  { id: 'viva', label: 'Oral exam', icon: 'scroll', greek: 'ἐξέτασις', gloss: 'exetasis: examination, the word behind Socrates’ unexamined life' },
-  { id: 'gym', label: 'Gym', icon: 'dumbbell', greek: 'γυμνάσιον', gloss: 'gymnasion: the source of our word gym' },
-  { id: 'learn', label: 'Learn', icon: 'book', greek: 'μάθησις', gloss: 'mathēsis: learning' },
-  { id: 'library', label: 'Library', icon: 'columns', greek: 'βιβλιοθήκη', gloss: 'bibliothēkē: a place for books' },
-  { id: 'trophies', label: 'Trophies', icon: 'trophy', greek: 'τρόπαιον', gloss: 'tropaion: a victory monument, the source of our word trophy' },
+  { id: 'home', label: 'Home', icon: 'home', greek: 'ἑστία', gloss: 'hestia: the hearth at the center of a Greek house', group: 'core' },
+  { id: 'viva', label: 'Oral exam', icon: 'scroll', greek: 'ἐξέτασις', gloss: 'exetasis: examination, the word behind Socrates’ unexamined life', group: 'core' },
+  { id: 'analyze', label: 'Speech feedback', icon: 'mic', greek: 'ἀνάλυσις', gloss: 'analysis: a loosening up, the source of our word', group: 'core' },
+  { id: 'prepare', label: 'Prepare a speech', icon: 'pen', greek: 'παρασκευή', gloss: 'paraskeuē: preparation', group: 'core' },
+  { id: 'gym', label: 'Gym', icon: 'dumbbell', greek: 'γυμνάσιον', gloss: 'gymnasion: the source of our word gym', group: 'train' },
+  { id: 'learn', label: 'Learn', icon: 'book', greek: 'μάθησις', gloss: 'mathēsis: learning', group: 'train' },
+  { id: 'library', label: 'Library', icon: 'columns', greek: 'βιβλιοθήκη', gloss: 'bibliothēkē: a place for books', group: 'train' },
+  { id: 'trophies', label: 'Progress', icon: 'trophy', greek: 'τρόπαιον', gloss: 'tropaion: a victory monument, the source of our word trophy', group: 'train' },
 ];
 const TAB_OF = { home: 'home', analyze: 'analyze', report: 'analyze', prepare: 'prepare', learn: 'learn', lesson: 'learn', game: 'learn', library: 'library', speech: 'library', trophies: 'trophies', viva: 'viva', gym: 'gym', teacher: 'teacher', class: 'teacher', review: 'teacher', account: 'account', privacy: 'account' };
 const BACK = { report: ['analyze', 'Analyze'], lesson: ['learn', 'Academy'], game: ['learn', 'Academy'], speech: ['library', 'Library'], class: ['teacher', 'Classes'], review: ['teacher', 'Classes'], privacy: ['account', 'Account'] };
 const PAGES = { home: HomePage, analyze: AnalyzePage, report: ReportPage, prepare: PreparePage, learn: LearnPage, lesson: LessonPage, game: GamePage, library: LibraryPage, speech: SpeechPage, trophies: TrophiesPage, viva: VivaPage, gym: GymPage, teacher: TeacherPage, class: ClassPage, review: ReviewPage, account: AccountPage, privacy: PrivacyPage };
-const NAV_TEACHER = { id: 'teacher', label: 'Classes', icon: 'users', greek: 'τάξεις', gloss: 'taxeis: classes, ranks' };
+const NAV_TEACHER = { id: 'teacher', label: 'Classes', icon: 'users', greek: 'τάξεις', gloss: 'taxeis: classes, ranks', group: 'core' };
+const NAV_GROUPS = { core: '', train: 'Train' };
 /* Teachers get Classes first; everyone gets the same practice pages. */
 function navFor() {
   const u = typeof Platform !== 'undefined' ? Platform.user : null;
@@ -26,9 +28,12 @@ function Rail({ tab }) {
   const li = levelInfo(p.xp);
   const fresh = (p.lessons || []).some((l) => !lessonDone(p, l.id));
   return html`<aside className="rail">
-    <button className="logo" onClick=${() => go('home')} aria-label="Rostra home"><${LogoMark} size=${32} /><span><span className="logo-word">Rostra</span><span className="logo-sub" lang="grc">τέχνη ῥητορική</span></span></button>
+    <button className="logo" onClick=${() => go('home')} title="Home"><${LogoMark} size=${32} /><span><span className="logo-word">Rostra</span><span className="logo-sub" lang="grc">τέχνη ῥητορική</span></span></button>
     <nav className="stack" style=${{ gap: 4 }} aria-label="Main">
-      ${navFor().map((n) => html`<button key=${n.id} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined}><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title="New lessons for you"></span>` : null}</span><span className="greek nav-greek" lang="grc" title=${n.gloss}>${n.greek}</span></button>`)}
+      ${navFor().map((n, i, all) => html`<${Fragment} key=${n.id}>
+        ${i > 0 && n.group !== all[i - 1].group ? html`<span className="nav-group" aria-hidden="true">${NAV_GROUPS[n.group] || ''}</span>` : null}
+        <button className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined}><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title="New lessons for you"></span>` : null}</span><span className="greek nav-greek" lang="grc" title=${n.gloss}>${n.greek}</span></button>
+      <//>`)}
     </nav>
     <div className="rail-foot">
       <button className="rail-level" onClick=${() => go('trophies')}>
@@ -54,7 +59,7 @@ function TopBar({ route }) {
   return html`<header className="topbar">
     <div className="topbar-title">
       ${back ? html`<button className="btn btn-sm back" onClick=${() => go(back[0])}><${Icon} name="arrowL" size=${16} />${back[1]}</button>`
-        : html`<button className="logo mobile-only" style=${{ padding: 0 }} onClick=${() => go('home')} aria-label="Rostra home"><${LogoMark} size=${28} /><span className="logo-word">Rostra</span></button>`}
+        : html`<button className="logo mobile-only" style=${{ padding: 0 }} onClick=${() => go('home')} title="Home"><${LogoMark} size=${28} /><span className="logo-word">Rostra</span></button>`}
     </div>
     <span className=${'stat-chip flame' + (live ? '' : ' cold')} title=${live ? `${live}-day streak` : 'No active streak'}><${Icon} name="flame" size=${18} />${live}</span>
     <span id="xp-chip" className="stat-chip xp" title="Total XP"><${Icon} name="bolt" size=${18} />${p.xp.toLocaleString()}</span>
@@ -65,7 +70,8 @@ function TopBar({ route }) {
   </header>`;
 }
 function setSoundOn(v) { Sound.enabled = v; Store.act((pp) => { pp.settings.sound = v; }); if (v) Sound.play('tap'); }
-const TAB_IDS = ['home', 'analyze', 'prepare', 'viva'];
+const TAB_IDS = ['home', 'viva', 'analyze', 'prepare'];
+const TAB_LABEL = { home: 'Home', viva: 'Exam', analyze: 'Speech', prepare: 'Prepare' };
 const MORE_IDS = ['learn', 'gym', 'library', 'trophies', 'account'];
 const NAV_MORE_EXTRA = { account: { id: 'account', label: 'Account', icon: 'users', greek: 'πρόσωπον' } };
 function MoreSheet({ tab, onClose }) {
@@ -97,7 +103,7 @@ function TabBar({ tab }) {
   const moreOn = MORE_IDS.includes(tab);
   return html`<${Fragment}>
     <nav className="tabbar" aria-label="Main">
-      ${NAV.filter((n) => TAB_IDS.includes(n.id)).map((n) => html`<button key=${n.id} className=${'tab' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined}><${Icon} name=${n.icon} size=${22} />${n.label}</button>`)}
+      ${TAB_IDS.map((id) => NAV.find((n) => n.id === id)).map((n) => html`<button key=${n.id} className=${'tab' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined} aria-label=${n.label}><${Icon} name=${n.icon} size=${22} />${TAB_LABEL[n.id]}</button>`)}
       <button ref=${moreBtn} className=${'tab' + (moreOn ? ' is-on' : '')} onClick=${() => setMore(true)} aria-haspopup="dialog" aria-expanded=${more} aria-current=${moreOn ? 'page' : undefined}><${Icon} name="more" size=${22} stroke=${3} />More</button>
     </nav>
     ${more ? html`<${MoreSheet} tab=${tab} onClose=${closeMore} />` : null}

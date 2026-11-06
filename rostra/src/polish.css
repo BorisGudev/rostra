@@ -84,3 +84,54 @@
 .stack:has(> .lesson-head) > .quote-block q { display: block; quotes: none; color: var(--stage-ink); font-size: clamp(24px, 3.7vw, 38px); line-height: 1.26; text-wrap: pretty; }
 .stack:has(> .lesson-head) > .quote-block .eyebrow { color: var(--stage-gold); }
 .stack:has(> .lesson-head) > .quote-block figcaption { max-width: 62ch; }
+
+/* ---------- v2: the rail reads as two groups, the core tools and the training ground ---------- */
+.nav-group { display: block; margin: 12px 10px 4px; font-family: var(--font-inscr); font-size: 10.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.nav-group:empty { margin: 4px 0 0; }
+
+/* ---------- v2: home, centred on the two jobs ---------- */
+.home-core { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.core-card {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; text-align: left;
+  padding: clamp(16px, 2vw, 22px); border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--surface);
+  color: var(--ink); font: inherit; cursor: pointer; transition: border-color .15s, transform .15s;
+}
+.core-card:hover { border-color: var(--gold); }
+.core-card:active { transform: translateY(1px); }
+.core-card h2 { font-size: clamp(19px, 2vw, 24px); letter-spacing: -0.025em; line-height: 1.1; margin: 4px 0 6px; }
+.core-card .small { color: var(--ink-2); line-height: 1.45; }
+.core-text { display: grid; min-width: 0; }
+.core-ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--r); background: var(--surface-3); color: var(--ink); align-self: start; }
+.core-exam .core-ic { background: color-mix(in srgb, var(--gold) 22%, var(--surface)); color: var(--gold-ink); }
+.core-speech .core-ic { background: color-mix(in srgb, var(--pathos) 14%, var(--surface)); color: var(--pathos); }
+.core-exam { border-color: color-mix(in srgb, var(--gold) 55%, var(--line)); }
+.core-go { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: var(--surface); }
+@media (max-width: 760px) { .home-core { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- v2: recording on the feedback page ---------- */
+.rec { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 14px; border: 1px dashed var(--line-2); border-radius: var(--r); background: var(--surface-2); min-width: 0; }
+.rec.is-on { border-style: solid; border-color: var(--pathos); }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--pathos); animation: viva-onair 1.5s ease-in-out infinite; }
+.rec-time { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; min-width: 54px; }
+.rec-meter { flex: 1 1 80px; background: var(--line); }
+.rec-meter > span { background: var(--pathos); }
+.rec-live { flex: 0 0 100%; margin: 0; font-style: italic; }
+@media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
+
+/* ---------- v2: the door and account pages reuse the stage; keep focus visible on dark ---------- */
+.auth-stage .stoa, .auth-stage canvas { display: block; }
+.core-card:focus-visible, .tile-btn:focus-visible { outline: 2.5px solid var(--ethos); outline-offset: 2px; }
+
+/* ---------- v2: WCAG AA text colours. The three lights stay vivid as lights; as small text on stone they darken. ---------- */
+:root { --ethos-text: #2446D6; --pathos-text: #C4184A; --logos-text: #06795F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ethos-text: var(--ethos); --pathos-text: var(--pathos); --logos-text: var(--logos); } }
+:root[data-theme="dark"] { --ethos-text: var(--ethos); --pathos-text: var(--pathos); --logos-text: var(--logos); }
+.quest-xp { color: color-mix(in srgb, var(--gold) 55%, var(--ink)); }
+.score-trio > span[style*="--ethos)"] { color: var(--ethos-text) !important; }
+.score-trio > span[style*="--pathos)"] { color: var(--pathos-text) !important; }
+.score-trio > span[style*="--logos)"] { color: var(--logos-text) !important; }
+/* The active rail item is ink-coloured; in dark mode ink is light, so its gold whisper needs a darker gold. */
+:root { --on-ink-gold: var(--stage-gold); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --on-ink-gold: #6B500A; } }
+:root[data-theme="dark"] { --on-ink-gold: #6B500A; }
+.nav-item.is-on .nav-greek { color: var(--on-ink-gold); }

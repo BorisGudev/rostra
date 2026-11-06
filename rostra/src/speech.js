@@ -161,3 +161,60 @@ function speechDeliveryLine(d) {
   if (d.durationSec) parts.push(`spoke for ${fmtTime(d.durationSec)}`);
   return parts.length ? `Measured delivery (facts from the recording, not judgments): ${parts.join('; ')}.` : '';
 }
+
+/* ---------- Record a speech right on the feedback page ---------- */
+function RecordPanel({ onDone }) {
+  const [state, setState] = useState('idle'); // idle | recording | processing | error
+  const [secs, setSecs] = useState(0);
+  const [level, setLevel] = useState(0);
+  const [live, setLive] = useState('');
+  const [err, setErr] = useState('');
+  const R = useRef({ cap: null, timer: 0, t0: 0 });
+  const sup = SpeechCapture.support();
+  useEffect(() => () => { clearInterval(R.current.timer); if (R.current.cap) { try { R.current.cap.stop(); } catch (e) { /* ignore */ } } }, []);
+  async function start() {
+    setErr('');
+    try {
+      const lang = typeof Platform !== 'undefined' ? Platform.lang : 'en';
+      R.current.cap = await SpeechCapture.start({ lang, live: speechMode() === 'live', onLevel: (v) => setLevel((old) => (Math.abs(old - v) > 0.04 ? v : old)), onInterim: setLive });
+      R.current.t0 = performance.now();
+      setSecs(0); setLive('');
+      R.current.timer = setInterval(() => setSecs(Math.round((performance.now() - R.current.t0) / 1000)), 500);
+      setState('recording');
+    } catch (e) {
+      setState('error');
+      setErr(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'The microphone was blocked. Allow it in the browser’s address bar, or bring a recording instead.' : 'The microphone could not start. Bring a recording instead.');
+    }
+  }
+  async function stop() {
+    const cap = R.current.cap; R.current.cap = null;
+    clearInterval(R.current.timer);
+    if (!cap) return;
+    setState('processing');
+    try {
+      const { blob, durationSec, liveText } = await cap.stop();
+      if (!blob || blob.size < 1000 || durationSec < 3) { setState('idle'); setErr('That was too short to use. Try again, and speak for at least a few seconds.'); return; }
+      const ext = /mp4/.test(blob.type) ? 'm4a' : /ogg/.test(blob.type) ? 'ogg' : 'webm';
+      const file = new File([blob], `recording-${dayKey()}.${ext}`, { type: blob.type || 'audio/webm' });
+      const lang = typeof Platform !== 'undefined' ? Platform.lang : 'en';
+      const tr = await speechTranscribe(blob, { lang, liveText });
+      setState('idle');
+      onDone({ file, text: tr.text || '', durationSec });
+      if (!tr.text) toast('Recorded. No transcript came back, so paste the words below for content feedback.', 'warn');
+    } catch (e) { setState('idle'); setErr('Something went wrong with the recording. Try again.'); }
+  }
+  if (!sup.mic) return null;
+  return html`<div className=${'rec' + (state === 'recording' ? ' is-on' : '')}>
+    ${state === 'idle' || state === 'error' ? html`<button type="button" className="btn-cta" onClick=${start}><${Icon} name="mic" size=${18} />Record now</button>` : null}
+    ${state === 'recording' ? html`<${Fragment}>
+      <span className="rec-dot" aria-hidden="true"></span>
+      <span className="rec-time num" aria-live="off">${fmtTime(secs)}</span>
+      <span className="viva-mic-meter rec-meter" role="img" aria-label="Microphone level"><span style=${{ transform: `scaleX(${Math.max(0.04, level)})` }}></span></span>
+      <button type="button" className="btn-cta" onClick=${stop}><${Icon} name="stop" size=${18} />Stop</button>
+    <//>` : null}
+    ${state === 'processing' ? html`<span className="row" style=${{ gap: 8 }}><span className="spin"></span><span className="small">Writing down what you said…</span></span>` : null}
+    ${live && state === 'recording' ? html`<p className="rec-live small muted">${vivaClip(live, 220)}</p>` : null}
+    ${err ? html`<p className="hint" style=${{ color: 'var(--bad)' }}>${err}</p>` : null}
+    ${state === 'idle' && !err ? html`<span className="hint">Speak for up to a few minutes. The words are written down for you; the audio is not kept.</span>` : null}
+  </div>`;
+}
