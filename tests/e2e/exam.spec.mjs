@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { createClassroom, signIn } from './helpers.mjs';
 
 /* A student sits a Quick oral exam out loud. Chromium's fake microphone plays tests/fixtures/answer.wav; the mock
    transcription returns a fixed answer; the mock examiner marks it, asks one follow-up per question, and writes a report. */
-test('a spoken oral exam: three questions, follow-ups, a report with measured delivery', async ({ page }) => {
+test('a spoken oral exam: three questions, follow-ups, a report with measured delivery', async ({ page, request }) => {
   test.setTimeout(240_000);
+  const { student } = await createClassroom(request);
+  await signIn(page, student.username, student.password);
   await page.goto('/#viva');
   await page.locator('#viva-subject').fill('Photosynthesis');
   await page.getByRole('button', { name: 'Enter the exam room' }).click();

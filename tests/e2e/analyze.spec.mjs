@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { createClassroom, signIn } from './helpers.mjs';
 
 const SPEECH = 'Three years ago I stood behind a restaurant in Lisbon at eleven at night, watching a chef throw away forty kilos of perfectly good vegetables. Forty kilos. In one night. From one kitchen. That is when I decided that food waste is not a charity problem, it is a business problem, and that we could build a company around it. Today our compost club serves twelve restaurants and every one of them pays us.';
 
-test('a pasted speech gets a coached report through the server AI', async ({ page }) => {
+test('a pasted speech gets a coached report through the server AI', async ({ page, request }) => {
+  const { student } = await createClassroom(request);
+  await signIn(page, student.username, student.password);
   await page.goto('/#analyze');
   await page.locator('#an-text').fill(SPEECH);
   await page.getByRole('button', { name: /Analyze content/ }).click();

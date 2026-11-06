@@ -1,0 +1,54 @@
+/* ---------- The door: sign in / join ---------- */
+.auth { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); min-height: 100vh; background: var(--bg); }
+.auth-stage { border-radius: 0; outline: 0; min-height: 320px; }
+.auth-stage .stoa { width: 100%; height: 100%; }
+.auth-main { display: grid; align-content: start; gap: 26px; padding: clamp(18px, 3vw, 40px) clamp(16px, 4vw, 56px) 60px; min-width: 0; }
+.auth-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.auth-card { max-width: 560px; display: grid; gap: 16px; padding: clamp(20px, 3vw, 32px); }
+.auth-title { font-size: clamp(30px, 4vw, 44px); line-height: 1; letter-spacing: -0.04em; }
+.auth-tabs { width: 100%; }
+.auth-tabs button { flex: 1 1 0; white-space: nowrap; }
+.auth-form { gap: 14px; }
+.auth-code { font-family: var(--font-display); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.auth-code-out { font-family: var(--font-display); font-weight: 800; letter-spacing: .16em; font-size: 18px; padding: 2px 8px; border-radius: var(--r-sm); background: var(--surface-3); }
+.auth-err { margin: 0; }
+.auth-foot a { color: inherit; }
+.lang-switch button { font-size: 13px; }
+.list-plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.prose-page .prose h2 { font-size: 18px; margin: 18px 0 6px; }
+.prose-page .prose h2:first-child { margin-top: 0; }
+@media (max-width: 880px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth-stage { min-height: 140px; max-height: 180px; }
+  .auth-main { padding: 18px 16px 48px; }
+}
+
+/* ---------- Teacher: classes, assignments, results ---------- */
+.teach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.teach-class { display: grid; gap: 8px; text-align: left; }
+.teach-class .teach-code { font-family: var(--font-display); font-weight: 800; letter-spacing: .14em; font-size: 15px; color: var(--gold-ink); }
+.teach-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.teach-table th { text-align: left; font-family: var(--font-inscr); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line-2); font-weight: 700; }
+.teach-table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.teach-table tr:last-child td { border-bottom: 0; }
+.teach-table .num { font-variant-numeric: tabular-nums; }
+.teach-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.teach-pct { display: inline-block; min-width: 44px; padding: 2px 8px; border-radius: 999px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.teach-pct.g-distinction { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--gold-ink); }
+.teach-pct.g-merit { background: color-mix(in srgb, var(--ethos) 16%, transparent); color: var(--ethos); }
+.teach-pct.g-pass { background: color-mix(in srgb, var(--logos) 16%, transparent); color: var(--logos); }
+.teach-pct.g-not-yet, .teach-pct.g-incomplete { background: color-mix(in srgb, var(--pathos) 14%, transparent); color: var(--pathos); }
+.teach-pct.g-none { background: var(--surface-3); color: var(--muted); }
+.teach-assign { display: grid; gap: 10px; }
+.teach-assign .viva-opts { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.teach-review-note { margin-bottom: 14px; }
+.teach-review .viva-actions, .teach-review .rpt-actions, .teach-review .rpt-next { display: none; }
+.assign-card { display: grid; gap: 10px; }
+.assign-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--line); }
+.assign-row:first-of-type { border-top: 0; }
+.spark { display: inline-flex; gap: 3px; align-items: flex-end; height: 22px; }
+.spark i { display: block; width: 6px; border-radius: 2px 2px 0 0; background: var(--line-2); min-height: 3px; }
+.spark i.on { background: var(--gold); }
+@media (max-width: 640px) {
+  .teach-table th:nth-child(n+4), .teach-table td:nth-child(n+4) { display: none; }
+}

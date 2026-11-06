@@ -24,7 +24,7 @@ export default defineConfig({
     command: 'node scripts/dev.mjs --build',
     url: 'http://localhost:8788/api/health',
     reuseExistingServer: !process.env.CI,
-    env: { ...process.env, MOCK_AI: '1', PORT: '8788' },
+    env: { ...process.env, MOCK_AI: '1', MOCK_SUPABASE: '1', MOCK_SEED: '1', PORT: '8788' },
     timeout: 60_000,
   },
 });

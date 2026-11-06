@@ -11,9 +11,15 @@ const NAV = [
   { id: 'library', label: 'Library', icon: 'columns', greek: 'βιβλιοθήκη', gloss: 'bibliothēkē: a place for books' },
   { id: 'trophies', label: 'Trophies', icon: 'trophy', greek: 'τρόπαιον', gloss: 'tropaion: a victory monument, the source of our word trophy' },
 ];
-const TAB_OF = { home: 'home', analyze: 'analyze', report: 'analyze', prepare: 'prepare', learn: 'learn', lesson: 'learn', game: 'learn', library: 'library', speech: 'library', trophies: 'trophies', viva: 'viva', gym: 'gym' };
-const BACK = { report: ['analyze', 'Analyze'], lesson: ['learn', 'Academy'], game: ['learn', 'Academy'], speech: ['library', 'Library'] };
-const PAGES = { home: HomePage, analyze: AnalyzePage, report: ReportPage, prepare: PreparePage, learn: LearnPage, lesson: LessonPage, game: GamePage, library: LibraryPage, speech: SpeechPage, trophies: TrophiesPage, viva: VivaPage, gym: GymPage };
+const TAB_OF = { home: 'home', analyze: 'analyze', report: 'analyze', prepare: 'prepare', learn: 'learn', lesson: 'learn', game: 'learn', library: 'library', speech: 'library', trophies: 'trophies', viva: 'viva', gym: 'gym', teacher: 'teacher', class: 'teacher', review: 'teacher', account: 'account', privacy: 'account' };
+const BACK = { report: ['analyze', 'Analyze'], lesson: ['learn', 'Academy'], game: ['learn', 'Academy'], speech: ['library', 'Library'], class: ['teacher', 'Classes'], review: ['teacher', 'Classes'], privacy: ['account', 'Account'] };
+const PAGES = { home: HomePage, analyze: AnalyzePage, report: ReportPage, prepare: PreparePage, learn: LearnPage, lesson: LessonPage, game: GamePage, library: LibraryPage, speech: SpeechPage, trophies: TrophiesPage, viva: VivaPage, gym: GymPage, teacher: TeacherPage, class: ClassPage, review: ReviewPage, account: AccountPage, privacy: PrivacyPage };
+const NAV_TEACHER = { id: 'teacher', label: 'Classes', icon: 'users', greek: 'τάξεις', gloss: 'taxeis: classes, ranks' };
+/* Teachers get Classes first; everyone gets the same practice pages. */
+function navFor() {
+  const u = typeof Platform !== 'undefined' ? Platform.user : null;
+  return u && (u.role === 'teacher' || u.role === 'admin') ? [NAV.find((n) => n.id === 'home'), NAV_TEACHER, ...NAV.filter((n) => n.id !== 'home')] : NAV;
+}
 
 function Rail({ tab }) {
   const { profile: p, backend, storageOk } = useStore();
@@ -22,7 +28,7 @@ function Rail({ tab }) {
   return html`<aside className="rail">
     <button className="logo" onClick=${() => go('home')} aria-label="Rostra home"><${LogoMark} size=${32} /><span><span className="logo-word">Rostra</span><span className="logo-sub" lang="grc">τέχνη ῥητορική</span></span></button>
     <nav className="stack" style=${{ gap: 4 }} aria-label="Main">
-      ${NAV.map((n) => html`<button key=${n.id} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined}><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title="New lessons for you"></span>` : null}</span><span className="greek nav-greek" lang="grc" title=${n.gloss}>${n.greek}</span></button>`)}
+      ${navFor().map((n) => html`<button key=${n.id} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => go(n.id)} aria-current=${tab === n.id ? 'page' : undefined}><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title="New lessons for you"></span>` : null}</span><span className="greek nav-greek" lang="grc" title=${n.gloss}>${n.greek}</span></button>`)}
     </nav>
     <div className="rail-foot">
       <button className="rail-level" onClick=${() => go('trophies')}>
@@ -30,6 +36,7 @@ function Rail({ tab }) {
         <${Bar} value=${li.progress * 100} className="bar-xp" />
       </button>
       <button className="nav-item" onClick=${() => Router.coach('')}><span className="nav-label">Ask the coach</span><span className="greek nav-greek" lang="grc" title="symboulos: adviser">σύμβουλος</span></button>
+      <button className=${'nav-item' + (tab === 'account' ? ' is-on' : '')} onClick=${() => go('account')} aria-current=${tab === 'account' ? 'page' : undefined}><span className="nav-label">${typeof Platform !== 'undefined' && Platform.user ? Platform.user.displayName || 'Account' : 'Account'}</span><span className="greek nav-greek" lang="grc" title="prosōpon: person">πρόσωπον</span></button>
       ${storageOk === false
         ? html`<div className="rail-store is-bad" title="Browser storage is full or blocked, so your latest work may not survive a reload."><${Icon} name="alert" size=${14} />Not saving</div>`
         : html`<div className="rail-store"><${Icon} name=${backend === 'db' ? 'cloud' : 'laptop'} size=${14} />${backend === 'db' ? 'Synced to your account' : 'Saved in this browser'}</div>`}
@@ -59,7 +66,8 @@ function TopBar({ route }) {
 }
 function setSoundOn(v) { Sound.enabled = v; Store.act((pp) => { pp.settings.sound = v; }); if (v) Sound.play('tap'); }
 const TAB_IDS = ['home', 'analyze', 'prepare', 'viva'];
-const MORE_IDS = ['learn', 'gym', 'library', 'trophies'];
+const MORE_IDS = ['learn', 'gym', 'library', 'trophies', 'account'];
+const NAV_MORE_EXTRA = { account: { id: 'account', label: 'Account', icon: 'users', greek: 'πρόσωπον' } };
 function MoreSheet({ tab, onClose }) {
   const { profile: p, storageOk } = useStore();
   const first = useRef(null);
@@ -75,7 +83,7 @@ function MoreSheet({ tab, onClose }) {
     <div className="sheet" role="dialog" aria-modal="true" aria-label="More">
       <div className="row-between"><h2 className="sheet-title">More</h2><button className="btn btn-ghost btn-sm btn-icon" onClick=${onClose} aria-label="Close"><${Icon} name="x" size=${18} /></button></div>
       <nav className="stack" style=${{ gap: 4 }} aria-label="More pages">
-        ${MORE_IDS.map((id) => NAV.find((n) => n.id === id)).map((n, i) => html`<button key=${n.id} ref=${i === 0 ? first : null} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => { onClose(); go(n.id); }} aria-current=${tab === n.id ? 'page' : undefined}><${Icon} name=${n.icon} /><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title="New lessons for you"></span>` : null}</span><span className="greek nav-greek" lang="grc">${n.greek}</span></button>`)}
+        ${MORE_IDS.map((id) => NAV.find((n) => n.id === id) || NAV_MORE_EXTRA[id]).concat(typeof Platform !== 'undefined' && Platform.user && Platform.user.role !== 'student' ? [NAV_TEACHER] : []).map((n, i) => html`<button key=${n.id} ref=${i === 0 ? first : null} className=${'nav-item' + (tab === n.id ? ' is-on' : '')} onClick=${() => { onClose(); go(n.id); }} aria-current=${tab === n.id ? 'page' : undefined}><${Icon} name=${n.icon} /><span className="nav-label">${n.label}${n.id === 'learn' && fresh ? html`<span className="nav-dot" title="New lessons for you"></span>` : null}</span><span className="greek nav-greek" lang="grc">${n.greek}</span></button>`)}
       </nav>
       <button className="nav-item sheet-toggle" role="switch" aria-checked=${soundOn} onClick=${() => setSoundOn(!soundOn)}><${Icon} name=${soundOn ? 'volume' : 'volumeOff'} />Sound<span className="chip chip-sm">${soundOn ? 'On' : 'Off'}</span></button>
       ${storageOk === false ? html`<p className="hint">Browser storage is full or blocked, so your latest work may not survive a reload.</p>` : null}
@@ -109,6 +117,16 @@ class ErrorBoundary extends React.Component {
 const HOT = (window.claude && window.claude.hot) || null;
 function App({ initial }) {
   useStore();
+  /* Sign-ins and sign-outs re-render the shell; the door shows while accounts are required and nobody is in. */
+  const [, authTick] = useState(0);
+  useEffect(() => {
+    if (typeof Platform === 'undefined') return undefined;
+    return Platform.on((ev) => {
+      if (ev === 'signin') Store.reboot();
+      if (ev === 'signout') { Store.signOutLocal(); Router.go('home'); }
+      authTick((x) => x + 1);
+    });
+  }, []);
   const [route, setRoute] = useState(() => {
     if (initial && initial.route && PAGES[initial.route.page]) return initial.route;
     let h = '';
@@ -118,10 +136,29 @@ function App({ initial }) {
   const [coach, setCoach] = useState(null);
   const routeRef = useRef(route);
   routeRef.current = route;
-  Router.go = (page, param) => { setRoute({ page, param }); try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } };
+  Router.go = (page, param) => {
+    setRoute({ page, param });
+    try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
+    /* The address bar follows the page (one word, no ids), so reload and the back button land somewhere sensible. */
+    try { if (location.hash !== '#' + page) history.pushState(null, '', '#' + page); } catch (e) { /* ignore */ }
+  };
   Router.coach = (seed) => setCoach(seed || '');
+  useEffect(() => {
+    const onHash = () => {
+      let h = '';
+      try { h = (location.hash || '').replace('#', ''); } catch (e) { h = ''; }
+      if (!PAGES[h] || ['report', 'lesson', 'game', 'speech', 'class', 'review'].includes(h)) h = h ? routeRef.current.page : 'home';
+      if (h !== routeRef.current.page) setRoute({ page: h });
+    };
+    window.addEventListener('hashchange', onHash);
+    window.addEventListener('popstate', onHash);
+    return () => { window.removeEventListener('hashchange', onHash); window.removeEventListener('popstate', onHash); };
+  }, []);
   useEffect(() => { try { if (HOT && HOT.snapshot) HOT.snapshot(() => ({ route: routeRef.current })); } catch (e) { /* optional */ } }, []);
   const tab = TAB_OF[route.page] || 'home';
+  const door = typeof Platform !== 'undefined' && Platform.config && Platform.accountsRequired && !Platform.signedIn;
+  if (door && route.page !== 'privacy') return html`<${Fragment}><${AuthPage} onDone=${(page) => { if (page) Router.go(page); }} /><${FxLayer} /><//>`;
+  if (door) return html`<div className="app"><main className="main" id="main"><div className="page" style=${{ paddingTop: 24 }}><button className="btn btn-sm back" onClick=${() => Router.go('home')}><${Icon} name="arrowL" size=${16} />Sign in</button><${PrivacyPage} /></div></main></div>`;
   const Page = PAGES[route.page] || HomePage;
   const key = route.page + ':' + (typeof route.param === 'string' ? route.param : route.param ? 'draft' : '');
   return html`<div className="app">
@@ -135,7 +172,9 @@ function App({ initial }) {
     <${FxLayer} />
   </div>`;
 }
-function start(data) {
+async function start(data) {
+  /* On the web, find out first whether accounts are required, so the right first screen paints once. */
+  if (!(window.claude && window.claude.use) && typeof Platform !== 'undefined') { try { await Platform.init(); } catch (e) { /* local mode */ } }
   bootStore();
   AI.init();
   ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} initial=${data || {}} />`);

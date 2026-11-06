@@ -461,8 +461,15 @@ const Store = {
   },
   addSpeech(sp) {
     const prev = this.state.speeches.find((x) => !x.dup);
+    /* A speech done for a teacher's assignment: tag it and tell the teacher's table. */
+    const pa = typeof Platform !== 'undefined' ? Platform.pendingAssignment : null;
+    if (pa && pa.id && !sp.sample) { sp.assignmentId = pa.id; sp.assignmentTitle = pa.title; Platform.pendingAssignment = null; }
     this.set({ speeches: [sp, ...this.state.speeches] });
     Persist.save(sp.id, sp);
+    if (sp.assignmentId && typeof Platform !== 'undefined' && Platform.recordSubmission) {
+      const vals = POLE_KEYS.map((k) => sp.scores && sp.scores[k]).filter((v) => v != null);
+      Platform.recordSubmission(sp.assignmentId, sp.id, { kind: 'speech', title: sp.title, percent: vals.length ? Math.round(mean(vals)) : null, scores: sp.scores, words: sp.words, finished: sp.date });
+    }
     if (sp.dup) { toast('You already analyzed this exact speech, so it earns no XP. Change it and try again.', 'warn'); return; }
     this.act((p, ctx) => {
       const sc = sp.scores;
@@ -513,6 +520,24 @@ const Store = {
     return next;
   },
   deleteViva(id) { this.set({ vivas: this.state.vivas.filter((x) => x.id !== id) }); Persist.remove(id); },
+  /* After a sign-in: reconnect, merge this browser's work with the account, re-check the coach. */
+  async reboot() {
+    Persist.mode = 'local'; Persist.col = null; Persist.uid = null; Persist.warned = false;
+    this.set({ backend: 'local' });
+    await bootStore();
+    if (typeof AI !== 'undefined') await AI.refresh();
+  },
+  /* After a sign-out on a shared classroom laptop: nothing of this person stays in the browser. */
+  signOutLocal() {
+    Persist.clearFlags();
+    Persist.localReplace({});
+    lsDel('owner');
+    Persist.mode = 'local'; Persist.col = null; Persist.uid = null;
+    const profile = defaultProfile();
+    ensureQuests(profile);
+    this.set({ ready: true, profile, speeches: [], preps: [], vivas: [], backend: 'local' });
+    if (typeof AI !== 'undefined') AI.refresh();
+  },
   async resetAll() {
     const ids = ['profile', ...this.state.speeches.map((s) => s.id), ...this.state.preps.map((p) => p.id), ...this.state.vivas.map((v) => v.id)];
     for (const id of ids) await Persist.remove(id);

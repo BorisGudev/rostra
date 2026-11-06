@@ -994,6 +994,9 @@ function vivaComplete(d, report) {
   const first = !d.rewarded;
   const pay = vivaRewardOf(d, report);
   const saved = Store.saveViva({ ...d, status: 'done', report: first ? { ...report, xpEarned: pay.total } : report, finished: Date.now(), revealed: false, rewarded: true }, 0);
+  if (first && d.assignmentId && typeof Platform !== 'undefined' && Platform.recordSubmission) {
+    Platform.recordSubmission(d.assignmentId, d.id, { kind: 'viva', title: d.subject, percent: report.percent, grade: report.grade, source: report.source, mode: d.mode, finished: saved.finished });
+  }
   if (first) {
     Store.act((p, ctx) => {
       if (pay.mains) { p.stats.vivaQuestions = (p.stats.vivaQuestions || 0) + pay.mains; ctx.quest('viva', pay.mains); }

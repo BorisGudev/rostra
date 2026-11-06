@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Readable } from 'node:stream';
 import { build } from './build.mjs';
+import { createMockSupabase, installMockEnv } from './mock-supabase.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '..');
@@ -37,9 +38,22 @@ async function loadFunction(name) {
   return functions.get(name);
 }
 
+const port = Number(process.env.PORT) || 8788;
+installMockEnv(port); // MOCK_SUPABASE=1: point the server's Supabase env at the in-memory mock below
+const mock = createMockSupabase();
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    if (url.pathname.startsWith('/mock-supabase')) {
+      const chunks = [];
+      for await (const c of req) chunks.push(c);
+      const body = ['GET', 'HEAD'].includes(req.method) ? undefined : Buffer.concat(chunks);
+      const response = await mock.handle(new Request(url, { method: req.method, headers: req.headers, body, duplex: 'half' }), '/mock-supabase');
+      res.writeHead(response.status, Object.fromEntries(response.headers));
+      res.end(Buffer.from(await response.arrayBuffer()));
+      return;
+    }
     if (url.pathname.startsWith('/api/')) {
       const name = url.pathname.split('/')[2];
       const fn = await loadFunction(name);
@@ -65,5 +79,4 @@ const server = createServer(async (req, res) => {
     res.end(JSON.stringify({ error: String(e && e.message || e) }));
   }
 });
-const port = Number(process.env.PORT) || 8788;
 server.listen(port, () => console.log(`Rostra dev: http://localhost:${port}  (mode: ${process.env.ANTHROPIC_API_KEY ? 'live AI' : 'mock AI'}, ${process.env.SUPABASE_URL ? 'Supabase' : 'local-only accounts'})`));

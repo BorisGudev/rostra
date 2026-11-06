@@ -173,6 +173,17 @@ const Platform = {
     };
   },
 
+  /* A finished assignment: one row the teacher's table reads. Silent on failure; the work itself is already saved. */
+  pendingAssignment: null,
+  async recordSubmission(assignmentId, docId, summary) {
+    if (!this.sb || !this.user || !assignmentId) return false;
+    try {
+      const { error } = await this.sb.from('submissions').upsert({ assignment_id: assignmentId, student_id: this.user.id, doc_id: docId, summary }, { onConflict: 'assignment_id,student_id,doc_id' });
+      if (error) { console.error('submission failed', error.message); return false; }
+      return true;
+    } catch (e) { return false; }
+  },
+
   /* ---------- accounts ---------- */
   async account(action, payload) {
     let res;

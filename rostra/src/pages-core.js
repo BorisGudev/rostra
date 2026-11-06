@@ -361,6 +361,7 @@ function HomePage() {
     <${HomeStage} scores=${scores} example=${!hasData} trail=${trail} ghost=${ghost} triLine=${triLine} onPoster=${() => setPoster(true)} />
     ${poster ? html`<${PosterModal} onClose=${() => setPoster(false)} />` : null}
     ${p.onboarded && (hasData || exams.length || openPrep) ? html`<${TodayStrip} p=${p} preps=${preps} vivas=${vivas} />` : null}
+    <${AssignmentsCard} />
     <section className="home-cards">
       <${LevelCard} />
       <${QuestsCard} />
@@ -455,6 +456,7 @@ function RunTheater({ run, plan, onStop }) {
 function AnalyzePage({ param }) {
   const { speeches, ai, profile } = useStore();
   const pre = param && typeof param === 'object' ? param : null;
+  const brief = pre && pre.brief ? String(pre.brief) : '';
   const [file, setFile] = useState(null);
   const [tMode, setTMode] = useState('paste');
   const [text, setText] = useState(pre ? pre.text || '' : '');
@@ -522,6 +524,7 @@ function AnalyzePage({ param }) {
   if (run) return html`<${RunTheater} run=${run} plan=${plan} onStop=${() => ctl.current && ctl.current.abort()} />`;
   return html`<${Fragment}>
     <${PageHead} label="Analyze" greek="ἀνάλυσις" title="Bring a speech to the coach" fig="anaphora" mark=${['Bring']} line="Bring the recording for delivery. Bring the words for content. Bring both for the full picture." />
+    ${brief ? html`<div className="notice notice-gold"><${Icon} name="users" size=${18} /><span><b>Your teacher’s task${pre.title ? ': ' + pre.title : ''}.</b> ${brief}</span></div>` : null}
     <div className="analyze-grid">
       <div className="card">
         <div className="step">
