@@ -137,7 +137,18 @@ const Persist = {
     for (const [id, d] of Object.entries(docs)) this.localSave(id, d);
   },
   async connect() {
-    if (!window.claude || typeof window.claude.use !== 'function') return false;
+    if (!window.claude || typeof window.claude.use !== 'function') {
+      /* On the web: Supabase through Platform, once someone is signed in. */
+      try {
+        if (typeof Platform === 'undefined') return false;
+        await Platform.init();
+        const col = Platform.db();
+        if (!col) return false;
+        this.uid = Platform.user.id;
+        this.col = col;
+        return true;
+      } catch (e) { return false; }
+    }
     try {
       const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
       if (!db || !user) return false;
@@ -396,7 +407,7 @@ const BADGE_RULES = {
 
 /* ---------- Store ---------- */
 const Store = {
-  state: { ready: false, profile: defaultProfile(), speeches: [], preps: [], vivas: [], backend: 'local', ai: 'checking' },
+  state: { ready: false, profile: defaultProfile(), speeches: [], preps: [], vivas: [], backend: 'local', ai: 'checking', aiLocked: false, user: null },
   listeners: new Set(),
   set(patch) { this.state = { ...this.state, ...patch }; this.listeners.forEach((l) => l(this.state)); },
   hydrate(docs, backend) {
@@ -559,7 +570,18 @@ const AI = {
   fn: null, images: false, imageMax: 0, initPromise: null,
   init() {
     this.initPromise = (async () => {
-      if (!window.claude || typeof window.claude.use !== 'function') { Store.set({ ai: 'off' }); return; }
+      if (!window.claude || typeof window.claude.use !== 'function') {
+        /* On the web the coach lives behind /api/ai. 'locked' means the server has AI but wants a sign-in first. */
+        if (typeof Platform === 'undefined') { Store.set({ ai: 'off' }); return; }
+        try {
+          await Platform.init();
+          const state = Platform.aiState();
+          this.fn = state === 'ready' ? Platform.sampleShim() : null;
+          this.images = false;
+          Store.set({ ai: state === 'ready' ? 'ready' : 'off', aiLocked: state === 'locked', backend: Platform.signedIn ? 'db' : Store.state.backend });
+        } catch (e) { Store.set({ ai: 'off' }); }
+        return;
+      }
       try {
         const s = await window.claude.use('sample');
         if (!s) { Store.set({ ai: 'off' }); return; }
@@ -571,6 +593,7 @@ const AI = {
     return this.initPromise;
   },
   get ready() { return Store.state.ai === 'ready'; },
+  get on() { return Store.state.ai !== 'off'; },
   async json(prompt, opts = {}) {
     if (this.initPromise) await this.initPromise;
     if (!this.fn) throw { code: 'unavailable', message: 'AI unavailable' };
@@ -583,15 +606,22 @@ const AI = {
   },
   handle(e) {
     const c = e && e.code;
+    if (c === 'not_granted' && typeof Platform !== 'undefined' && Platform.accountsRequired) { Store.set({ ai: 'off', aiLocked: true }); return; }
     if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(c)) Store.set({ ai: 'off' });
   },
+  /* Re-check after a sign-in or sign-out. */
+  refresh() { return this.init(); },
 };
 function aiErrorText(e) {
   const c = e && e.code;
   switch (c) {
-    case 'not_granted': case 'sampling_disabled': case 'not_declared': case 'capability_disabled': case 'capability_removed': case 'unavailable':
-      return 'The AI coach isn’t enabled for this page. Allow Claude for this artifact to unlock full coaching.';
-    case 'rate_limited': return 'You’ve reached a usage limit for now. Try again in a little while.';
+    case 'not_granted': return typeof Platform !== 'undefined' && Platform.accountsRequired ? 'Sign in to use the coach.' : 'The AI coach isn’t enabled for this page.';
+    case 'sampling_disabled': case 'not_declared': case 'capability_disabled': case 'capability_removed': case 'unavailable':
+      return 'The AI coach isn’t available on this server right now.';
+    case 'rate_limited': return 'You’ve reached today’s limit for the coach. It resets tomorrow.';
+    case 'timeout': return 'The coach took too long to answer. Try again.';
+    case 'network': return 'The coach couldn’t be reached. Check your connection and try again.';
+    case 'server_misconfigured': return 'The AI key on the server isn’t valid. Tell your teacher or the Rostra team.';
     case 'session_expired': return 'Your session expired. Sign in to Claude again, then retry.';
     case 'prompt_too_large': return 'That text is too long for one pass. Trim it to the part you most want coached.';
     case 'refused': return 'The coach couldn’t work with this text. Try different content.';
@@ -1400,6 +1430,14 @@ async function offerDownload(filename, text) {
   } catch (e) {
     if (e && e.code === 'declined') return;
   }
+  try {
+    const blob = new Blob([text], { type: /\.json$/i.test(filename) ? 'application/json' : 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Saved ' + filename);
+    return;
+  } catch (e) { /* fall through */ }
   try { await navigator.clipboard.writeText(text); toast('Downloads aren’t available here, so the Markdown was copied to your clipboard.'); }
   catch (e) { toast('Downloads aren’t available in this view.', 'warn'); }
 }
