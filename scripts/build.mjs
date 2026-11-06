@@ -18,7 +18,7 @@ const DIST = path.join(ROOT, 'dist');
 const NM = path.join(ROOT, 'node_modules');
 
 /* Load order matters: top-level code may only use names defined in earlier files. */
-export const SCRIPTS = ['i18n.js', 'data.js', 'platform.js', 'engine.js', 'ui.js', 'kit.js', 'art.js', 'pages-core.js', 'pages-more.js', 'viva.js', 'speech.js', 'gym.js', 'auth.js', 'teacher.js', 'app.js'];
+export const SCRIPTS = ['i18n.js', 'i18n-bg.js', 'data.js', 'platform.js', 'engine.js', 'ui.js', 'kit.js', 'art.js', 'pages-core.js', 'pages-more.js', 'viva.js', 'speech.js', 'gym.js', 'auth.js', 'teacher.js', 'app.js'];
 export const STYLES = ['fonts.css', 'styles.css', 'kit.css', 'art.css', 'viva.css', 'gym.css', 'auth.css', 'polish.css'];
 
 const read = (f) => readFileSync(path.join(SRC, f), 'utf8');

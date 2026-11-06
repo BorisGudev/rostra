@@ -23,7 +23,7 @@ const Platform = {
   initPromise: null,
   get accountsRequired() { return !!(this.config && this.config.accounts === 'supabase'); },
   get signedIn() { return !!this.user; },
-  get lang() { return (this.user && this.user.lang) || platformLs.get('lang') || (typeof navigator !== 'undefined' && /^bg/i.test(navigator.language || '') ? 'bg' : 'en'); },
+  get lang() { return typeof I18N !== 'undefined' ? I18N.lang : 'en'; },
   on(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); },
   emit(ev) { this.listeners.forEach((l) => { try { l(ev, this); } catch (e) { console.error(e); } }); },
 
@@ -62,11 +62,15 @@ const Platform = {
     let p = null;
     try { const r = await this.sb.from('profiles').select('role, display_name, username, school_id, lang').eq('id', u.id).maybeSingle(); p = r.data; } catch (e) { p = null; }
     this.user = { id: u.id, email: u.email || null, role: (p && p.role) || meta.role || 'student', displayName: (p && p.display_name) || meta.display_name || '', username: (p && p.username) || meta.username || '', schoolId: p ? p.school_id : null, lang: (p && p.lang) || meta.lang || platformLs.get('lang') || 'en' };
+    if (!platformLs.get('lang') && this.user.lang && typeof I18N !== 'undefined' && I18N.lang !== this.user.lang) { I18N.set(this.user.lang); platformLs.set('lang', this.user.lang); try { location.reload(); } catch (e) { /* ignore */ } }
   },
+  /* The page reloads: strings are read once at load time (top-level constants included). */
   async setLang(lang) {
+    if (typeof I18N !== 'undefined') I18N.set(lang);
     platformLs.set('lang', lang);
     if (this.user && this.sb) { this.user.lang = lang; try { await this.sb.from('profiles').update({ lang }).eq('id', this.user.id); } catch (e) { /* offline */ } }
     this.emit('lang');
+    try { location.reload(); } catch (e) { /* ignore */ }
   },
   headers(extra = {}) {
     const h = { ...extra };

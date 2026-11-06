@@ -117,7 +117,7 @@ check('render HomePage new user (not onboarded, no data)', function () {
   return withState({ profile: freshProfile, speeches: [], preps: [], vivas: [] }, function () {
     HomePage({});
     var t = textOf(HomeStage({ scores: SAMPLE_PROFILE.scores, example: true, trail: SAMPLE_PROFILE.trail, ghost: SAMPLE_PROFILE.first, triLine: 'x', onPoster: function () {} }));
-    assert(t.indexOf('Example data') >= 0, 'example marker missing');
+    assert(t.indexOf('Example data') < 0 && t.indexOf('Journey') < 0, 'a new user sees no sample data and no journey toggle');
     return 'ok';
   });
 });
