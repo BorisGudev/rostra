@@ -146,6 +146,8 @@ async function speechDelivery(blob, text, durationSec) {
       if (m && m.speakingSec && out.words) out.wpm = Math.round(out.words / (Math.max(m.speakingSec, 1) / 60));
     }
   } catch (e) { /* the transcript alone still gives pace and fillers */ }
+  /* Nobody speaks 400 words a minute: a figure outside human range means the clip and the text do not match. */
+  if (out.wpm != null && (out.wpm > 300 || out.wpm < 30)) out.wpm = null;
   return out;
 }
 

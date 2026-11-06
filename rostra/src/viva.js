@@ -2373,12 +2373,15 @@ function VivaReport({ doc }) {
         <div><div className="eyebrow">Communication</div><h2>${commTitle}</h2></div>
         <div className="viva-metrics">${metrics.map(([l, v, tone]) => html`<div key=${l} className=${'viva-metric ' + tone}><b className="num">${v}</b><span className="tiny">${l}</span></div>`)}</div>
         <ul className="viva-notes">${vivaArr(r.commNotes).map((n, i) => html`<li key=${i}>${n}</li>`)}</ul>
-        <div className="viva-hear">
+        ${spokenExam ? html`<div className="viva-hear">
+          <span className="inscr">What was measured</span>
+          <p className="small">Pace, silences and filler words come from the recording of each answer, on your device. Filler words and silences over two seconds lower the communication mark by up to 12 points on that answer. Nothing about your voice was judged.</p>
+        </div>` : html`<div className="viva-hear">
           <span className="inscr">Hear yourself</span>
           <p className="small">Record your next exam on your phone, then bring the recording to Analyze for pace, pauses and pitch. That measures your delivery. Your content marks still come from the exam.</p>
           <ul className="viva-notes small"><li>Did your first sentence answer the question?</li><li>Count your silences over five seconds.</li><li>Note where you restated the question.</li></ul>
           <button className="btn btn-sm" onClick=${() => go('analyze')}><${Icon} name="wave" size=${15} />Analyze a recording</button>
-        </div>
+        </div>`}
       </section>
     </div>
     ${vivaArr(r.panel).length ? html`<section className="stack" style=${{ gap: 12 }}>
