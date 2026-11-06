@@ -1179,7 +1179,7 @@ I18N.dict.bg = {
  "Pick up where you left off": "Продължете от там, докъдето стигнахте",
  "Pick your point first. Then find one example. That’s enough.": "Първо изберете точката си. После намерете един пример. Това е достатъчно.",
  "Pillar of Trust": "Стълб на доверието",
- "Pitch": "Височина на тона",
+ "Pitch": "Питч",
  "Pitch variety": "Разнообразие на тона",
  "Place {0} on a map of the subject: what comes before it, and what comes after it.": "Поставете {0} на карта на предмета: какво е преди него и какво след него.",
  "Plain": "Обикновен",
