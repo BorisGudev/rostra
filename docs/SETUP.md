@@ -3,7 +3,7 @@
 Everything below is clicking in web dashboards and pasting values. Nothing needs to change in the code. Do it in this order; each step says what it unlocks.
 
 ## 1. Netlify: turn off site protection (unlocks: anyone can open the site)
-The live site currently answers "401 Unauthorized" to visitors. In Netlify: open the site → **Site configuration** → **Access & security** (or "Site protection") → make it public / remove the password. Under **Build & deploy → Continuous deployment**, make sure the branch to deploy is `main` and that no build settings are overridden (the repository's `netlify.toml` provides them).
+The live site currently answers "401 Unauthorized" to visitors. In Netlify: open the site → **Site configuration** → **Access & security** (or "Site protection") → make it public / remove the password. Under **Build & deploy → Continuous deployment**, make sure the branch to deploy is `main` and that no build settings are overridden (the repository's `netlify.toml` provides them). Then, under **Cloud compute → Functions → Region**, choose **Frankfurt (fra)** so the API runs in the EU, and redeploy.
 
 ## 2. Supabase: the database and accounts (unlocks: sign-in, classes, teacher view, saved work)
 1. https://supabase.com/dashboard → **New project**. Name: `rostra`. Region: **Frankfurt (eu-central-1)**. Choose a database password and keep it somewhere safe (Netlify does not need it).

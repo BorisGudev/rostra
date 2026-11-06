@@ -11,8 +11,8 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  # Run the API in Frankfurt so student data stays in the EU (Netlify regions: dub, fra, lhr).
-  region = "fra"
+  # The functions' region (Frankfurt, so student data stays in the EU) is a dashboard setting:
+  # Netlify → the site → Cloud compute → Functions → Region → "fra". See docs/SETUP.md step 1.
 
 # Browser calls /api/<name>; each function also declares its own path for Netlify.
 [[redirects]]

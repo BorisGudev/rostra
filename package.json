@@ -11,7 +11,7 @@
     "build": "node scripts/build.mjs",
     "dev": "node scripts/dev.mjs",
     "test": "npm run build && npm run test:unit && npm run test:e2e",
-    "test:unit": "node --test \"tests/unit/**/*.test.mjs\"",
+    "test:unit": "node scripts/test-unit.mjs",
     "test:e2e": "playwright test --trace off",
     "lint": "node scripts/lint.mjs"
   },
