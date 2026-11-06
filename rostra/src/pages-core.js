@@ -506,7 +506,6 @@ function AnalyzePage({ param }) {
   const plan = [];
   if (file) plan.push({ id: 'decode', label: t('Decoding audio'), icon: 'wave' }, { id: 'energy', label: t('Measuring pace and pauses'), icon: 'clock' }, { id: 'pitch', label: t('Tracing pitch and volume'), icon: 'trend' });
   else if (cues) plan.push({ id: 'captions', label: t('Reading caption timing'), icon: 'clock' });
-  if (file && isVideo && ai === 'ready' && AI.images) plan.push({ id: 'presence', label: t('Reading body language'), icon: 'video' });
   if (words >= 30) plan.push({ id: 'ai', label: ai === 'off' ? t('Reading your content (on-device)') : t('Reading your argument'), icon: 'sparkles' });
   async function start() {
     setErr('');
@@ -658,7 +657,7 @@ function DeliverySection({ sp }) {
   const audio = m.source === 'audio';
   return html`<section className="card stack" style=${{ gap: 18 }}>
     <div className="sec-head"><div><div className="eyebrow">${t('Delivery')} <span className="greek" lang="grc">ὑπόκρισις</span></div><h2>${t('How you sounded')}</h2><p className="small muted">${audio ? t('Measured from your recording, on your device.') : t('Estimated from caption timing. Upload the recording for pitch and volume.')}</p></div>
-      <div className="row"><span className="chip"><${Icon} name="shield" size=${14} style=${{ color: 'var(--ethos)' }} />${t`Confidence ${d.confidence ?? '–'}`}</span>${d.expressiveness != null ? html`<span className="chip"><${Icon} name="heart" size=${14} style=${{ color: 'var(--pathos)' }} />${t`Expressiveness ${d.expressiveness}`}</span>` : null}</div></div>
+      <div className="row"><span className="chip" title=${t('Pace, pauses and filler words, combined')}><${Icon} name="shield" size=${14} style=${{ color: 'var(--ethos)' }} />${t`Clarity ${(d.clarity != null ? d.clarity : d.confidence) ?? '–'}`}</span>${(d.variety != null ? d.variety : d.expressiveness) != null ? html`<span className="chip" title=${t('How much your pitch and volume moved')}><${Icon} name="heart" size=${14} style=${{ color: 'var(--pathos)' }} />${t`Vocal variety ${d.variety != null ? d.variety : d.expressiveness}`}</span>` : null}</div></div>
     ${m.wave ? html`<div>
       <${Waveform} wave=${m.wave} duration=${m.duration} pauses=${m.pauses.list} />
       <div className="row-between tiny muted num" style=${{ marginTop: 4 }}><span>0:00</span><span>${fmtTime(m.duration / 2)}</span><span>${fmtTime(m.duration)}</span></div>
@@ -819,7 +818,7 @@ function ReportPage({ id }) {
     try {
       const raw = await AI.json(analysisPrompt({ transcript: sp.transcript, occasion: sp.occasion, focus: sp.focus, title: sp.title, profile: Store.state.profile, metrics: sp.metrics, delivery: sp.delivery }), { modelTier: 'default', cache: false });
       const ai = normalizeAnalysis(raw);
-      const scores = combineScores({ content: ai.scores, delivery: sp.delivery, presence: sp.presence, fillerScore: sp.fillerScore });
+      const scores = combineScores({ content: ai.scores, delivery: sp.delivery, fillerScore: sp.fillerScore });
       const next = { ...sp, ai, heur: null, aiError: null, scores, archetype: archetypeOf(scores).name };
       Store.updateSpeech(next);
       Store.act((p, ctx) => {
@@ -849,12 +848,6 @@ function ReportPage({ id }) {
 
     <${DeliverySection} sp=${sp} />
 
-    ${sp.presence ? html`<section className="card stack" style=${{ gap: 14 }}>
-      <div className="sec-head"><div><div className="eyebrow">${t('Presence')}</div><h2>${t('What the camera saw')}</h2><p className="small muted">${t`${tn(sp.presence.thumbs.length, 'frame', 'frames')} sampled across your video.`}</p></div><${Ring} value=${sp.presence.score} size=${84} stroke=${9} color="var(--ethos)" /></div>
-      <div className="frames">${sp.presence.thumbs.map((th, i) => html`<img key=${i} src=${th} alt=${t`Frame ${i + 1}`} />`)}</div>
-      <ul className="list-check">${sp.presence.observations.map((o, i) => html`<li key=${i}><${Icon} name="eye" size=${20} style=${{ color: 'var(--ethos)' }} /><span>${o}</span></li>`)}</ul>
-      ${sp.presence.tip ? html`<div className="fix"><${Icon} name="sparkles" size=${16} style=${{ color: 'var(--good)', flex: 'none' }} /><span>${sp.presence.tip}</span></div>` : null}
-    </section>` : null}
 
     ${a && a.structure.length ? html`<section className="card stack structure-card" style=${{ gap: 16 }}>
       <div className="sec-head"><div><div className="eyebrow">${t('Structure')} <span className="greek" lang="grc">τάξις</span></div><h2>${t('The shape of your speech')}</h2><p className="small muted">${t('Each part is a column. Strong parts carry the roof; cracked and missing ones are where it sags.')}</p></div>

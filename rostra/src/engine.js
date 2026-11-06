@@ -654,7 +654,6 @@ function aiErrorText(e) {
     case 'prompt_too_large': return t('That text is too long for one pass. Trim it to the part you most want coached.');
     case 'refused': return t('The coach couldn’t work with this text. Try different content.');
     case 'invalid_json': return t('The coach’s reply came back incomplete. Try again.');
-    case 'image_rejected': case 'images_unavailable': return t('Video frames couldn’t be sent, so presence wasn’t scored.');
     case 'cancelled': return t('Stopped.');
     default: return t('The coach couldn’t be reached. Check your connection and try again.');
   }
@@ -971,40 +970,6 @@ function metricsFromCues(cues) {
   return { source: 'captions', duration: +end.toFixed(1), spanSec: +spanSec.toFixed(1), speakingSec: null, wpmEst: Math.round(words / (spanSec / 60)), pauses: summarizePauses(gaps), pausesReliable: gaps.length >= 3, pitch: null, loudness: null, timeline, wave: null };
 }
 
-/* Video frames → images for the presence read */
-function once(el, ev, ms) {
-  return new Promise((res, rej) => {
-    const t = setTimeout(() => { el.removeEventListener(ev, h); rej(new Error('timeout')); }, ms);
-    const h = () => { clearTimeout(t); el.removeEventListener(ev, h); res(); };
-    el.addEventListener(ev, h);
-  });
-}
-async function extractFrames(file, count) {
-  const url = URL.createObjectURL(file);
-  const v = document.createElement('video');
-  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
-  try {
-    await once(v, 'loadeddata', 9000);
-    const dur = v.duration;
-    if (!isFinite(dur) || !v.videoWidth) throw new Error('no-video');
-    const scale = Math.min(1, 900 / v.videoWidth);
-    const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
-    const t = document.createElement('canvas'); const ts = 200 / c.width; t.width = 200; t.height = Math.round(c.height * ts);
-    const ctx = c.getContext('2d'), tctx = t.getContext('2d');
-    const blobs = [], thumbs = [];
-    for (let i = 0; i < count; i++) {
-      v.currentTime = Math.min(dur - 0.1, (dur * (i + 0.5)) / count);
-      await once(v, 'seeked', 6000);
-      ctx.drawImage(v, 0, 0, c.width, c.height);
-      tctx.drawImage(c, 0, 0, t.width, t.height);
-      thumbs.push(t.toDataURL('image/jpeg', 0.6));
-      blobs.push(await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.82)));
-    }
-    return { blobs: blobs.filter(Boolean), thumbs };
-  } finally { URL.revokeObjectURL(url); }
-}
-
-/* ---------- Scoring ---------- */
 function ramp(v, pts) {
   if (v <= pts[0][0]) return pts[0][1];
   for (let i = 1; i < pts.length; i++) if (v <= pts[i][0]) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; return Math.round(y0 + ((y1 - y0) * (v - x0)) / (x1 - x0)); }
@@ -1027,8 +992,10 @@ function scoreDelivery(m, words, occasionId, fillerCount) {
   const volumeScore = m.loudness ? ramp(m.loudness.std, [[1, 35], [2, 55], [3.5, 80], [5, 100], [8, 95], [11, 75]]) : null;
   const fillersPerMin = hasWords ? +(fillerCount / minutes).toFixed(2) : null;
   const fillerScore = fillersPerMin == null ? null : ramp(fillersPerMin, [[0, 100], [1, 92], [3, 70], [6, 45], [10, 25]]);
-  const conf = [paceScore, pauseScore, fillerScore].filter((v) => v != null);
-  const expr = [pitchScore, volumeScore].filter((v) => v != null);
+  /* Two neutral composites of measured delivery. They describe the sound, never a feeling:
+     clarity = pace, pauses and fillers; variety = how much pitch and volume moved. */
+  const clar = [paceScore, pauseScore, fillerScore].filter((v) => v != null);
+  const vari = [pitchScore, volumeScore].filter((v) => v != null);
   const notes = [];
   const est = wpmSource === 'estimate' ? t(' (estimated from syllables)') : '';
   if (wpm) {
@@ -1044,7 +1011,7 @@ function scoreDelivery(m, words, occasionId, fillerCount) {
   if (m.pitch) {
     if (m.pitch.std < 2) notes.push({ tone: 'warn', title: t('Flat pitch'), text: t`Your pitch varied about ${m.pitch.std.toFixed(1)} semitones, which reads as monotone. Let your voice rise on questions and fall at the end of statements.` });
     else if (m.pitch.std > 6) notes.push({ tone: 'warn', title: t('Very sing-song'), text: t`Your pitch swung about ${m.pitch.std.toFixed(1)} semitones. Expressive is good; settle it on key lines so they sound certain.` });
-    else notes.push({ tone: 'good', title: t('Expressive voice'), text: t`Your pitch moved about ${m.pitch.std.toFixed(1)} semitones, in the lively range that keeps listeners engaged.` });
+    else notes.push({ tone: 'good', title: t('Varied pitch'), text: t`Your pitch moved about ${m.pitch.std.toFixed(1)} semitones, in the lively range that keeps listeners engaged.` });
   }
   if (m.loudness) {
     if (m.loudness.std < 2) notes.push({ tone: 'warn', title: t('Steady volume'), text: t('Your volume barely changed. Drop it to pull people in on a personal moment; lift it on your call to action.') });
@@ -1057,7 +1024,7 @@ function scoreDelivery(m, words, occasionId, fillerCount) {
   }
   return {
     wpm, wpmSource, pace: [lo, hi], paceScore, pauseScore, pitchScore, volumeScore, fillersPerMin, fillerScore, fillerCount,
-    confidence: conf.length ? Math.round(mean(conf)) : null, expressiveness: expr.length ? Math.round(mean(expr)) : null, notes,
+    clarity: clar.length ? Math.round(mean(clar)) : null, variety: vari.length ? Math.round(mean(vari)) : null, notes,
   };
 }
 
@@ -1121,17 +1088,20 @@ function heuristicContent(text) {
   };
 }
 
-function combineScores({ content, delivery, presence, fillerScore }) {
+/* Content from the coach, delivery from the device. Older documents may still carry `confidence` / `expressiveness`
+   (the names were retired: they read as feelings); they are treated as the neutral composites they always were. */
+function combineScores({ content, delivery, fillerScore }) {
   const out = {};
   for (const k of POLE_KEYS) {
     const parts = [];
     if (content) parts.push([content[k], k === 'logos' ? 0.9 : 0.7]);
     if (delivery) {
-      if (k === 'ethos' && delivery.confidence != null) parts.push([delivery.confidence, content ? 0.3 : 1]);
-      if (k === 'pathos' && delivery.expressiveness != null) parts.push([delivery.expressiveness, content ? 0.3 : 1]);
+      const clarity = delivery.clarity != null ? delivery.clarity : delivery.confidence;
+      const variety = delivery.variety != null ? delivery.variety : delivery.expressiveness;
+      if (k === 'ethos' && clarity != null) parts.push([clarity, content ? 0.3 : 1]);
+      if (k === 'pathos' && variety != null) parts.push([variety, content ? 0.3 : 1]);
       if (k === 'logos' && content && delivery.paceScore != null) parts.push([delivery.paceScore, 0.1]);
     } else if (k === 'ethos' && content && fillerScore != null) parts.push([fillerScore, 0.15]);
-    if (presence && k === 'ethos' && presence.score != null) parts.push([presence.score, parts.length ? 0.15 : 1]);
     if (!parts.length) { out[k] = null; continue; }
     const wsum = parts.reduce((s, [, w]) => s + w, 0);
     out[k] = Math.round(parts.reduce((s, [v, w]) => s + v * w, 0) / wsum);
@@ -1229,10 +1199,6 @@ TRANSCRIPT
 """
 ${transcript}
 """`;
-}
-function presencePrompt(n, occasion) {
-  return `These ${n} images are still frames taken at even intervals from a video of a person giving a ${occasionOf(occasion).label.toLowerCase()}. Assess only visible delivery: posture, gestures, facial expression, eye line (toward the audience or camera vs. down at notes), framing and energy. Do not identify the person or comment on appearance beyond delivery.
-Reply with only JSON: {"score": 0-100 for overall stage presence (60 is typical), "observations": ["three short, specific observations"], "tip": "one actionable tip for next time"}`;
 }
 function drillPrompt(lesson, answer) {
   return `You are a speech coach grading a short practice exercise.
@@ -1338,7 +1304,7 @@ async function runSpeechAnalysis(input, stage, signal) {
   const transcript = prepareTranscript(rawT || '');
   const words = wordsOf(transcript).length;
   const isVideo = !!file && (/^video\//.test(file.type) || /\.(mp4|mov|webm|m4v)$/i.test(file.name));
-  let metrics = null, presence = null;
+  let metrics = null;
   if (file) {
     stage('decode', 0);
     metrics = await analyzeAudio(file, (p, label) => stage(label, p), signal);
@@ -1352,16 +1318,8 @@ async function runSpeechAnalysis(input, stage, signal) {
   const minutesGuess = metrics ? metrics.spanSec / 60 : words / 140;
   const fillerScore = !metrics && words >= 30 ? ramp(fillers.length / Math.max(0.5, minutesGuess), [[0, 100], [1, 92], [3, 70], [6, 45], [10, 25]]) : null;
 
-  if (isVideo && AI.ready && AI.images) {
-    stage('presence', 0);
-    try {
-      const { blobs, thumbs } = await extractFrames(file, Math.max(1, Math.min(5, AI.imageMax || 5)));
-      if (blobs.length) {
-        const raw = await AI.json(presencePrompt(blobs.length, occasion), { images: blobs, signal });
-        presence = { score: clamp(Math.round(scoreOr(raw.score, 60)), 0, 100), observations: (raw.observations || []).map(String).slice(0, 4), tip: String(raw.tip || ''), thumbs: thumbs.slice(0, 5) };
-      }
-    } catch (e) { if (e && e.code === 'cancelled') throw e; presence = null; }
-  }
+  /* No body-language read: inferring how someone feels from their face or posture is emotion recognition,
+     which the EU AI Act bans in education. Video is treated as audio. */
   let ai = null, heur = null, aiError = null;
   if (words >= 30) {
     if (Store.state.ai !== 'off') {
@@ -1377,7 +1335,7 @@ async function runSpeechAnalysis(input, stage, signal) {
     if (!ai) heur = heuristicContent(transcript);
   }
   const content = ai ? ai.scores : heur ? heur.scores : null;
-  const scores = combineScores({ content, delivery, presence, fillerScore });
+  const scores = combineScores({ content, delivery, fillerScore });
   const prev = Store.state.speeches[0];
   // Full XP for a real speech, less for a few lines, none for re-submitting the same thing.
   const fp = hashStr(transcript + '|' + (file ? file.name + ':' + file.size : ''));
@@ -1392,11 +1350,10 @@ async function runSpeechAnalysis(input, stage, signal) {
     occasion, focus: focus || [],
     source: { file: file ? file.name : null, kind: file ? (isVideo ? 'video' : 'audio') : null, captions: !!(cues && cues.length) },
     transcript, words, durationSec: metrics ? metrics.duration : Math.round((words / 140) * 60),
-    metrics, delivery, presence, ai, heur, aiError, scores, fillerScore,
+    metrics, delivery, ai, heur, aiError, scores, fillerScore,
     fillers: fillers.slice(0, 200), xp: Math.round(xp), archetype: archetypeOf(scores).name,
   };
   // Keep the document under the sync limit: frames go first, then the end of a very long transcript.
-  if (jsonBytes(doc) > SYNC_LIMIT && doc.presence) doc.presence = { ...doc.presence, thumbs: [] };
   const over = jsonBytes(doc);
   if (over > SYNC_LIMIT) { doc.transcript = doc.transcript.slice(0, Math.floor(doc.transcript.length * (SYNC_LIMIT / over) * 0.9)); doc.transcriptTrimmed = true; }
   return doc;
@@ -1416,7 +1373,7 @@ function getSample() {
   _sample = {
     type: 'speech', id: 'sample', sample: true, date: Date.now() - 86400000 * 2, title: ai.title, occasion: 'pitch', focus: ['Persuasion'],
     source: { file: 'compost-club-pitch.m4a', kind: 'audio', captions: false },
-    transcript, words, durationSec: metrics.duration, metrics, delivery, presence: null, ai, heur: null, scores, fillers, xp: 140, archetype: archetypeOf(scores).name,
+    transcript, words, durationSec: metrics.duration, metrics, delivery, ai, heur: null, scores, fillers, xp: 140, archetype: archetypeOf(scores).name,
   };
   return _sample;
 }
