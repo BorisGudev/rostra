@@ -16,7 +16,7 @@ export default defineConfig({
     permissions: ['microphone'],
     launchOptions: {
       // Chromium answers getUserMedia with a fake device and, when a WAV is given, plays that file as the microphone.
-      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', ...(process.env.FAKE_AUDIO ? [`--use-file-for-fake-audio-capture=${process.env.FAKE_AUDIO}`] : [])],
+      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-audio-capture=${process.env.FAKE_AUDIO || 'tests/fixtures/answer.wav'}`],
     },
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],

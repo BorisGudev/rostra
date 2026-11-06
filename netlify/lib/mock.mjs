@@ -67,7 +67,7 @@ export function mockJson(prompt) {
       notes: empty ? 'No substantive answer was given.' : strong ? 'Clear definition and a reason; the example was thin.' : 'The outline was right but the reasoning stopped at what, not why.',
       scores, answer_first: !empty,
       reaction: isBg ? 'Разбирам.' : 'Noted.',
-      next: limitReached || follows >= 2 ? { action: 'move_on', type: 'probe', question: '', examiner } : { action: 'followup', type: strong ? 'extend' : 'probe', question: followQ, examiner },
+      next: limitReached || follows >= 1 ? { action: 'move_on', type: 'probe', question: '', examiner } : { action: 'followup', type: strong ? 'extend' : 'probe', question: followQ, examiner },
     };
   }
   if (/asks for clarification/i.test(p)) return { reply: isBg ? 'Питам за основната идея: отговорете с едно изречение, после обяснете защо.' : 'I am asking for the core idea: answer in one sentence, then tell me why.' };

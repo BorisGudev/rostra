@@ -25,13 +25,14 @@ const VIVA_FORMATS = {
   qualifying: { id: 'qualifying', label: 'Qualifying', n: 7, minutes: 25, range: '20 to 42', think: 30, answer: 180, panel: true, finishXp: 200, desc: 'Seven questions in front of a panel of three.' },
   ladder: { id: 'ladder', label: 'Why ladder', n: 1, minutes: 5, range: '3 to 6', think: 5, answer: 45, maxFollows: 6, finishXp: 40, drill: true, desc: 'One claim. Follow-ups until your understanding gives way.' },
 };
-const VIVA_DICTATE_HELP = 'Turn on your device’s dictation, then speak. Mac: press Fn twice. Windows: Win+H. iPhone or Android: the mic key on your keyboard.';
 const VIVA_MODES = {
-  aloud: { id: 'aloud', label: 'Say it aloud, then jot', icon: 'mic', desc: 'Speak to the room while the clock runs. Then you get 45 seconds to note the points you made. Rostra can’t hear you, so your notes are what gets marked.' },
-  dictate: { id: 'dictate', label: 'Speak into dictation', icon: 'wave', desc: `${VIVA_DICTATE_HELP} This depends on your device and may not start in every browser. If it doesn’t, pick “Say it aloud”.` },
+  speak: { id: 'speak', label: 'Speak my answers', icon: 'mic', desc: 'Rostra records each answer, writes down what you said, and the examiner replies to your actual words. Pace, pauses and filler words are measured from the recording. The audio is not kept.' },
   write: { id: 'write', label: 'Type my answers (content drill)', icon: 'type', desc: 'Checks what you know. It does not rehearse speaking.' },
 };
-const vivaModeId = (m) => (VIVA_MODES[m] ? m : 'aloud');
+/* Earlier exams used 'aloud' (notes) and 'dictate' (OS dictation): both open as spoken exams now. */
+const vivaModeId = (m) => (VIVA_MODES[m] ? m : 'speak');
+/* True when this exam is spoken: the mode says so and the microphone did not fall through to typing. */
+const vivaIsSpoken = (doc) => !!doc && doc.mode === 'speak' && !doc.micFallback;
 const VIVA_DISCIPLINES = {
   general: { id: 'general', label: 'Mixed', note: 'A general mix of question types.', room: '', prompt: '' },
   quantitative: { id: 'quantitative', label: 'Quantitative', note: 'Derivations, estimates, units and limiting cases.', room: 'Keep a blank sheet handy. Say every step aloud.', prompt: 'Field: quantitative. Use these types: derive a named result aloud step by step; estimate a quantity with round numbers, saying each assumption; check a result with units or a limiting case; predict what changes if one input doubles or one assumption fails; find the error in a short wrong argument you state aloud. The candidate has paper you cannot see, so every step must be said. Key points name the derivation steps and final form. Credit correct steps even if the end result is wrong.' },
@@ -246,7 +247,7 @@ function vivaNewDoc(over = {}) {
   const now = Date.now();
   return {
     id: uid('v_'), type: 'viva', subject: '', topic: '', level: 'undergrad', format: fmt.id, persona: fmt.panel ? 'panel' : 'socratic',
-    status: 'setup', created: now, updated: now, material: '', mode: 'aloud', think: fmt.think, answer: fmt.answer, voice: true, practice: false, basis: 'course', discipline: 'general',
+    status: 'setup', created: now, updated: now, material: '', mode: 'speak', think: fmt.think, answer: fmt.answer, voice: true, practice: false, basis: 'course', discipline: 'general',
     focus: [], source: null, title: '', opening: '', closing: '', plan: [], reserve: [], turns: [], report: null,
     ...over,
   };
@@ -467,7 +468,7 @@ function vivaTranscriptText(doc, upto, withEval = true) {
     vivaArr(t.clarify).forEach((c) => lines.push(`Candidate asked for clarification${c.ask ? ': ' + c.ask : ''}. Examiner: ${c.reply}`));
     vivaArr(t.help).forEach((h) => lines.push(`Candidate said “I don’t know, help me reason.” Examiner scaffold: ${h}`));
     if (t.moment) lines.push('Candidate asked for a moment to think.');
-    if (t.answered) lines.push(`Candidate${t.aloud ? ` (spoke aloud for ${fmtTime(t.answerSec || 0)}; these are the key points they jotted afterwards)` : ''}: ${vivaClip(t.answer, 1400) || (t.aloud && t.kind === 'warm' ? '(spoken aloud, not recorded)' : '(no answer given)')}`);
+    if (t.answered) lines.push(`Candidate${t.spoken ? ` (spoke for ${fmtTime(t.answerSec || 0)}; verbatim transcript)` : t.aloud ? ` (spoke aloud for ${fmtTime(t.answerSec || 0)}; these are the key points they jotted afterwards)` : ''}: ${vivaClip(t.answer, 1400) || (t.aloud && t.kind === 'warm' ? '(spoken aloud, not recorded)' : '(no answer given)')}`);
     if (t.overtime > 3) lines.push(`Went ${fmtTime(t.overtime)} over time.`);
     const facts = [];
     if (t.left) facts.push(`left the room ${t.left === 1 ? 'once' : t.left + ' times'}`);
@@ -494,7 +495,9 @@ function vivaEvalPrompt(doc, idx) {
   const said = (t.selfCheck && t.selfCheck.said) || 'an unstated amount';
   const candidate = t.aloud
     ? `Candidate’s answer: NOTES ONLY. They spoke aloud for ${fmtTime(t.answerSec || 0)}, which you did not hear, then had ${Math.round(t.jotSec || 45)} seconds to jot these notes. They report having said ${said} of it aloud.${vivaOverClaim(t) ? ' The notes hold more words than fit in that speaking time, so some were added afterwards.' : ''} Treat each note as an unverified claim. Score accuracy and depth only from what the notes demonstrate. A bare term shows recall and earns no depth credit. Score reasoning at most 60 unless the notes show the steps. Return communication as null: you did not hear them. Your follow-up is the verification, so it is required: pick the note most likely to be hollow and ask them to explain that one point aloud, in their own words.\n"""\n${vivaClip(t.answer, 3000) || '(no notes given)'}\n"""`
-    : `Candidate’s answer${t.dictated ? ` (verbatim dictated speech with ${t.edits || 0} manual edits; ignore transcription errors and missing punctuation; judge structure from word order)` : ' (typed)'}:\n"""\n${vivaClip(t.answer, 3000) || '(no answer given)'}\n"""`;
+    : t.spoken
+      ? `Candidate’s answer (spoken; this is the verbatim speech-to-text transcript. Ignore transcription slips, missing punctuation and false starts; judge content from the words and structure from their order.${t.transcriptSource === 'typed' ? ' The transcription failed, so the candidate typed what they had said.' : ''}):\n"""\n${vivaClip(t.answer, 3000) || '(no answer given)'}\n"""\n${speechDeliveryLine(t.delivery)}`
+      : `Candidate’s answer${t.dictated ? ` (verbatim dictated speech with ${t.edits || 0} manual edits; ignore transcription errors and missing punctuation; judge structure from word order)` : ' (typed)'}:\n"""\n${vivaClip(t.answer, 3000) || '(no answer given)'}\n"""`;
   const material = vivaMaterialFor(doc, p);
   return [
     `You are ${ex.name} (${ex.id}), ${ex.role.toLowerCase()}, examining a candidate in a live oral exam. Style: ${ex.style}`,
@@ -625,7 +628,7 @@ function vivaReportPrompt(doc) {
     'Base the examiner_conclusion on what happened under follow-up, not on first answers. Quote the candidate. Do not soften it.',
     work ? 'For defense, judge whether the transcript shows that this candidate understands the submitted work and could have produced it.' : '',
     closeTurn ? 'If the closing statement correctly fixes an earlier error, return correction_credit of 2 per fix, at most 4, and name it in strengths. Saying nothing costs nothing.' : '',
-    `Delivery metrics computed from the answers: led with the answer in ${m.answerFirst} of ${m.n}; hedges ${m.hedges}; filler words ${m.fillers}; signposts ${m.signposts}; answers over time ${m.overtimeCount}; help requests ${m.helps}; clarification requests ${m.clarifies}.${doc.mode === 'aloud' ? ' The candidate spoke aloud and then jotted key points, so the text is notes and you did not hear the delivery.' : doc.mode === 'dictate' ? ' The text is dictated speech, so ignore transcription errors.' : ' The answers were typed, so you did not hear the delivery.'}`,
+    `Delivery metrics computed from the answers: led with the answer in ${m.answerFirst} of ${m.n}; hedges ${m.hedges}; filler words ${m.fillers}; signposts ${m.signposts}; answers over time ${m.overtimeCount}; help requests ${m.helps}; clarification requests ${m.clarifies}.${vivaIsSpoken(doc) ? ` The answers were spoken and transcribed; ignore transcription slips. Measured from the recordings: average pace ${m.wpm || 'unknown'} words per minute, ${m.pausesLong || 0} silences over 2 seconds, ${m.fillers} filler words. Comment on pace, pauses and fillers as facts; never on mood or feelings.` : doc.mode === 'aloud' ? ' The candidate spoke aloud and then jotted key points, so the text is notes and you did not hear the delivery.' : doc.mode === 'dictate' ? ' The text is dictated speech, so ignore transcription errors.' : ' The answers were typed, so you did not hear the delivery.'}`,
     'Return JSON only:',
     `${JSON.stringify(shape).slice(0, -1)},"strengths":["2 to 4 specific strengths that cite their answers"],"gaps":[{"concept":"...","what_was_missing":"1 or 2 sentences","model_answer_outline":["3 to 5 short steps of a strong spoken answer"]}],"communication":["2 to 4 notes on answer-first structure, hedging, filler, concision and composure"],"panel":[${ids.map((id) => `{"examiner":"${id}","comment":"1 or 2 sentences in that examiner’s voice"}`).join(',')}],"next_steps":["3 concrete practice steps"],"flashcards":[{"q":"...","a":"short answer"}]}`,
     'Give 1 to 4 gaps and 6 to 10 flashcards that target the gaps and key facts.',
@@ -781,7 +784,9 @@ function vivaCommMetrics(doc) {
   const ts = all.filter((t) => vivaIsQuestionTurn(t) && t.answered && String(t.answer || '').trim());
   const n = ts.length;
   let words = 0, fillers = 0, hedges = 0, signposts = 0, answerFirst = 0, afEstimated = false;
+  const wpms = [], pitches = []; let pausesLong = 0, spokenSec = 0, spokenN = 0;
   ts.forEach((t) => {
+    if (t.spoken && t.delivery) { spokenN += 1; if (t.delivery.wpm) wpms.push(t.delivery.wpm); if (t.delivery.pausesLong != null) pausesLong += t.delivery.pausesLong; spokenSec += t.delivery.durationSec || t.answerSec || 0; if (t.delivery.pitchStd != null) pitches.push(t.delivery.pitchStd); }
     words += wordsOf(t.answer).length;
     fillers += findFillers(t.answer).length;
     hedges += vivaCount(VIVA_HEDGE_RE, t.answer);
@@ -803,8 +808,17 @@ function vivaCommMetrics(doc) {
   const signPer = n ? signposts / n : 0;
   const score = n ? clamp(Math.round(60 + 30 * afRate - Math.min(18, hedgesPer * 6) - Math.min(12, fillersPer100 * 2) - Math.min(16, overtimeCount * 5) + Math.min(10, signPer * 4)), 15, 100) : 0;
   const aloud = (doc && doc.mode) === 'aloud';
-  const dictated = (doc && doc.mode) === 'dictate';
+  const spoken = vivaIsSpoken(doc) && spokenN > 0;
+  const dictated = (doc && doc.mode) === 'dictate' || spoken;
+  const wpm = wpms.length ? Math.round(mean(wpms)) : null;
+  const pitchStd = pitches.length ? +mean(pitches).toFixed(1) : null;
   const notes = [];
+  if (spoken) {
+    if (wpm && wpm > 175) notes.push(`You spoke at about ${wpm} words per minute. Examiners follow best between 120 and 160. Slow the first sentence of each answer.`);
+    else if (wpm && wpm < 100) notes.push(`You spoke at about ${wpm} words per minute, which leaves gaps the examiner may fill with a follow-up. Aim for 120 to 160.`);
+    else if (wpm) notes.push(`You spoke at about ${wpm} words per minute, a pace examiners can follow.`);
+    if (pausesLong >= 3) notes.push(`${plural(pausesLong, 'silence')} over two seconds. Say “let me think” and keep going: a named pause reads as composure, an unnamed one as a blank.`);
+  }
   if (n) {
     notes.push(afRate < 0.6
       ? `You led with the answer in ${answerFirst} of ${n} replies. Put the answer in your first sentence, then reason. Examiners grade what they hear first.`
@@ -818,7 +832,7 @@ function vivaCommMetrics(doc) {
   if (overtimeCount) notes.push(`You ran over time on ${plural(overtimeCount, 'answer')}. Practice a 30-second version of each answer first, then expand.`);
   if (helps) notes.push(`You asked for help ${helps === 1 ? 'once' : helps + ' times'}. That is a good move when you are stuck, and it costs a little. Say what you do know first.`);
   if (aloud && n) notes.push('These notes come from the key points you jotted, so they describe your structure more than your spoken words.');
-  return { n, words, avgWords, fillers, hedges, hedgesPer, signposts, answerFirst, answerFirstRate: afRate, answerFirstEstimated: afEstimated, overtimeCount, helps, clarifies, moments, score, notes, aloud };
+  return { n, words, avgWords, fillers, hedges, hedgesPer, signposts, answerFirst, answerFirstRate: afRate, answerFirstEstimated: afEstimated, overtimeCount, helps, clarifies, moments, score, notes, aloud, spoken, wpm, pausesLong, pitchStd, spokenSec: Math.round(spokenSec) };
 }
 const VIVA_PANEL_LINES = {
   elenchos: (r) => (r.depth >= 75 ? 'You could say why, and then why again. That is rarer than you think. Keep asking it of yourself.' : 'Too many answers stopped at what. Before the real exam, ask yourself why after every sentence you plan to say.'),
@@ -1045,6 +1059,7 @@ function vivaConductNotes(doc) {
 function vivaHonestyLine(doc) {
   const r = (doc && doc.report) || {};
   if (r.source === 'self') return 'You marked this yourself. Treat it as practice, and let a real examiner have the last word.';
+  if (vivaIsSpoken(doc)) return 'Marked from the transcript of what you said. Pace, pauses and filler words were measured from the recording. Your tone of voice was not judged, and the audio was not kept.';
   if (doc && doc.mode === 'aloud') return 'Marked from your notes. Nobody heard you speak, so this is a guide to your knowledge. It says nothing about your delivery.';
   if (doc && doc.mode === 'dictate') return 'Marked from your dictated words. Nobody heard your voice, so pace, pauses and tone are outside this mark.';
   return 'Marked from typed answers. This checks what you know. It does not rehearse speaking.';
@@ -1659,21 +1674,23 @@ function VivaRoom({ doc, startPhase }) {
   const [leaving, setLeaving] = useState(false);
   const [check, setCheck] = useState({});
   const [shortAsk, setShortAsk] = useState(false);
+  const [mic, setMic] = useState({ level: 0, live: '', note: '' });
   const boxRef = useRef(null);
   const refs = useRef({ phase: '', key: 0, typed: false, voiced: false, tStart: 0, aStart: 0, thinkSec: 0, spoken: 0, allow: 0, ctrl: null, clockKey: 0, speech: 0 });
   const R = refs.current;
   R.phase = phase;
-  const clockOn = phase === 'think' || phase === 'answer' || phase === 'jot';
+  const clockOn = phase === 'think' || phase === 'answer';
+  const speak = vivaIsSpoken(doc);
   /* The clock stops while the examiner talks or is working out a reply: that time isn't the candidate's. */
   const running = clockOn && !busy && !speaking;
-  const counted = useCountdown({ seconds: clock.total, running, resetKey: clock.key, onEnd: () => { if (R.phase === 'think') startAnswer(); else if (R.phase === 'answer') cutOff(); else if (R.phase === 'jot') endJot(); } });
+  const counted = useCountdown({ seconds: clock.total, running, resetKey: clock.key, onEnd: () => { if (R.phase === 'think') startAnswer(); else if (R.phase === 'answer') cutOff(); } });
   /* The hook resets in an effect, so for one render it still holds the old clock's reading. */
   const left = R.clockKey === clock.key ? counted : clock.total;
   useEffect(() => { R.clockKey = clock.key; }, [clock.key]);
   useEffect(() => { const t = setTimeout(() => setEntering(false), 2400); return () => clearTimeout(t); }, []);
   /* Clearing the key stops the cancelled utterance's late onend from starting think time after unmount. */
   useEffect(() => { const hold = FX.hold(); return hold; }, []); // no XP floats or level-up modals while the exam is live
-  useEffect(() => () => { if (R.stash) R.stash(true); R.key = 0; Voice.stop(); if (R.ctrl) R.ctrl.abort(); }, []);
+  useEffect(() => () => { if (R.stash) R.stash(true); R.key = 0; Voice.stop(); if (R.ctrl) R.ctrl.abort(); if (R.cap) { try { R.cap.stop(); } catch (e) { /* ignore */ } R.cap = null; } }, []);
   /* Room lockdown: the coach and the nav stay out of reach until the exam ends. A visible Leave remains. */
   useEffect(() => {
     try { document.documentElement.dataset.exam = 'live'; } catch (e) { /* cosmetic */ }
@@ -1681,11 +1698,11 @@ function VivaRoom({ doc, startPhase }) {
   }, []);
   /* Keep the question, the clock and the answer box on screen together. */
   useEffect(() => {
-    if (!['think', 'answer', 'check', 'jot', 'said', 'self', 'verdict'].includes(phase)) return;
+    if (!['think', 'answer', 'transcribing', 'retype', 'self', 'verdict'].includes(phase)) return;
     try {
       const el = document.querySelector('.viva-lectern');
       if (el && el.scrollIntoView) el.scrollIntoView({ block: 'end', behavior: reducedMotion() ? 'auto' : 'smooth' });
-      if ((phase === 'answer' || phase === 'jot') && boxRef.current) boxRef.current.focus({ preventScroll: true });
+      if ((phase === 'answer' || phase === 'retype') && boxRef.current) boxRef.current.focus({ preventScroll: true });
     } catch (e) { /* scrolling is a convenience */ }
   }, [phase]);
   /* Time spent away during think or answer is noted, and a closing tab keeps the draft and the clock. */
@@ -1705,11 +1722,11 @@ function VivaRoom({ doc, startPhase }) {
   useEffect(() => {
     if (phase !== 'answer' || !R.cutDone || R.autoEnded || left > -20) return;
     R.autoEnded = true;
-    if (doc.mode === 'aloud' && !(shown && shown.kind === 'close')) finishSpeaking(true); else submit();
+    if (speak && !(shown && shown.kind === 'close')) finishSpeaking(true); else submit();
   }, [left, phase]);
   /* A long silence gets one nudge, in the modes where the page can see input arriving. */
   useEffect(() => {
-    if (phase !== 'answer' || !running || R.nudged || doc.mode === 'aloud') return;
+    if (phase !== 'answer' || !running || R.nudged || speak) return;
     if (performance.now() - (R.lastInput || 0) < 30000) return;
     R.nudged = true;
     const t = shown;
@@ -1744,10 +1761,10 @@ function VivaRoom({ doc, startPhase }) {
     const key = Date.now() + Math.random();
     R.key = key; R.typed = false; R.voiced = false;
     R.edits = t.edits || 0; R.pasted = t.pasted || 0; R.hiddenSec = t.hiddenSec || 0; R.hiddenAt = 0; R.overDebt = t.overDebt || 0;
-    R.nudged = false; R.cutDone = false; R.autoEnded = false; R.jotSec = 0; R.over = 0;
+    R.nudged = false; R.cutDone = false; R.autoEnded = false; R.jotSec = 0; R.over = 0; R.delivery = null; R.transcriptSource = null;
     setSay(null); setAskOpen(false); setDraft(t.answer || lsGet('viva.draft.' + t.id) || t.draft || ''); setMarks({}); setCovered([]);
-    setCheck(t.selfCheck && typeof t.selfCheck === 'object' ? t.selfCheck : {}); setShortAsk(false);
-    if (t.resumeAt && ['think', 'answer', 'check', 'jot', 'said'].includes(t.resumeAt)) { resumeTurn(t, key); return; }
+    setCheck(t.selfCheck && typeof t.selfCheck === 'object' ? t.selfCheck : {}); setShortAsk(false); setMic({ level: 0, live: '', note: '' });
+    if (t.resumeAt && ['think', 'answer'].includes(t.resumeAt)) { resumeTurn(t, key); return; }
     setUtter({ key, skip: false });
     setPhase('asking');
     vivaChime('ask');
@@ -1765,13 +1782,14 @@ function VivaRoom({ doc, startPhase }) {
     const rem = Number(t.remaining);
     const kind = t.resumeAt;
     R.phase = kind;
-    if (kind === 'think' || kind === 'answer' || kind === 'jot') {
+    if (kind === 'think' || kind === 'answer') {
       if (rem < 0) R.overDebt = (R.overDebt || 0) + Math.round(-rem);
       if (kind === 'think') R.tStart = now - away * 1000;
-      else if (kind === 'answer') { R.aStart = now - away * 1000; R.lastInput = now; }
-      else R.jotStart = now - away * 1000;
-      const full = kind === 'jot' ? 45 : vivaClockSecs(cur(), t, kind);
+      else { R.aStart = now - away * 1000; R.lastInput = now; }
+      const full = vivaClockSecs(cur(), t, kind);
       setClock({ total: Math.max(1, isFinite(rem) ? rem : full), full, key: Date.now(), kind });
+      /* A spoken answer cannot be resumed mid-recording: what was said before leaving is gone, so the recording restarts. */
+      if (kind === 'answer' && vivaIsSpoken(cur()) && t.kind !== 'close') startCapture();
     }
     setPhase(kind);
     patchTurn(() => ({ resumeAt: null, remaining: null, elapsed: null }));
@@ -1804,6 +1822,21 @@ function VivaRoom({ doc, startPhase }) {
     setClock({ total: secs, full: secs, key: Date.now(), kind: 'answer' });
     setPhase('answer');
     vivaChime('answer');
+    if (vivaIsSpoken(d) && t && t.kind !== 'close') startCapture();
+  }
+  /* The microphone opens the moment the answer clock starts. Live text shows only when the browser transcribes itself. */
+  async function startCapture() {
+    if (R.cap) return;
+    const lang = typeof Platform !== 'undefined' ? Platform.lang : 'en';
+    try {
+      const cap = await SpeechCapture.start({ lang, live: speechMode() === 'live', onLevel: (level) => setMic((m) => (Math.abs(m.level - level) > 0.04 ? { ...m, level } : m)), onInterim: (text) => setMic((m) => ({ ...m, live: text })) });
+      R.cap = cap;
+    } catch (e) {
+      /* The microphone went away mid-exam: this exam continues typed, and the report says so. */
+      R.cap = null;
+      Store.saveViva({ ...cur(), micFallback: true }, 0);
+      toast('The microphone could not start, so you can type this answer instead.', 'warn');
+    }
   }
   function cutOff() {
     vivaChime('over');
@@ -1814,33 +1847,51 @@ function VivaRoom({ doc, startPhase }) {
     setSay({ text: line, examiner: t.examiner, key: Date.now(), kind: 'cut' });
     speakAs(t.examiner, line);
   }
-  function finishSpeaking(force) {
+  /* The candidate stops speaking: the recording closes, becomes text, and goes to the examiner. */
+  async function finishSpeaking(force) {
     const d = cur(); const t = d.turns[d.turns.length - 1];
     const spoke = (performance.now() - R.aStart) / 1000;
     if (!force && t && t.kind === 'main' && spoke < 10) { setShortAsk(true); return; }
     setShortAsk(false);
+    if (R.phase !== 'answer') return;
     R.spoken = spoke;
     R.over = Math.max(0, Math.round(-left)) + (R.overDebt || 0);
-    /* The warm-up isn't marked, so there's nothing to report back. */
-    if (t && t.kind === 'warm') { submit(); return; }
-    R.phase = 'check'; setPhase('check');
+    R.phase = 'transcribing'; setPhase('transcribing');
+    const cap = R.cap; R.cap = null;
+    let blob = null, liveText = '';
+    try { if (cap) { const r = await cap.stop(); blob = r.blob; liveText = r.liveText; } } catch (e) { blob = null; }
+    const c = new AbortController(); R.ctrl = c;
+    const lang = typeof Platform !== 'undefined' ? Platform.lang : 'en';
+    const [tr, delivery] = await Promise.all([
+      speechTranscribe(blob, { lang, liveText, doc: d.id, signal: c.signal }),
+      speechDelivery(blob, liveText, spoke),
+    ]);
+    if (c.signal.aborted || R.phase !== 'transcribing') return;
+    if (tr.text) {
+      delivery.words = wordsOf(tr.text).length; delivery.fillers = findFillers(tr.text).length;
+      if (delivery.words && spoke > 2 && !delivery.wpm) delivery.wpm = Math.round(delivery.words / (spoke / 60));
+    }
+    R.delivery = delivery; R.transcriptSource = tr.source;
+    if (!tr.text) {
+      /* Nothing came back: let the candidate type what they said, and tell the examiner that happened. */
+      setMic((m) => ({ ...m, note: tr.source === 'error' ? 'The transcription service did not answer.' : 'No words were picked up.' }));
+      R.transcriptSource = 'typed';
+      R.phase = 'retype'; setPhase('retype');
+      return;
+    }
+    setDraft(tr.text);
+    submit({ text: tr.text });
   }
-  function startJot() {
-    R.jotStart = performance.now(); R.phase = 'jot';
-    setClock({ total: 45, full: 45, key: Date.now(), kind: 'jot' });
-    setPhase('jot');
-  }
-  function endJot() { R.jotSec = (performance.now() - R.jotStart) / 1000; R.phase = 'said'; setPhase('said'); }
   function onBox(e) {
     const t = lastT;
-    const v = R.phase === 'jot' ? vivaTrimWords(e.target.value, 60) : e.target.value;
+    const v = e.target.value;
     setDraft(v);
     R.lastInput = performance.now();
     if (t) lsSet('viva.draft.' + t.id, v);
   }
   function onBoxKey(e) {
     if (e.key === 'Backspace' || e.key === 'Delete') R.edits = (R.edits || 0) + 1;
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { if (R.phase === 'jot') endJot(); else submit(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submit();
   }
   function onBoxPaste(e) {
     let text = '';
@@ -1889,18 +1940,17 @@ function VivaRoom({ doc, startPhase }) {
     const d = cur(); const idx = d.turns.length - 1; const t = d.turns[idx];
     if (!t || t.answered || busy) return;
     const typedTurn = t.kind === 'close';
-    const aloud = d.mode === 'aloud' && !typedTurn;
-    const ansSec = aloud ? R.spoken : (performance.now() - R.aStart) / 1000;
-    const text = opts.skip ? '' : draft.trim().slice(0, 6000);
+    const spoken = vivaIsSpoken(d) && !typedTurn && (R.phase === 'transcribing' || R.phase === 'retype' || !!opts.text);
+    const ansSec = spoken ? R.spoken : (performance.now() - R.aStart) / 1000;
+    const text = opts.skip ? '' : String(opts.text != null ? opts.text : draft).trim().slice(0, 6000);
     const rec = {
-      ...t, answered: true, answer: text, aloud, dictated: d.mode === 'dictate' && !typedTurn,
+      ...t, answered: true, answer: text, aloud: false, dictated: d.mode === 'dictate' && !typedTurn, spoken,
+      delivery: spoken ? R.delivery || null : null, transcriptSource: spoken ? R.transcriptSource || null : null,
       thinkSec: Math.round(R.thinkSec || 0), answerSec: Math.round(ansSec || 0),
-      overtime: aloud ? R.over || 0 : Math.max(0, Math.round(-left)) + (R.overDebt || 0),
+      overtime: spoken ? R.over || 0 : Math.max(0, Math.round(-left)) + (R.overDebt || 0),
       edits: R.edits || 0, pasted: R.pasted || 0, hiddenSec: Math.round(R.hiddenSec || 0),
-      selfCheck: aloud && t.kind !== 'warm' ? { first: check.first, lost: check.lost, said: opts.said || null } : null,
-      jotSec: aloud ? Math.round(R.jotSec || 0) : null, draft: '', resumeAt: null, remaining: null, elapsed: null,
+      selfCheck: null, jotSec: null, draft: '', resumeAt: null, remaining: null, elapsed: null,
     };
-    if (aloud) rec.overClaim = vivaOverClaim(rec);
     const d2 = { ...d, turns: d.turns.map((x, i) => (i === idx ? rec : x)) };
     Store.saveViva(d2, 0);
     lsDel('viva.draft.' + t.id);
@@ -1931,6 +1981,8 @@ function VivaRoom({ doc, startPhase }) {
       const raw = await AI.json(vivaEvalPrompt(d, idx), { cache: false, signal: c.signal, modelTier: 'default' });
       const tt = d.turns[idx];
       const ev = vivaNormEval(raw, { follows: vivaFollowCount(d, tt.qi), maxFollows: vivaMaxFollows(d), examinerIds: ids, defaultExaminer: tt.examiner, keyPoints: tt.kind === 'main' ? vivaArr((vivaArr(d.plan)[tt.qi] || {}).keyPoints) : [], aloud: !!tt.aloud, selfCheck: tt.selfCheck });
+      /* The examiner never heard the voice: communication comes from the words. Fillers and long silences cost a little, as they would in the room. */
+      if (tt.spoken && tt.delivery && ev && ev.scores) { const dl = tt.delivery; const pen = Math.min(12, (dl.fillers || 0) * 1.5 + (dl.pausesLong || 0) * 2); ev.scores.communication = clamp(Math.round(ev.scores.communication - pen), 0, 100); }
       if (!ev) throw { code: 'invalid_json' };
       applyEval(cur(), idx, ev);
     } catch (e) {
@@ -1984,13 +2036,27 @@ function VivaRoom({ doc, startPhase }) {
     if (ts.length && !ts[ts.length - 1].eval) ts = ts.slice(0, -1);
     if (!ts.some(vivaMarked)) { toast('Answer at least one question before you ask for a verdict.', 'warn'); return; }
     Voice.stop(); setSpeaking(null); if (R.ctrl) R.ctrl.abort();
+    if (R.cap) { try { R.cap.stop(); } catch (e) { /* ignore */ } R.cap = null; }
     const closing = 'We will stop here. Let us confer.';
     Store.saveViva({ ...d, turns: ts, ended: true, closing }, 0);
     setLeaving(false); setBusy('');
     setSay({ text: closing, examiner: ids[0], key: Date.now(), kind: 'closing' });
     setPhase('verdict');
   }
-  function leave() { Voice.stop(); if (R.ctrl) R.ctrl.abort(); go('viva'); }
+  function leave() { Voice.stop(); if (R.ctrl) R.ctrl.abort(); if (R.cap) { try { R.cap.stop(); } catch (e) { /* ignore */ } R.cap = null; } go('viva'); }
+  /* The microphone is asked for before the first question, so no permission box interrupts an answer. */
+  async function begin() {
+    const d = cur();
+    if (vivaIsSpoken(d)) {
+      const sup = SpeechCapture.support();
+      const p = sup.mic ? await SpeechCapture.permit() : { ok: false, reason: 'unsupported' };
+      if (!p.ok) {
+        Store.saveViva({ ...d, micFallback: true, micReason: p.reason }, 0);
+        toast(p.reason === 'denied' ? 'The microphone was blocked, so this exam is typed. Allow it in the browser’s address bar to speak next time.' : 'No microphone here, so this exam is typed.', 'warn');
+      }
+    }
+    vivaChime('enter'); beginTurn(turn);
+  }
   function toggleVoice() { const d = cur(); const v = !d.voice; Store.saveViva({ ...d, voice: v }); if (!v) { Voice.stop(); setSpeaking(null); } }
 
   const ex = vivaEx(shown ? shown.examiner : ids[0]);
@@ -2000,19 +2066,18 @@ function VivaRoom({ doc, startPhase }) {
   const closingPhase = phase === 'verdict' || phase === 'deliberating';
   const thinking = phase === 'evaluating' || phase === 'deliberating' || !!busy;
   const over = clockOn && clock.kind === 'answer' && left < 0;
-  const aloud = doc.mode === 'aloud';
   const voiceOn = doc.voice && Voice.ok;
   const cps = voiceOn ? 14.5 * (ex.voice.rate || 1) : 42;
   const lastT = turns[turns.length - 1];
   const canEnd = turns.some(vivaMarked);
-  const typedBox = !aloud || (shown && shown.kind === 'close');
+  const typedBox = !speak || (shown && shown.kind === 'close');
   /* Saved on leaving, on unmount and when the tab hides. A finished or dropped turn is never touched. */
   R.stash = (countLeave) => {
     const d = cur();
     const t = vivaArr(d.turns)[vivaArr(d.turns).length - 1];
-    if (!t || t.answered || d.status !== 'live' || !['think', 'answer', 'check', 'jot', 'said'].includes(R.phase)) return;
+    if (!t || t.answered || d.status !== 'live' || !['think', 'answer'].includes(R.phase)) return;
     const now = performance.now();
-    const start = R.phase === 'think' ? R.tStart : R.phase === 'answer' ? R.aStart : R.jotStart;
+    const start = R.phase === 'think' ? R.tStart : R.aStart;
     const hidden = R.hiddenSec || 0;
     patchTurn((x) => ({
       left: countLeave ? (x.left || 0) + 1 : x.left || 0,
@@ -2027,10 +2092,9 @@ function VivaRoom({ doc, startPhase }) {
     intro: turns.some((t) => t.answered) ? 'Welcome back. The panel is ready when you are.' : 'The panel is seated. Take a breath.',
     asking: 'Listen to the question.',
     think: 'Think time. Plan your first sentence: the answer.',
-    answer: over ? (typedBox ? 'Over time. Land your point and submit.' : 'Over time. Finish your sentence.') : shown && shown.kind === 'close' ? 'Correct or add anything you like. Saying nothing costs nothing.' : !typedBox ? 'Speak now, as if the examiner sat across the table. Rostra can’t hear you, so you’ll jot your key points next.' : doc.mode === 'dictate' ? VIVA_DICTATE_HELP : 'Answer now. Lead with your answer, then reason.',
-    check: 'Two quick questions before your notes open.',
-    jot: 'Note the points you made, up to 60 words. You have 45 seconds.',
-    said: 'One last thing before this goes to the examiner.',
+    answer: over ? (typedBox ? 'Over time. Land your point and submit.' : 'Over time. Finish your sentence.') : shown && shown.kind === 'close' ? 'Correct or add anything you like. Saying nothing costs nothing.' : !typedBox ? 'Speak now, as if the examiner sat across the table. Lead with your answer, then the reason.' : 'Answer now. Lead with your answer, then reason.',
+    transcribing: 'Writing down what you said…',
+    retype: mic.note ? `${mic.note} Type what you said, as you said it.` : 'Type what you said, as you said it.',
     evaluating: `${ex.name} is weighing your answer…`,
     self: 'Mark your answer as a strict examiner would.',
     pending: 'Your last answer is waiting to be marked.',
@@ -2039,7 +2103,7 @@ function VivaRoom({ doc, startPhase }) {
   }[phase] || '';
   const controls = (phase === 'think' || phase === 'answer') && shown && !shown.answered && vivaIsQuestionTurn(shown);
   const roomRules = [
-    aloud ? 'Speak each answer aloud to the room, then jot what you said.' : doc.mode === 'dictate' ? `Speak each answer into dictation. ${VIVA_DICTATE_HELP} If it doesn’t start on your device, type instead.` : 'You’re typing, so this checks what you know. It does not rehearse speaking.',
+    speak ? 'Speak each answer aloud. Rostra records it, writes it down and hands the words to the examiner. The audio is not kept.' : doc.micFallback ? 'The microphone is not available, so you type your answers this time.' : 'You’re typing, so this checks what you know. It does not rehearse speaking.',
     vivaDiscipline(doc.discipline).room,
     'Lead with your answer, then reason out loud.',
     'Ask for clarification or a moment whenever you need one.',
@@ -2082,7 +2146,7 @@ function VivaRoom({ doc, startPhase }) {
         </div>
         <aside className="viva-clock">
           <${Klepsydra} total=${clock.full || clock.total} remaining=${clockOn ? left : clock.kind === 'answer' && phase !== 'asking' ? Math.min(left, clock.total) : clock.full || clock.total} size=${92} running=${running} />
-          <span className=${'viva-clock-label' + (over ? ' over' : '')}>${clockOn ? (clock.kind === 'think' ? 'Think' : clock.kind === 'jot' ? 'Notes' : over ? 'Over time' : 'Answer') : phase === 'asking' ? 'Listening' : '—'}</span>
+          <span className=${'viva-clock-label' + (over ? ' over' : '')}>${clockOn ? (clock.kind === 'think' ? 'Think' : over ? 'Over time' : 'Answer') : phase === 'asking' ? 'Listening' : '—'}</span>
           ${doc.practice ? html`<${VivaMeter} doc=${doc} />` : null}
         </aside>
       </div>
@@ -2099,7 +2163,7 @@ function VivaRoom({ doc, startPhase }) {
           <button className="btn btn-sm" type="submit">Ask</button>
         </form>` : null}
         ${controls && vivaArr(shown.help).length ? html`<p className="hint">Asking for help costs a few points on this question. Admitting a gap and reasoning on is still the strongest move.</p>` : null}
-        ${phase === 'intro' ? html`<div className="row" style=${{ gap: 10 }}><button className="btn-cta gold" onClick=${() => { vivaChime('enter'); beginTurn(turn); }}><${Icon} name="play" size=${18} />${turns.some((t) => t.answered) ? 'Continue the exam' : 'Begin the exam'}</button><span className="hint">${voiceOn ? 'The examiners will speak. Turn your sound on.' : 'Questions appear as text.'}</span></div>` : null}
+        ${phase === 'intro' ? html`<div className="row" style=${{ gap: 10 }}><button className="btn-cta gold" onClick=${begin}><${Icon} name="play" size=${18} />${turns.some((t) => t.answered) ? 'Continue the exam' : 'Begin the exam'}</button><span className="hint">${speak ? 'Your browser will ask to use the microphone.' : voiceOn ? 'The examiners will speak. Turn your sound on.' : 'Questions appear as text.'}</span></div>` : null}
         ${phase === 'asking' ? html`<button className="btn btn-sm" onClick=${skipAsk}>Skip to think time</button>` : null}
         ${phase === 'think' ? html`<button className="btn-cta" onClick=${startAnswer}><${Icon} name=${!typedBox ? 'mic' : 'pen'} size=${18} />Start my answer now</button>` : null}
         ${phase === 'answer' && typedBox ? html`<div className="viva-answer">
@@ -2110,28 +2174,17 @@ function VivaRoom({ doc, startPhase }) {
             <button className="btn-cta" disabled=${!wordsOf(draft).length || !!busy} onClick=${() => submit()}><${Icon} name="send" size=${17} />Submit answer</button>
           </span></div>
         </div>` : null}
+        ${phase === 'answer' && !typedBox ? html`<div className="viva-mic" aria-live="off">
+          <div className="viva-mic-row"><span className="viva-mic-dot" aria-hidden="true"></span><span className="viva-mic-label">Recording · ${fmtTime(Math.max(0, (clock.full || clock.total) - left))}</span><span className="viva-mic-meter" role="img" aria-label="Microphone level"><span style=${{ transform: `scaleX(${Math.max(0.04, mic.level)})` }}></span></span></div>
+          ${mic.live ? html`<p className="viva-mic-live">${vivaClip(mic.live, 400)}</p>` : null}
+        </div>` : null}
         ${phase === 'answer' && !typedBox && !shortAsk ? html`<button className="btn-cta" onClick=${() => finishSpeaking()}><${Icon} name="check" size=${18} />I’ve finished speaking</button>` : null}
         ${phase === 'answer' && !typedBox && shortAsk ? html`<div className="viva-check" role="group" aria-label="Is that your full answer?"><p className="viva-check-q">Is that your full answer?</p><div className="row" style=${{ gap: 8 }}><button className="btn btn-sm" onClick=${() => setShortAsk(false)}>Keep speaking</button><button className="btn btn-sm" onClick=${() => finishSpeaking(true)}>Yes</button></div></div>` : null}
-        ${phase === 'check' ? html`<div className="viva-check">
-          <div className="viva-check-row" role="group" aria-label="Did your first sentence answer the question?"><p className="viva-check-q">Did your first sentence answer the question?</p><div className="row" style=${{ gap: 6 }}>
-            <button className="chip" aria-pressed=${check.first === true} onClick=${() => setCheck((c) => ({ ...c, first: true }))}>Yes</button>
-            <button className="chip" aria-pressed=${check.first === false} onClick=${() => setCheck((c) => ({ ...c, first: false }))}>No</button>
-          </div></div>
-          <div className="viva-check-row" role="group" aria-label="Did you lose the thread or stop for more than five seconds?"><p className="viva-check-q">Did you lose the thread or stop for more than five seconds?</p><div className="row" style=${{ gap: 6 }}>
-            <button className="chip" aria-pressed=${check.lost === true} onClick=${() => setCheck((c) => ({ ...c, lost: true }))}>Yes</button>
-            <button className="chip" aria-pressed=${check.lost === false} onClick=${() => setCheck((c) => ({ ...c, lost: false }))}>No</button>
-          </div></div>
-          <button className="btn-cta" disabled=${typeof check.first !== 'boolean' || typeof check.lost !== 'boolean'} onClick=${startJot}><${Icon} name="pen" size=${17} />Open my notes</button>
+        ${phase === 'transcribing' ? html`<div className="viva-weigh"><span className="spin"></span><span>Turning your ${fmtTime(R.spoken || 0)} of speech into text.</span></div>` : null}
+        ${phase === 'retype' ? html`<div className="viva-answer">
+          <textarea ref=${boxRef} className="textarea viva-textarea" rows="5" value=${draft} onInput=${onBox} onKeyDown=${onBoxKey} onPaste=${onBoxPaste} placeholder="What you said, as closely as you can." aria-label="What you said"></textarea>
+          <div className="row-between"><span className="hint num">${wordsOf(draft).length} words</span><button className="btn-cta" disabled=${!wordsOf(draft).length || !!busy} onClick=${() => submit({ text: draft })}><${Icon} name="send" size=${17} />Send to the examiner</button></div>
         </div>` : null}
-        ${phase === 'jot' ? html`<div className="viva-answer">
-          <textarea ref=${boxRef} className="textarea viva-textarea" rows="5" value=${draft} onInput=${onBox} onKeyDown=${onBoxKey} onPaste=${onBoxPaste} placeholder="Your answer in one line, then the points you made, in order." aria-label="Key points you made"></textarea>
-          <div className="row-between"><span className="hint num">You spoke for ${fmtTime(R.spoken || 0)} · ${wordsOf(draft).length} of 60 words. Fewer than 15 can’t pass.</span><button className="btn-cta" disabled=${!!busy} onClick=${endJot}><${Icon} name="check" size=${17} />Done with my notes</button></div>
-        </div>` : null}
-        ${phase === 'said' ? html`<div className="viva-check" role="group" aria-label="How much of this did you say aloud?"><p className="viva-check-q">How much of this did you say aloud?</p><div className="row" style=${{ gap: 8 }}>
-          <button className="btn-cta" onClick=${() => submit({ said: 'all' })}>All</button>
-          <button className="btn-cta" onClick=${() => submit({ said: 'most' })}>Most</button>
-          <button className="btn-cta" onClick=${() => submit({ said: 'some' })}>Some</button>
-        </div></div>` : null}
         ${phase === 'evaluating' ? html`<div className="viva-weigh"><span className="spin"></span><span>Marking on accuracy, depth, reasoning and communication.</span></div>` : null}
         ${phase === 'self' && lastT ? html`<${VivaSelfMark} turn=${lastT} answers=${turns.filter((x) => x.qi === lastT.qi && x.answered && !x.eval).map((x) => x.answer)} offline=${doc.source === 'offline'} plan=${plan[lastT.qi]} marks=${marks} setMarks=${setMarks} covered=${covered} setCovered=${setCovered} reason=${selfReason} onSubmit=${recordSelf} />` : null}
         ${phase === 'pending' ? html`<div className="row" style=${{ gap: 10 }}>
@@ -2218,9 +2271,10 @@ function VivaReport({ doc }) {
   const retake = () => { const n = vivaRetake(doc); go('viva', n.id); };
   const m = r.comm || {};
   const cards = vivaArr(r.cards);
-  const dictated = doc.mode === 'dictate';
-  const commTitle = doc.mode === 'aloud' ? 'What you reported' : dictated ? 'How you sounded, from dictation' : 'How your answers read';
-  const modeChip = doc.mode === 'aloud' ? 'Spoken, marked from notes' : dictated ? 'Dictated' : 'Typed, not spoken';
+  const spokenExam = vivaIsSpoken(doc);
+  const dictated = doc.mode === 'dictate' || spokenExam;
+  const commTitle = spokenExam ? 'How you sounded' : doc.mode === 'aloud' ? 'What you reported' : dictated ? 'How you sounded, from dictation' : 'How your answers read';
+  const modeChip = spokenExam ? 'Spoken and transcribed' : doc.mode === 'aloud' ? 'Spoken, marked from notes' : dictated ? 'Dictated' : 'Typed, not spoken';
   const offlineExam = doc.source === 'offline';
   const prev = doc.retakeOf ? vivaArr(Store.state && Store.state.vivas).find((v) => v.id === doc.retakeOf) : null;
   const cmp = vivaRetakeCompare(doc, prev);
@@ -2231,6 +2285,10 @@ function VivaReport({ doc }) {
   const line = r.source === 'self' && !incomplete ? 'You marked this yourself, so it counts as practice.' : g.line;
   const metrics = [
     [`Led with the answer${m.answerFirstEstimated ? ' (estimated)' : ''}`, m.n ? `${m.answerFirst}/${m.n}` : '–', m.n && m.answerFirstRate >= 0.6 ? 'good' : 'warn'],
+    ...(spokenExam ? [
+      ['Pace', m.wpm ? `${m.wpm} wpm` : '–', m.wpm && (m.wpm > 175 || m.wpm < 100) ? 'warn' : 'good'],
+      ['Silences over 2 s', m.pausesLong != null ? m.pausesLong : '–', (m.pausesLong || 0) >= 3 ? 'warn' : 'good'],
+    ] : []),
     ...(dictated ? [
       ['Hedges', m.hedges != null ? m.hedges : '–', m.n && m.hedges / m.n >= 1.2 ? 'warn' : 'good'],
       ['Filler words', m.fillers != null ? m.fillers : '–', (m.fillers || 0) >= 3 ? 'warn' : 'good'],

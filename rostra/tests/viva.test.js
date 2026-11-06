@@ -365,7 +365,7 @@ check('viva: setup offline, as a retake, and with an odd remembered form', funct
       vtAssert(r.seen.VivaSetup, 'routes a draft to setup'); vtHas(r, 'Back in the room');
     });
     lsSet('viva.last', { level: 'nope', format: 12, persona: {}, mode: 'x', think: 'y', answer: null, voice: 'z' });
-    try { vtEq(vivaInitialForm().format, 'standard'); vtEq(vivaInitialForm().think, 20); vtEq(vivaInitialForm().mode, 'aloud'); vtRender(VivaSetup({})); }
+    try { vtEq(vivaInitialForm().format, 'standard'); vtEq(vivaInitialForm().think, 20); vtEq(vivaInitialForm().mode, 'speak'); vtRender(VivaSetup({})); }
     finally { localStorage.removeItem(LS + 'viva.last'); }
   });
 });
@@ -409,7 +409,7 @@ check('viva: live exam renders in every phase, both modes, panel too', function 
   ['ready', 'off'].forEach(function (ai) { vtState({ ai: ai }, function () { vtRender(VivaRoom({ doc: vtExam(), startPhase: 'pending' })); vtRender(VivaRoom({ doc: vtExam(), startPhase: 'verdict' })); }); });
   var fresh = vtExam({ turns: [] });
   vtRender(VivaRoom({ doc: fresh })); vtRender(VivaLog({ doc: fresh }));
-  vtHas(vtRender(VivaRoom({ doc: vtExam({ mode: 'aloud' }), startPhase: 'answer' })), 'viva-onair');
+  vtHas(vtRender(VivaRoom({ doc: vtExam({ mode: 'speak' }), startPhase: 'answer' })), 'viva-mic');
 });
 check('viva: self-marking in both reasons, with and without marks', function () {
   var plan = { keyPoints: ['First point', 'Second point'] };
@@ -521,10 +521,12 @@ check('viva: prompts stay well formed', function () {
 
 /* ---------- A real rehearsal: modes, marking rules, fairness, reports ---------- */
 function vtMainPair(qi, a, b) { return [vtMarked(qi, 'main', a), vtMarked(qi, 'follow', b || a, { fType: 'probe' })]; }
-check('rehearsal: modes default to aloud, in the agreed order', function () {
-  vtEq(Object.keys(VIVA_MODES).join(), 'aloud,dictate,write');
-  vtEq(vivaNewDoc().mode, 'aloud'); vtEq(vivaNewDoc().practice, false); vtEq(vivaModeId('write'), 'write'); vtEq(vivaModeId('junk'), 'aloud');
-  vtAssert(VIVA_MODES.dictate.desc.indexOf('Fn twice') >= 0 && VIVA_MODES.dictate.desc.indexOf('depends on your device') >= 0, 'dictate instructions and caveat');
+check('rehearsal: modes default to speaking, in the agreed order', function () {
+  vtEq(Object.keys(VIVA_MODES).join(), 'speak,write');
+  vtEq(vivaNewDoc().mode, 'speak'); vtEq(vivaNewDoc().practice, false); vtEq(vivaModeId('write'), 'write'); vtEq(vivaModeId('junk'), 'speak');
+  vtEq(vivaModeId('aloud'), 'speak'); vtEq(vivaModeId('dictate'), 'speak'); // old exams still open
+  vtAssert(VIVA_MODES.speak.desc.indexOf('not kept') >= 0, 'the audio is not kept');
+  vtAssert(vivaIsSpoken({ mode: 'speak' }) && !vivaIsSpoken({ mode: 'speak', micFallback: true }) && !vivaIsSpoken({ mode: 'write' }), 'spoken means speak mode with a working microphone');
   vtEq(VIVA_MODES.write.label, 'Type my answers (content drill)');
 });
 check('rehearsal: no judging reactions, one question, verdict words replaced', function () {
@@ -643,10 +645,12 @@ check('rehearsal: examiner conclusion and honesty line by mode', function () {
   d.report = ai;
   var v = vtRender(VivaReport({ doc: d }));
   vtHas(v, 'What a real examiner would conclude'); vtHas(v, 'You would fail'); vtHas(v, 'Typed, not spoken'); vtHas(v, 'How your answers read');
-  ['aloud', 'dictate', 'write'].forEach(function (m) { vtAssert(vivaHonestyLine(Object.assign({}, d, { mode: m })).length > 20, m); });
+  ['aloud', 'dictate', 'write', 'speak'].forEach(function (m) { vtAssert(vivaHonestyLine(Object.assign({}, d, { mode: m })).length > 20, m); });
   vtAssert(vivaHonestyLine({ mode: 'aloud', report: {} }).indexOf('Nobody heard you speak') >= 0);
+  vtAssert(vivaHonestyLine({ mode: 'speak', report: {} }).indexOf('audio was not kept') >= 0, 'spoken honesty line');
   vtHas(vtRender(VivaReport({ doc: Object.assign({}, d, { mode: 'aloud' }) })), 'What you reported');
-  vtHas(vtRender(VivaReport({ doc: Object.assign({}, d, { mode: 'dictate' }) })), 'How you sounded, from dictation');
+  vtHas(vtRender(VivaReport({ doc: Object.assign({}, d, { mode: 'speak' }) })), 'How you sounded');
+  vtHas(vtRender(VivaReport({ doc: Object.assign({}, d, { mode: 'speak' }) })), 'Spoken and transcribed');
   vtAssert(v.all.indexOf('Filler words') < 0, 'typed answers show no filler count');
 });
 check('rehearsal: material reaches every prompt, across the whole text', function () {
@@ -849,10 +853,10 @@ check('rehearsal: stated durations cover the allowed time, setup defaults stay s
     vtAssert(top <= Math.ceil(maxSec / 60) + 2, k + ' range overstated');
   });
   lsDel('viva.last');
-  vtState({ vivas: [] }, function () { vtEq(vivaInitialForm().format, 'quick'); vtEq(vivaInitialForm().mode, 'aloud'); vtEq(vivaInitialForm().think, 15); });
+  vtState({ vivas: [] }, function () { vtEq(vivaInitialForm().format, 'quick'); vtEq(vivaInitialForm().mode, 'speak'); vtEq(vivaInitialForm().think, 15); });
   vtState({ vivas: [{ id: 'a' }] }, function () { vtEq(vivaInitialForm().format, 'standard'); });
   var form = vtRender(VivaSetup({}));
-  ['What are you being examined on?', 'My own work', 'More options', 'Speak into dictation', 'Type my answers (content drill)', 'Show my marks as I go', 'Kind of subject'].forEach(function (s) { vtHas(form, s); });
+  ['What are you being examined on?', 'My own work', 'More options', 'Speak my answers', 'Type my answers (content drill)', 'Show my marks as I go', 'Kind of subject'].forEach(function (s) { vtHas(form, s); });
   vtAssert(form.all.indexOf('Offline') < 0 || Store.state.ai === 'off', 'online copy');
   vtRender(VivaSetup({ draft: vivaNewDoc({ basis: 'work', material: 'x', format: 'ladder', mode: 'dictate', discipline: 'applied' }) }));
   vtState({ ai: 'off' }, function () { vtHas(vtRender(VivaSetup({})), 'earns no seal'); });
@@ -868,4 +872,25 @@ check('rehearsal: old exam docs still open', function () {
   vtRender(VivaHistory({ vivas: [oldDone, oldLive] }));
   vtAssert(vivaMarkdown(oldDone).indexOf('Merit') >= 0, 'markdown');
   vtRender(VivaRevise({ doc: oldDone }));
+});
+
+check('spoken: measured delivery reaches the metrics, the prompt and the report', function () {
+  var d = vtExam({ mode: 'speak' });
+  d.turns = [vtMarked(0, 'main', vtScores(70, 60, 65, 70), { answer: 'Photosynthesis turns light into sugar. It matters because, um, it makes oxygen. For example a tree.' }), vtMarked(1, 'main', vtScores(60, 55, 60, 65), { answer: 'Chlorophyll absorbs light. Because of that electrons move.' })];
+  d.turns.forEach(function (t, i) { t.spoken = true; t.answerSec = 40; t.delivery = { durationSec: 40, words: 18, wpm: i ? 190 : 140, pausesLong: i ? 3 : 0, pausesDeliberate: 2, fillers: i ? 0 : 1, pitchStd: 3.1 }; });
+  var m = vivaCommMetrics(d);
+  vtAssert(m.spoken && m.wpm === 165 && m.pausesLong === 3, 'aggregates: ' + JSON.stringify([m.wpm, m.pausesLong]));
+  vtAssert(m.notes.some(function (n) { return n.indexOf('silence') >= 0; }), 'a note about silences');
+  var prompt = vivaEvalPrompt(d, 0);
+  vtAssert(prompt.indexOf('verbatim speech-to-text transcript') >= 0 && prompt.indexOf('140 words per minute') >= 0, 'the examiner sees the transcript and the measured pace');
+  vtAssert(vivaReportPrompt(d).indexOf('spoken and transcribed') >= 0, 'the report prompt says the answers were spoken');
+  d.report = vivaComputeReport(d);
+  var v = vtRender(VivaReport({ doc: d }));
+  vtHas(v, 'Pace'); vtHas(v, 'Silences over 2 s'); vtHas(v, 'audio was not kept');
+  vtAssert(speechDeliveryLine({ wpm: 150, pausesLong: 1, fillers: 2, durationSec: 61 }).indexOf('150 words per minute; 1 silence over 2 seconds; 2 filler words; spoke for 1:01') >= 0, 'delivery line');
+  vtAssert(speechDeliveryLine(null) === '', 'no delivery, no line');
+  vtRender(VivaRoom({ doc: Object.assign({}, d, { status: 'live', turns: [vivaMakeTurn({ qi: 0, kind: 'main', q: 'Q?', examiner: 'elenchos' })] }), startPhase: 'answer' }));
+  vtRender(VivaRoom({ doc: Object.assign({}, d, { status: 'live', turns: [vivaMakeTurn({ qi: 0, kind: 'main', q: 'Q?', examiner: 'elenchos' })] }), startPhase: 'transcribing' }));
+  vtRender(VivaRoom({ doc: Object.assign({}, d, { status: 'live', turns: [vivaMakeTurn({ qi: 0, kind: 'main', q: 'Q?', examiner: 'elenchos' })] }), startPhase: 'retype' }));
+  vtRender(VivaRoom({ doc: Object.assign({}, d, { status: 'live', micFallback: true, turns: [vivaMakeTurn({ qi: 0, kind: 'main', q: 'Q?', examiner: 'elenchos' })] }), startPhase: 'answer' }));
 });
