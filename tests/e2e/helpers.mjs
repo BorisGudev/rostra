@@ -39,6 +39,11 @@ export async function createClassroom(request, { className = 'Biology 10B' } = {
 }
 
 /* Sign in through the real door. */
+/* Sign out and wait for the door: sign-out first uploads pending work, and a reload before it finishes keeps the session. */
+export async function signOut(page) {
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page.getByRole('tab', { name: 'Join as a student' })).toBeVisible({ timeout: 20_000 });
+}
 export async function signIn(page, login, password) {
   await page.goto('/');
   await page.getByLabel('Username or email').fill(login);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createClassroom, signIn, uniq } from './helpers.mjs';
+import { createClassroom, signIn, signOut, uniq } from './helpers.mjs';
 
 /* The school flow, end to end, through the real screens:
    a teacher signs up with the school's invite code and creates a class; a student joins with the class code;
@@ -36,8 +36,7 @@ test('teacher creates a class, student joins, exam is set, taken and seen', asyn
   await page.getByRole('button', { name: 'Assign to the class' }).click();
   await expect(page.locator('.assign-card', { hasText: 'The French Revolution, oral check' })).toBeVisible();
   await page.goto('/#account');
-  await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('tab', { name: 'Join as a student' })).toBeVisible();
+  await signOut(page);
 
   // Student joins with the code.
   const student = { username: uniq('ivan'), password: 'studentpass1' };
@@ -78,9 +77,7 @@ test('teacher creates a class, student joins, exam is set, taken and seen', asyn
   await page.goto('/#home');
   await expect(page.locator('.assign-list')).toContainText('All assignments done');
   await page.goto('/#account');
-  await page.getByRole('button', { name: 'Sign out' }).click();
-  // Sign-out first uploads pending work, so wait for the door before signing in as someone else.
-  await expect(page.getByRole('tab', { name: 'Join as a student' })).toBeVisible({ timeout: 20_000 });
+  await signOut(page);
 
   // The teacher sees the result and can open the report.
   await signIn(page, teacher.email, teacher.password);

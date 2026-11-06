@@ -3,6 +3,10 @@ on:
   push:
     branches: ['**']
   pull_request:
+# A new push to the same branch stops the run that is still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest

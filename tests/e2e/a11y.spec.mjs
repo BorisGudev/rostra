@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { createClassroom, signIn } from './helpers.mjs';
+import { createClassroom, signIn, signOut } from './helpers.mjs';
 
 /* WCAG 2.2 AA, checked by axe on the main screens at phone and laptop width, light and dark.
    Serious and critical findings fail the test; the rest are printed. */
@@ -21,7 +21,7 @@ for (const [w, h, scheme] of [[375, 812, 'light'], [1440, 900, 'dark']]) {
     await signIn(page, student.username, student.password);
     for (const p of PAGES) { await page.evaluate((hash) => { location.hash = hash; }, '#' + p); await page.waitForTimeout(400); await scan(p); }
     await page.evaluate(() => { location.hash = '#account'; });
-    await page.getByRole('button', { name: 'Sign out' }).click();
+    await signOut(page);
     await signIn(page, teacher.email, teacher.password);
     await page.evaluate(() => { location.hash = '#teacher'; });
     await page.waitForTimeout(400);
